@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 80892e94bdc19b945acaf942d861abf6374329f62f6d95b7649162278bad2d2b # shrinks to config = Config { root: "\u{7f}", name: "", email: "" }
+cc 65c2d6dab005e3c355377ba7df75fdd05037e08fbb4e9c5b8fca6576bfc15f7e # shrinks to config = Config { root: "", name: "\u{7f}", email: "" }
