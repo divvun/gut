@@ -1,0 +1,27 @@
+image: 'rust:1.41.1'
+
+stages:
+  - test
+
+variables:
+  CARGO_INCREMENTAL: 0
+
+test:
+  stage: test
+  script:
+    - cargo test --all --verbose
+
+pretty:
+  stage: test
+  allow_failure: true
+  before_script:
+    - rustup component add rustfmt
+  script:
+    - cargo fmt -- --check
+
+petty:
+  stage: test
+  before_script:
+    - rustup component add clippy
+  script:
+    - cargo clippy --all --verbose
