@@ -1,7 +1,8 @@
+use super::path::config_path;
+use super::toml::{read_file, write_to_file};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-
-use super::toml::{read_file, write_to_file};
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Config {
@@ -14,10 +15,19 @@ impl Config {
     }
 
     pub fn save_config(&self) -> Result<()> {
-        write_to_file("config.toml", self)
+        write_to_file(get_path(), self)
     }
 
     pub fn get_config() -> Result<Config> {
-        read_file("config.toml")
+        read_file(get_path())
+    }
+}
+
+fn get_path() -> PathBuf {
+    let path = config_path();
+    log::info!("Conifg path: {:?}", path);
+    match path {
+        Some(p) => p,
+        None => panic!("Cannot read the config directory. We need to read our config file in your config directory."),
     }
 }

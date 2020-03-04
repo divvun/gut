@@ -1,6 +1,7 @@
 mod api;
 mod cli;
 mod config;
+mod path;
 mod toml;
 mod user;
 
@@ -20,7 +21,7 @@ fn main() -> Result<()> {
         .init();
 
     let args = Args::from_args();
-    log::debug!("{:?}", args);
+    log::debug!("Arguments: {:?}", args);
 
     match args {
         Args::Init(InitArgs { root, token }) => {

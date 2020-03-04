@@ -1,7 +1,8 @@
+use super::path::user_path;
+use super::toml::{read_file, write_to_file};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-
-use super::toml::{read_file, write_to_file};
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
@@ -17,10 +18,19 @@ impl User {
     }
 
     pub fn save_user(&self) -> Result<()> {
-        write_to_file("user.toml", self)
+        write_to_file(get_path(), self)
     }
 
     pub fn get_user() -> Result<User> {
-        read_file("user.toml")
+        read_file(get_path())
+    }
+}
+
+fn get_path() -> PathBuf {
+    let path = user_path();
+    log::info!("User path: {:?}", path);
+    match path {
+        Some(p) => p,
+        None => panic!("Cannot read the config directory. We need to read our config file in your config directory."),
     }
 }
