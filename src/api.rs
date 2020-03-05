@@ -1,4 +1,5 @@
-use graphql_client::GraphQLQuery;
+use anyhow::*;
+use graphql_client::{GraphQLQuery, Response};
 use reqwest::{blocking as req, StatusCode};
 
 #[derive(GraphQLQuery)]
@@ -9,20 +10,31 @@ use reqwest::{blocking as req, StatusCode};
 )]
 struct UserQuery;
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Request failed")]
-    RequestError {
-        #[from]
-        source: reqwest::Error,
-    },
-    #[error("User unauthorized")]
-    Unauthorized,
-    #[error("Unsuccessful request with status code: {0}")]
-    Unsuccessful(StatusCode),
-}
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "github.graphql",
+    query_path = "user_query.graphql",
+    response_derives = "Debug"
+)]
+struct OrganizationRepositories;
 
-pub fn is_valid_token(token: &str) -> Result<(), Error> {
+#[derive(thiserror::Error, Debug)]
+#[error("User unauthorized")]
+pub struct Unauthorized;
+
+#[derive(thiserror::Error, Debug)]
+#[error("no repositories found")]
+pub struct NoReposFound;
+
+#[derive(thiserror::Error, Debug)]
+#[error("Unsuccessful request with status code: {0}")]
+pub struct Unsuccessful(StatusCode);
+
+#[derive(thiserror::Error, Debug)]
+#[error("invalid response when fetching repositories")]
+pub struct InvalidRepoResponse;
+
+pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
     let client = req::Client::new();
     let q = UserQuery::build_query(user_query::Variables {});
 
@@ -35,12 +47,75 @@ pub fn is_valid_token(token: &str) -> Result<(), Error> {
 
     let response_status = res.status();
     if response_status == reqwest::StatusCode::UNAUTHORIZED {
-        return Err(Error::Unauthorized);
+        return Err(Unauthorized.into());
     }
 
     if !response_status.is_success() {
-        return Err(Error::Unsuccessful(response_status));
+        return Err(Unsuccessful(response_status).into());
     }
 
     Ok(())
+}
+
+pub fn list_repos(organisation: &str) -> anyhow::Result<Vec<String>> {
+    let user_token = match super::User::get_token() {
+        Ok(user_token) => user_token,
+        Err(_) => return Err(Unauthorized.into()),
+    };
+
+    let client = req::Client::new();
+
+    let q = OrganizationRepositories::build_query(organization_repositories::Variables {
+        login: organisation.to_string(),
+    });
+
+    let res = client
+        .post("https://api.github.com/graphql")
+        .bearer_auth(user_token)
+        .header("User-Agent", "dadmin")
+        .json(&q)
+        .send()?;
+
+    let response_status = res.status();
+    if response_status == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(Unauthorized.into());
+    }
+
+    let response_body: Response<organization_repositories::ResponseData> = res.json()?;
+
+    let total_count: i64 = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .organization
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .repositories
+        .total_count;
+
+    //TODO: Implement pagination with graphql cursor magic and suffering
+    anyhow::ensure!(
+        total_count <= 100,
+        "too many repos! Pagintation not yet implemtented."
+    );
+
+    let repositories = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .organization
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .repositories
+        .nodes
+        .as_ref();
+
+    let repo_names = repositories
+        .ok_or(NoReposFound)?
+        .iter()
+        .filter_map(|repo| repo.as_ref())
+        .map(|x| x.name.to_string())
+        .collect();
+
+    Ok(repo_names)
 }

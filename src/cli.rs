@@ -2,13 +2,20 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "dadmin", about = "git multirepo maintenance tool")]
-pub enum Args {
+pub struct Args {
+    #[structopt(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Debug, StructOpt)]
+pub enum Commands {
     #[structopt(name = "init")]
     Init(InitArgs),
     #[structopt(name = "update-config")]
     Update(ConfigArgs),
+    #[structopt(name = "ls", aliases = &["list-repos"])]
+    ListRepos(ListRepoArgs),
 }
-
 #[derive(Debug, StructOpt)]
 pub struct InitArgs {
     #[structopt(long, short, default_value = "./dadmin")]
@@ -22,4 +29,10 @@ pub struct InitArgs {
 pub struct ConfigArgs {
     #[structopt(long, short, default_value = "./dadmin")]
     pub root: String,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct ListRepoArgs {
+    #[structopt(long, short, default_value = "divvun")]
+    pub organisation: String,
 }

@@ -24,6 +24,11 @@ impl User {
     pub fn get_user() -> Result<User> {
         read_file(get_path())
     }
+
+    pub fn get_token() -> Result<String> {
+        let user = User::get_user()?;
+        Ok(user.token)
+    }
 }
 
 fn get_path() -> PathBuf {

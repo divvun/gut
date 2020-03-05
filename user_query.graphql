@@ -3,3 +3,14 @@ query UserQuery {
     login
   }
 }
+
+query OrganizationRepositories($login: String!) { 
+  organization(login: $login) {
+    repositories(first: 100) {
+      totalCount
+      nodes{
+        name
+      }
+    }
+  }
+}
