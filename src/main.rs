@@ -34,7 +34,7 @@ fn main() -> Result<()> {
                 }
             };
             user.save_user()?;
-            let config = Config::new(root);
+            let config = Config::new(root.path);
             config.save_config()
         }
         Commands::ListRepos(ListRepoArgs { organisation }) => {

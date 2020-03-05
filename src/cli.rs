@@ -1,3 +1,4 @@
+use super::path::RootDirectory;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -16,10 +17,11 @@ pub enum Commands {
     #[structopt(name = "ls", aliases = &["list-repos"])]
     ListRepos(ListRepoArgs),
 }
+
 #[derive(Debug, StructOpt)]
 pub struct InitArgs {
-    #[structopt(long, short, default_value = "./dadmin")]
-    pub root: String,
+    #[structopt(long, short, default_value)]
+    pub root: RootDirectory,
 
     #[structopt(short, long)]
     pub token: String,
