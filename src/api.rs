@@ -1,4 +1,4 @@
-use anyhow::*;
+use crate::cli::Filter;
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::{blocking as req, StatusCode};
 
@@ -57,7 +57,10 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn list_repos(organisation: &str) -> anyhow::Result<Vec<String>> {
+pub fn list_repos(
+    organisation: &str,
+    repository_regex: &Option<Filter>,
+) -> anyhow::Result<Vec<String>> {
     let user_token = match super::User::get_token() {
         Ok(user_token) => user_token,
         Err(_) => return Err(Unauthorized.into()),
@@ -110,12 +113,18 @@ pub fn list_repos(organisation: &str) -> anyhow::Result<Vec<String>> {
         .nodes
         .as_ref();
 
-    let repo_names = repositories
+    let repo_names: Vec<String> = repositories
         .ok_or(NoReposFound)?
         .iter()
         .filter_map(|repo| repo.as_ref())
         .map(|x| x.name.to_string())
         .collect();
 
-    Ok(repo_names)
+    Ok(match repository_regex {
+        Some(regex) => repo_names
+            .into_iter()
+            .filter(|repo_name| regex.is_match(&repo_name))
+            .collect(),
+        None => repo_names,
+    })
 }

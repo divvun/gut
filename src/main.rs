@@ -7,7 +7,7 @@ mod user;
 
 use crate::api::list_repos;
 use anyhow::{Context, Result};
-use cli::{Args, Commands, InitArgs, ListRepoArgs};
+use cli::{Args, Commands, Filter, InitArgs};
 use structopt::StructOpt;
 
 use config::Config;
@@ -37,8 +37,13 @@ fn main() -> Result<()> {
             let config = Config::new(root.path);
             config.save_config()
         }
-        Commands::ListRepos(ListRepoArgs { organisation }) => {
-            let repos = match list_repos(&organisation).context("Fetching repositories") {
+        Commands::ListRepos => {
+            let repos = match list_repos(
+                &args.global_args.organisation,
+                &args.global_args.repositories,
+            )
+            .context("Fetching repositories")
+            {
                 Ok(repos) => repos,
                 Err(e) => {
                     if let Some(_) = e.downcast_ref::<api::NoReposFound>() {

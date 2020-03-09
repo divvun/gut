@@ -300,6 +300,7 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "proptest",
+ "regex",
  "reqwest",
  "serde",
  "structopt",
