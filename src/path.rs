@@ -18,7 +18,7 @@ pub fn config_path() -> Option<PathBuf> {
 
 pub fn user_path() -> Option<PathBuf> {
     let dir = get_config_dir()?;
-    let config = dir.join("app.toml");
+    let config = dir.join("user.toml");
     Some(config)
 }
 
