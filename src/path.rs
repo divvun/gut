@@ -1,4 +1,4 @@
-use dirs::{config_dir, home_dir};
+use dirs::config_dir;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};

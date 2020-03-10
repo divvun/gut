@@ -1,6 +1,7 @@
 mod api;
 mod cli;
 mod config;
+mod git;
 mod path;
 mod toml;
 mod user;
@@ -11,6 +12,7 @@ use cli::{Args, Commands, Filter, InitArgs};
 use structopt::StructOpt;
 
 use config::Config;
+use git::clone;
 use user::User;
 
 fn main() -> Result<()> {
