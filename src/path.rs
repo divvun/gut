@@ -4,12 +4,22 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+fn get_config_dir() -> Option<PathBuf> {
+    let config_dir = config_dir().map(|p| p.join("dadmin"))?;
+    let config_dir = config_dir.ensure_dir_exists().ok()?;
+    Some(config_dir)
+}
+
 pub fn config_path() -> Option<PathBuf> {
-    config_dir().map(|p| p.join(".dadmin.app.config"))
+    let dir = get_config_dir()?;
+    let config = dir.join("app.toml");
+    Some(config)
 }
 
 pub fn user_path() -> Option<PathBuf> {
-    config_dir().map(|p| p.join(".dadmin.user.config"))
+    let dir = get_config_dir()?;
+    let config = dir.join("app.toml");
+    Some(config)
 }
 
 pub fn validate_root(root: &str) -> Result<String, RootError> {
@@ -80,5 +90,16 @@ impl Default for RootDirectory {
 impl fmt::Display for RootDirectory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.path)
+    }
+}
+
+trait EnsureDirExists: Sized {
+    fn ensure_dir_exists(self) -> std::io::Result<Self>;
+}
+
+impl EnsureDirExists for std::path::PathBuf {
+    fn ensure_dir_exists(self) -> std::io::Result<Self> {
+        fs::create_dir_all(&self)?;
+        Ok(self)
     }
 }
