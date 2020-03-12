@@ -5,14 +5,7 @@ use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-pub fn to_string<T: ?Sized>(t: &T) -> Result<String>
-where
-    T: Serialize,
-{
-    toml::to_string(t).context("Serialize error")
-}
-
-pub fn from_string<'de, T>(content: &'de str) -> Result<T>
+fn from_string<'de, T>(content: &'de str) -> Result<T>
 where
     T: Deserialize<'de>,
 {
@@ -58,7 +51,7 @@ mod tests {
     proptest! {
         #[test]
         fn serde_data(data in data_strategy())  {
-            let content = to_string(&data).expect("serialized data");
+            let content = toml::to_string(&data).expect("serialized data");
             let new_data = from_string(&content).expect("deserialized data");
             assert_eq!(data, new_data)
         }
@@ -70,7 +63,7 @@ mod tests {
             write_to_file(&path, &data).unwrap();
             let result : TestToml = read_file(&path).unwrap();
             assert!(result == data);
-            dir.close()
+            dir.close()?
         }
     }
 }

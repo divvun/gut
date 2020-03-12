@@ -104,7 +104,7 @@ impl TryFrom<RemoteRepo> for GitRepo {
         ))?;
         Ok(GitRepo {
             remote_url: repo.ssh_url.clone(),
-            local_path: local_path,
+            local_path,
         })
     }
 }
