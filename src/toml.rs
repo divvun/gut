@@ -38,9 +38,9 @@ where
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
+    use tempfile::tempdir;
 
     use super::*;
-    use std::fs::remove_file;
 
     #[derive(Deserialize, Serialize, Debug, PartialEq)]
     struct TestToml {
@@ -65,11 +65,12 @@ mod tests {
 
         #[test]
         fn read_write_file(data in data_strategy()) {
-            let path = ".test.txt";
-            write_to_file(path, &data).unwrap();
-            let result : TestToml = read_file(path).unwrap();
+            let dir = tempdir()?;
+            let path = dir.path().join(".test.txt");
+            write_to_file(&path, &data).unwrap();
+            let result : TestToml = read_file(&path).unwrap();
             assert!(result == data);
-            remove_file(path).unwrap();
+            dir.close()
         }
     }
 }
