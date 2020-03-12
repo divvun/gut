@@ -21,6 +21,10 @@ impl Config {
     pub fn get_config() -> Result<Config> {
         read_file(get_path())
     }
+
+    pub fn get_root() -> Result<String> {
+        Config::get_config().map(|c| c.root)
+    }
 }
 
 fn get_path() -> PathBuf {

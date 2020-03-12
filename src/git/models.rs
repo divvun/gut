@@ -1,16 +1,16 @@
-use super::clone::*;
+use crate::git::clone;
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GitRepo {
     pub remote_url: String,
     pub local_path: PathBuf,
 }
 
-impl Clonable for GitRepo {
-    type Output = PathBuf;
+impl clone::Clonable for GitRepo {
+    type Output = GitRepo;
 
-    fn gclone(&self) -> Result<Self::Output, CloneError> {
-        clone(&self.remote_url, &self.local_path)
+    fn gclone(&self) -> Result<Self::Output, clone::CloneError> {
+        clone::clone(&self.remote_url, &self.local_path).map(|_| self.clone())
     }
 }

@@ -1,3 +1,4 @@
+use super::config::Config;
 use dirs::config_dir;
 use std::fmt;
 use std::fs;
@@ -46,6 +47,13 @@ pub fn validate_root(root: &str) -> Result<String, RootError> {
                 path: root.to_string(),
             })
     }
+}
+
+pub fn get_local_path(organisation: &str, name: &str) -> Option<PathBuf> {
+    let root = Config::get_root().ok()?;
+    let root_dir = Path::new(&root);
+    let local_path = root_dir.join(organisation).join(name);
+    Some(local_path)
 }
 
 #[derive(thiserror::Error, Debug)]

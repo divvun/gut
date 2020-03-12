@@ -2,6 +2,9 @@ use crate::cli::Filter;
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::{blocking as req, StatusCode};
 
+type URI = String;
+type GitSSHRemote = String;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "github.graphql",
@@ -57,10 +60,17 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
+pub struct RemoteRepo {
+    pub name: String,
+    pub ssh_url: GitSSHRemote,
+    pub owner: String,
+}
+
 pub fn list_repos(
     organisation: &str,
     repository_regex: &Option<Filter>,
-) -> anyhow::Result<Vec<String>> {
+) -> anyhow::Result<Vec<RemoteRepo>> {
     let user_token = match super::User::get_token() {
         Ok(user_token) => user_token,
         Err(_) => return Err(Unauthorized.into()),
@@ -113,17 +123,21 @@ pub fn list_repos(
         .nodes
         .as_ref();
 
-    let repo_names: Vec<String> = repositories
+    let repo_names: Vec<RemoteRepo> = repositories
         .ok_or(NoReposFound)?
         .iter()
         .filter_map(|repo| repo.as_ref())
-        .map(|x| x.name.to_string())
+        .map(|x| RemoteRepo {
+            name: x.name.to_string(),
+            ssh_url: x.ssh_url.to_string(),
+            owner: organisation.to_string(),
+        })
         .collect();
 
     Ok(match repository_regex {
         Some(regex) => repo_names
             .into_iter()
-            .filter(|repo_name| regex.is_match(&repo_name))
+            .filter(|repo_name| regex.is_match(&repo_name.name))
             .collect(),
         None => repo_names,
     })

@@ -1,15 +1,18 @@
-query UserQuery { 
-  viewer { 
+query UserQuery {
+  viewer {
     login
   }
 }
 
-query OrganizationRepositories($login: String!) { 
+query OrganizationRepositories($login: String!) {
   organization(login: $login) {
     repositories(first: 100) {
       totalCount
       nodes{
-        name
+        name,
+        nameWithOwner,
+        sshUrl,
+        url
       }
     }
   }

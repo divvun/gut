@@ -18,8 +18,8 @@ pub trait Clonable {
 #[derive(thiserror::Error, Debug)]
 #[error("Cannot clone repository with {remote_url} because of this error {source}")]
 pub struct CloneError {
-    source: git2::Error,
-    remote_url: String,
+    pub source: git2::Error,
+    pub remote_url: String,
 }
 
 pub fn clone(remote_url: &str, local_path: &Path) -> Result<PathBuf, CloneError> {
@@ -88,13 +88,11 @@ mod tests {
 
         let vec = vec![repo1, repo2, repo3, repo4];
 
-        let results = dbg!(GitRepo::gclone_list(vec));
-        let paths: Result<Vec<PathBuf>, CloneError> = results.into_iter().collect();
-        let paths = paths.unwrap();
+        let results = dbg!(GitRepo::gclone_list(vec.clone()));
+        let results: Result<Vec<_>, CloneError> = results.into_iter().collect();
+        let results = results.unwrap();
 
-        let expected_results = vec![repo1_path, repo2_path, repo3_path, repo4_path];
-
-        assert_eq!(expected_results, paths);
+        assert_eq!(vec, results);
         dir.close()?;
         Ok(())
     }

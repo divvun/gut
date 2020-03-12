@@ -20,6 +20,8 @@ pub enum Commands {
     Update(ConfigArgs),
     #[structopt(name = "lr", aliases = &["list-repos"])]
     ListRepos,
+    #[structopt(name = "cl", aliases = &["clone-repos"])]
+    CloneRepos,
 }
 
 #[derive(Debug, StructOpt)]
