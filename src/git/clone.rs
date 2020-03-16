@@ -7,10 +7,7 @@ use git2_credentials::CredentialHandler;
 pub trait Clonable {
     type Output;
     fn gclone(&self) -> Result<Self::Output, CloneError>;
-    fn gclone_list<T>(list: Vec<T>) -> Vec<Result<T::Output, CloneError>>
-    where
-        T: Clonable,
-    {
+    fn gclone_list<T: Clonable>(list: Vec<T>) -> Vec<Result<T::Output, CloneError>> {
         list.iter().map(|r| r.gclone()).collect()
     }
 }

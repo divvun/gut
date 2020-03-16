@@ -1,13 +1,12 @@
 use super::path::RootDirectory;
-use regex::{Error as RegexError, Regex, RegexBuilder};
-use std::{fmt, str::FromStr};
+use crate::clone::CloneArgs;
+use crate::filter::Filter;
+use crate::list_repo::ListRepoArgs;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "dadmin", about = "git multirepo maintenance tool")]
 pub struct Args {
-    #[structopt(flatten)]
-    pub global_args: GlobalArgs,
     #[structopt(subcommand)]
     pub command: Commands,
 }
@@ -19,9 +18,9 @@ pub enum Commands {
     #[structopt(name = "update-config")]
     Update(ConfigArgs),
     #[structopt(name = "lr", aliases = &["list-repos"])]
-    ListRepos,
-    #[structopt(name = "cl", aliases = &["clone-repos"])]
-    CloneRepos,
+    ListRepos(ListRepoArgs),
+    #[structopt(name = "cl", aliases = &["clone"])]
+    CloneRepos(CloneArgs),
 }
 
 #[derive(Debug, StructOpt)]
@@ -45,32 +44,4 @@ pub struct GlobalArgs {
     pub organisation: String,
     #[structopt(long, short)]
     pub repositories: Option<Filter>,
-}
-
-#[derive(Debug)]
-pub struct Filter {
-    regex: Regex,
-}
-
-impl FromStr for Filter {
-    type Err = RegexError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        RegexBuilder::new(s)
-            .case_insensitive(true)
-            .build()
-            .map(|regex| Filter { regex })
-    }
-}
-
-impl Filter {
-    pub fn is_match(&self, pattern: &str) -> bool {
-        self.regex.is_match(pattern)
-    }
-}
-
-impl fmt::Display for Filter {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.regex)
-    }
 }
