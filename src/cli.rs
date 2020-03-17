@@ -1,5 +1,6 @@
 use super::path::RootDirectory;
 use crate::clone::CloneArgs;
+use crate::create_branch::CreateBranchArgs;
 use crate::filter::Filter;
 use crate::list_repo::ListRepoArgs;
 use structopt::StructOpt;
@@ -21,6 +22,8 @@ pub enum Commands {
     ListRepos(ListRepoArgs),
     #[structopt(name = "cl", aliases = &["clone"])]
     CloneRepos(CloneArgs),
+    #[structopt(name = "cb", aliases = &["create-branch"])]
+    CreateBranch(CreateBranchArgs),
 }
 
 #[derive(Debug, StructOpt)]

@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use git2;
 use git2_credentials::ui4dialoguer::CredentialUI4Dialoguer;
@@ -19,7 +19,7 @@ pub struct CloneError {
     pub remote_url: String,
 }
 
-pub fn clone(remote_url: &str, local_path: &Path) -> Result<PathBuf, CloneError> {
+pub fn clone(remote_url: &str, local_path: &Path) -> Result<git2::Repository, CloneError> {
     log::debug!("Clone {:?} to {:?}", remote_url, local_path);
     let mut cb = git2::RemoteCallbacks::new();
     let git_config = git2::Config::open_default().map_err(|s| CloneError {
@@ -43,6 +43,5 @@ pub fn clone(remote_url: &str, local_path: &Path) -> Result<PathBuf, CloneError>
         .map_err(|s| CloneError {
             source: s,
             remote_url: remote_url.to_string(),
-        })?;
-    Ok(local_path.to_path_buf())
+        })
 }

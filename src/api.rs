@@ -64,7 +64,7 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RemoteRepo {
     pub name: String,
     pub ssh_url: GitSSHRemote,

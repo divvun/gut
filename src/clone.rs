@@ -26,7 +26,10 @@ impl CloneArgs {
 
         let git_repos: Vec<GitRepo> = try_from(filtered_repos)?;
 
-        let results = GitRepo::gclone_list(git_repos);
+        let results: Vec<Result<GitRepo, CloneError>> = GitRepo::gclone_list(git_repos)
+            .into_iter()
+            .map(|r| r.map(|(g, _)| g))
+            .collect();
 
         print_results(&results);
 
