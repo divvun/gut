@@ -121,11 +121,7 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
     Ok(list_repo)
 }
 
-pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> anyhow::Result<()> {
-    Ok(())
-}
-
-pub fn query_repository_default_branch(repo: &RemoteRepo, token: &str) -> anyhow::Result<String> {
+pub fn get_default_branch(repo: &RemoteRepo, token: &str) -> anyhow::Result<String> {
     let q = RepositoryDefaultBranch::build_query(repository_default_branch::Variables {
         owner: repo.owner.clone(),
         name: repo.name.clone(),
