@@ -4,10 +4,12 @@ mod clone;
 mod config;
 mod convert;
 mod create_branch;
+mod default_branch;
 mod filter;
 mod git;
 mod list_repo;
 mod path;
+mod rest_api;
 mod toml;
 mod user;
 
@@ -44,6 +46,7 @@ fn main() -> Result<()> {
         Commands::ListRepos(list_repo_args) => list_repo_args.show(),
         Commands::CloneRepos(clone_args) => clone_args.clone(),
         Commands::CreateBranch(args) => args.create_branch(),
+        Commands::DefaultBranch(args) => args.set_default_branch(),
         _ => Ok(()),
     }
 }

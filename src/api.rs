@@ -21,13 +21,21 @@ struct UserQuery;
 )]
 struct OrganizationRepositories;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "github.graphql",
+    query_path = "user_query.graphql",
+    response_derives = "Debug"
+)]
+struct RepositoryDefaultBranch;
+
 #[derive(thiserror::Error, Debug)]
 #[error("User unauthorized")]
 pub struct Unauthorized;
 
 #[derive(thiserror::Error, Debug)]
 #[error("Unsuccessful request with status code: {0}")]
-pub struct Unsuccessful(StatusCode);
+pub struct Unsuccessful(pub StatusCode);
 
 #[derive(thiserror::Error, Debug)]
 #[error("invalid response when fetching repositories")]
@@ -36,6 +44,10 @@ pub struct InvalidRepoResponse;
 #[derive(thiserror::Error, Debug)]
 #[error("no repositories found")]
 pub struct NoReposFound;
+
+#[derive(thiserror::Error, Debug)]
+#[error("No default branch")]
+pub struct NoDefaultBranch;
 
 fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, reqwest::Error> {
     let client = req::Client::new();
@@ -107,4 +119,37 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
         })
         .collect();
     Ok(list_repo)
+}
+
+pub fn get_default_branch(repo: &RemoteRepo, token: &str) -> anyhow::Result<String> {
+    let q = RepositoryDefaultBranch::build_query(repository_default_branch::Variables {
+        owner: repo.owner.clone(),
+        name: repo.name.clone(),
+    });
+
+    let response = query(token, &q)?;
+
+    let response_status = response.status();
+    if response_status == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(Unauthorized.into());
+    }
+
+    let response_body: Response<repository_default_branch::ResponseData> = response.json()?;
+
+    log::debug!("Response body {:?}", response_body);
+
+    let branch: &str = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .repository
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .default_branch_ref
+        .as_ref()
+        .ok_or(NoDefaultBranch)?
+        .name
+        .as_ref();
+    log::debug!("Default branch of repository {} is: {}", repo.name, branch);
+    Ok(branch.to_string())
 }
