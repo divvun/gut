@@ -9,6 +9,7 @@ mod filter;
 mod git;
 mod list_repo;
 mod path;
+mod rest_api;
 mod toml;
 mod user;
 

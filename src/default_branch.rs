@@ -1,5 +1,6 @@
 use crate::api;
 use crate::api::RemoteRepo;
+use crate::rest_api;
 
 use anyhow::{Context, Result};
 
@@ -44,6 +45,9 @@ fn set_default_branch(repo: &RemoteRepo, default_branch: &str, token: &str) -> R
     let result = api::query_repository_default_branch(repo, token);
     println!("Default branch of {:?} is: {:?}", repo, result);
 
+    let rest = rest_api::set_default_branch(repo, default_branch, token);
+
+    println!("Repos: {:?}", rest);
     api::set_default_branch(repo, default_branch, token)
 }
 

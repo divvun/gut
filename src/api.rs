@@ -35,7 +35,7 @@ pub struct Unauthorized;
 
 #[derive(thiserror::Error, Debug)]
 #[error("Unsuccessful request with status code: {0}")]
-pub struct Unsuccessful(StatusCode);
+pub struct Unsuccessful(pub StatusCode);
 
 #[derive(thiserror::Error, Debug)]
 #[error("invalid response when fetching repositories")]
