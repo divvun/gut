@@ -22,7 +22,7 @@ pub struct CreateBranchArgs {
 }
 
 impl CreateBranchArgs {
-    pub fn create_branch(&self) -> anyhow::Result<()> {
+    pub fn create_branch(&self) -> Result<()> {
         let user_token = get_user_token()?;
 
         let remote_repos = get_remote_repos(&user_token, &self.organisation)?;
