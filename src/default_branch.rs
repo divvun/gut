@@ -1,5 +1,4 @@
 use crate::api::{list_org_repos, RemoteRepo};
-use std::convert::TryFrom;
 
 use anyhow::{Context, Result};
 
