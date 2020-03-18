@@ -108,3 +108,7 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
         .collect();
     Ok(list_repo)
 }
+
+pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> anyhow::Result<()> {
+    Ok(())
+}

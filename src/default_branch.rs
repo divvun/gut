@@ -1,4 +1,5 @@
-use crate::api::{list_org_repos, RemoteRepo};
+use crate::api;
+use crate::api::RemoteRepo;
 
 use anyhow::{Context, Result};
 
@@ -40,7 +41,7 @@ impl DefaultBranchArgs {
 }
 
 fn set_default_branch(repo: &RemoteRepo, default_branch: &str, token: &str) -> Result<()> {
-    Ok(())
+    api::set_default_branch(repo, default_branch, token)
 }
 
 fn get_user_token() -> Result<String> {
@@ -49,7 +50,7 @@ fn get_user_token() -> Result<String> {
 }
 
 fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match list_org_repos(token, org).context("Fetching repositories") {
+    match api::list_org_repos(token, org).context("Fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if let Some(_) = e.downcast_ref::<crate::api::NoReposFound>() {
