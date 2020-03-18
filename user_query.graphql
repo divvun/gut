@@ -17,3 +17,11 @@ query OrganizationRepositories($login: String!) {
     }
   }
 }
+
+query RepositoryDefaultBranch($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      name
+    }
+  }
+}
