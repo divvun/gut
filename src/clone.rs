@@ -58,7 +58,7 @@ fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
-fn print_results(repos: &Vec<Result<GitRepo, CloneError>>) {
+fn print_results(repos: &[Result<GitRepo, CloneError>]) {
     for x in repos {
         match x {
             Ok(p) => println!(
