@@ -1,5 +1,5 @@
-use super::api;
-use super::api::RemoteRepo;
+use super::models;
+use super::models::RemoteRepo;
 use anyhow::Result;
 use reqwest::{blocking as req, StatusCode};
 use serde::Serialize;
@@ -32,11 +32,11 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
     let response = patch(&url, &body, token)?;
     let status = response.status();
     if status == StatusCode::UNAUTHORIZED {
-        return Err(api::Unauthorized.into());
+        return Err(models::Unauthorized.into());
     }
 
     if !status.is_success() {
-        return Err(api::Unsuccessful(status).into());
+        return Err(models::Unsuccessful(status).into());
     }
 
     Ok(())

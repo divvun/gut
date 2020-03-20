@@ -1,4 +1,3 @@
-mod api;
 mod cli;
 mod clone;
 mod config;
@@ -7,9 +6,9 @@ mod create_branch;
 mod default_branch;
 mod filter;
 mod git;
+mod github;
 mod list_repo;
 mod path;
-mod rest_api;
 mod toml;
 mod user;
 
@@ -34,7 +33,7 @@ fn main() -> Result<()> {
         Commands::Init(InitArgs { root, token }) => {
             let user = match User::new(token) {
                 Ok(user) => { user },
-                Err(e) => match e.downcast_ref::<api::Unauthorized>() {
+                Err(e) => match e.downcast_ref::<github::Unauthorized>() {
                     Some(_) => anyhow::bail!("Token is invalid. Check https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line"),
                     _ => return Err(e)
                 }
