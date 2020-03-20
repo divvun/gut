@@ -16,6 +16,7 @@ fn patch<T: Serialize + ?Sized>(
         .bearer_auth(token)
         .header("User-Agent", "dadmin")
         .header("Accept", "application/vnd.github.v3+json")
+        .header("Content-Type", "application/json")
         .json(body)
         .send()
 }
@@ -28,10 +29,10 @@ fn put<T: Serialize + ?Sized>(
     log::debug!("PUT: {}", url);
     let client = req::Client::new();
     client
-        .patch(url)
+        .put(url)
         .bearer_auth(token)
         .header("User-Agent", "dadmin")
-        .header("Accept", "application/vnd.github.v3+json")
+        .header("Accept", "application/vnd.github.luke-cage-preview+json")
         .json(body)
         .send()
 }
@@ -65,6 +66,9 @@ struct ProtectedBranch {
     enforce_admins: bool,
     required_pull_request_reviews: Option<RequiredPullRequestReviews>,
     restrictions: Option<Restrictions>,
+    required_linear_history: bool,
+    allow_force_pushes: bool,
+    allow_deletions: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -97,7 +101,12 @@ pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Res
         enforce_admins: true,
         required_pull_request_reviews: None,
         restrictions: None,
+        required_linear_history: true,
+        allow_force_pushes: false,
+        allow_deletions: false,
     };
+
+    log::debug!("Body {:?}", body);
 
     let response = put(&url, &body, token)?;
     log::debug!("Response: {:?}", response);
