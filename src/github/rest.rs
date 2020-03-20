@@ -41,3 +41,22 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
 
     Ok(())
 }
+
+// FIXME this is FAKE now
+pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
+    let body = DefaultBranch {
+        default_branch: branch.to_string(),
+    };
+    let response = patch(&url, &body, token)?;
+    let status = response.status();
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    Ok(())
+}

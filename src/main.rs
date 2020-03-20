@@ -43,6 +43,7 @@ fn main() -> Result<()> {
         Commands::CloneRepos(clone_args) => clone_args.clone(),
         Commands::CreateBranch(args) => args.create_branch(),
         Commands::DefaultBranch(args) => args.set_default_branch(),
+        Commands::ProtectedBranch(args) => args.set_protected_branch(),
         _ => Ok(()),
     }
 }
