@@ -53,10 +53,10 @@ fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     match github::list_org_repos(token, org).context("Fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
-            if let Some(_) = e.downcast_ref::<NoReposFound>() {
+            if e.downcast_ref::<NoReposFound>().is_some() {
                 anyhow::bail!("No repositories found");
             }
-            if let Some(_) = e.downcast_ref::<Unauthorized>() {
+            if e.downcast_ref::<Unauthorized>().is_some() {
                 anyhow::bail!("User token invalid. Run dadmin init with a valid token");
             }
             Err(e)
