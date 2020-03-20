@@ -1,5 +1,7 @@
 use super::path::RootDirectory;
-use crate::commands::{CloneArgs, CreateBranchArgs, DefaultBranchArgs, ListRepoArgs};
+use crate::commands::{
+    CloneArgs, CreateBranchArgs, DefaultBranchArgs, ListRepoArgs, ProtectedBranchArgs,
+};
 use crate::filter::Filter;
 use structopt::StructOpt;
 
@@ -24,6 +26,8 @@ pub enum Commands {
     CreateBranch(CreateBranchArgs),
     #[structopt(name = "db", aliases = &["default-branch"])]
     DefaultBranch(DefaultBranchArgs),
+    #[structopt(name = "pb", aliases = &["protected-branch"])]
+    ProtectedBranch(ProtectedBranchArgs),
 }
 
 #[derive(Debug, StructOpt)]
