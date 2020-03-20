@@ -8,6 +8,7 @@ use crate::filter::{Filter, Filterable};
 use crate::git::branch;
 use crate::git::models::GitRepo;
 use crate::git::push;
+use crate::user::User;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -82,7 +83,7 @@ fn create_branch(remote_repo: RemoteRepo, new_branch: &str, base_branch: &str) -
 }
 
 fn get_user_token() -> Result<String> {
-    super::User::get_token()
+    User::get_token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 
