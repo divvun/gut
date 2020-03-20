@@ -1,5 +1,7 @@
 use super::path::RootDirectory;
-use crate::commands::{CloneArgs, CreateBranchArgs, DefaultBranchArgs, ListRepoArgs, ProtectedBranchArgs};
+use crate::commands::{
+    CloneArgs, CreateBranchArgs, DefaultBranchArgs, ListRepoArgs, ProtectedBranchArgs,
+};
 use crate::filter::Filter;
 use structopt::StructOpt;
 
