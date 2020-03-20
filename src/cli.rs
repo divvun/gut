@@ -1,9 +1,6 @@
 use super::path::RootDirectory;
-use crate::clone::CloneArgs;
-use crate::create_branch::CreateBranchArgs;
-use crate::default_branch::DefaultBranchArgs;
+use crate::commands::{CloneArgs, CreateBranchArgs, DefaultBranchArgs, ListRepoArgs};
 use crate::filter::Filter;
-use crate::list_repo::ListRepoArgs;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]

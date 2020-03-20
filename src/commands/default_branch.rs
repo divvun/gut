@@ -1,6 +1,7 @@
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 
+use crate::user::User;
 use anyhow::{Context, Result};
 
 use crate::filter::{Filter, Filterable};
@@ -45,7 +46,7 @@ fn set_default_branch(repo: &RemoteRepo, default_branch: &str, token: &str) -> R
 }
 
 fn get_user_token() -> Result<String> {
-    super::User::get_token()
+    User::get_token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 

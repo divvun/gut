@@ -1,3 +1,4 @@
+use crate::user::User;
 use anyhow::{Context, Result};
 
 use crate::filter::{Filter, Filterable};
@@ -28,7 +29,7 @@ impl ListRepoArgs {
 }
 
 fn get_user_token() -> Result<String> {
-    super::User::get_token()
+    User::get_token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 
