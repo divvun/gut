@@ -1,5 +1,6 @@
+use super::models::*;
 use graphql_client::{GraphQLQuery, Response};
-use reqwest::{blocking as req, StatusCode};
+use reqwest::blocking as req;
 use serde::Serialize;
 
 type URI = String;
@@ -29,26 +30,6 @@ struct OrganizationRepositories;
 )]
 struct RepositoryDefaultBranch;
 
-#[derive(thiserror::Error, Debug)]
-#[error("User unauthorized")]
-pub struct Unauthorized;
-
-#[derive(thiserror::Error, Debug)]
-#[error("Unsuccessful request with status code: {0}")]
-pub struct Unsuccessful(pub StatusCode);
-
-#[derive(thiserror::Error, Debug)]
-#[error("invalid response when fetching repositories")]
-pub struct InvalidRepoResponse;
-
-#[derive(thiserror::Error, Debug)]
-#[error("no repositories found")]
-pub struct NoReposFound;
-
-#[derive(thiserror::Error, Debug)]
-#[error("No default branch")]
-pub struct NoDefaultBranch;
-
 fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, reqwest::Error> {
     let client = req::Client::new();
     client
@@ -74,13 +55,6 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-#[derive(Debug, Clone)]
-pub struct RemoteRepo {
-    pub name: String,
-    pub ssh_url: GitSSHRemote,
-    pub owner: String,
 }
 
 pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {

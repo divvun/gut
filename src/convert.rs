@@ -1,5 +1,5 @@
-use crate::api::RemoteRepo;
 use crate::git::models::GitRepo;
+use crate::github::RemoteRepo;
 use crate::path::get_local_path;
 use std::convert::TryFrom;
 

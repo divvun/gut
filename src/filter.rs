@@ -1,4 +1,4 @@
-use crate::api::RemoteRepo;
+use crate::github::RemoteRepo;
 use regex::{Error as RegexError, Regex, RegexBuilder};
 use std::{fmt, str::FromStr};
 

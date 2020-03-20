@@ -1,3 +1,4 @@
+use super::github;
 use super::path::user_path;
 use super::toml::{read_file, write_to_file};
 use anyhow::Result;
@@ -11,7 +12,7 @@ pub struct User {
 
 impl User {
     pub fn new(token: String) -> Result<User> {
-        super::api::is_valid_token(&token)?;
+        github::is_valid_token(&token)?;
         let user = User { token };
         println!("Authorization successful!");
         Ok(user)

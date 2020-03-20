@@ -1,4 +1,5 @@
-use crate::api::{list_org_repos, RemoteRepo};
+use crate::github;
+use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 
 use anyhow::{Context, Result};
 
@@ -43,13 +44,13 @@ fn get_user_token() -> Result<String> {
 }
 
 fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match list_org_repos(token, org).context("Fetching repositories") {
+    match github::list_org_repos(token, org).context("Fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
-            if let Some(_) = e.downcast_ref::<crate::api::NoReposFound>() {
+            if let Some(_) = e.downcast_ref::<NoReposFound>() {
                 anyhow::bail!("No repositories found");
             }
-            if let Some(_) = e.downcast_ref::<crate::api::Unauthorized>() {
+            if let Some(_) = e.downcast_ref::<Unauthorized>() {
                 anyhow::bail!("User token invalid. Run dadmin init with a valid token");
             }
             return Err(e);
