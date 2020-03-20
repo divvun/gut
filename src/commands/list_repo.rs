@@ -1,51 +1,35 @@
-use crate::github;
-use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
-
+use crate::user::User;
 use anyhow::{Context, Result};
 
 use crate::filter::{Filter, Filterable};
+use crate::github;
+use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-pub struct DefaultBranchArgs {
+pub struct ListRepoArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
-    pub default_branch: String,
 }
 
-impl DefaultBranchArgs {
-    pub fn set_default_branch(&self) -> Result<()> {
+impl ListRepoArgs {
+    pub fn show(&self) -> anyhow::Result<()> {
         let user_token = get_user_token()?;
 
         let remote_repos = get_remote_repos(&user_token, &self.organisation)?;
 
         let filtered_repos = RemoteRepo::filter_with_option(remote_repos, &self.regex);
-        for repo in filtered_repos {
-            let result = set_default_branch(&repo, &self.default_branch, &user_token);
-            match result {
-                Ok(_) => println!(
-                    "Set default branch {} for repo {} successfully",
-                    self.default_branch, repo.name
-                ),
-                Err(e) => println!(
-                    "Could not set default branch {} for repo {} because {}",
-                    self.default_branch, repo.name, e
-                ),
-            }
-        }
+
+        print_results(&filtered_repos);
+
         Ok(())
     }
 }
 
-fn set_default_branch(repo: &RemoteRepo, default_branch: &str, token: &str) -> Result<()> {
-    github::set_default_branch(repo, default_branch, token)
-}
-
 fn get_user_token() -> Result<String> {
-    super::User::get_token()
+    User::get_token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 
@@ -61,5 +45,11 @@ fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
             }
             Err(e)
         }
+    }
+}
+
+fn print_results<T: std::fmt::Debug>(repos: &[T]) {
+    for repo in repos {
+        println!("{:?}", repo);
     }
 }
