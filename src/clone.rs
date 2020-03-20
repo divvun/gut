@@ -53,7 +53,7 @@ fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
             if let Some(_) = e.downcast_ref::<Unauthorized>() {
                 anyhow::bail!("User token invalid. Run dadmin init with a valid token");
             }
-            return Err(e);
+            Err(e)
         }
     }
 }

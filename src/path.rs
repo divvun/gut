@@ -33,11 +33,11 @@ pub fn validate_root(root: &str) -> Result<String, RootError> {
     }
     if path.exists() {
         if path.is_dir() {
-            return Ok(root.to_string());
+            Ok(root.to_string())
         } else {
-            return Err(RootError::RootIsAFile {
+            Err(RootError::RootIsAFile {
                 path: root.to_string(),
-            });
+            })
         }
     } else {
         fs::create_dir_all(root)
