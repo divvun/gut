@@ -1,9 +1,9 @@
+use super::common;
 use crate::github;
 use crate::github::{CreateTeamResponse, Unauthorized};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
-use crate::user::User;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -22,19 +22,17 @@ pub struct CreateTeamArgs {
 
 impl CreateTeamArgs {
     pub fn create_team(&self) -> Result<()> {
-        let user_token = get_user_token()?;
+        let user_token = common::get_user_token()?;
+
         let response = create_team(self, &user_token)?;
+
         println!(
             "You created a team named: {} successfully with id: {} and link : {}",
             self.team_name, response.id, response.html_url
         );
+
         Ok(())
     }
-}
-
-fn get_user_token() -> Result<String> {
-    User::get_token()
-        .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 
 fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse> {

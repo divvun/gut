@@ -1,11 +1,9 @@
-use crate::github;
-use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
+use super::common;
 
-use crate::user::User;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use crate::convert::try_from;
-use crate::filter::{Filter, Filterable};
+use crate::filter::Filter;
 use crate::git::models::GitRepo;
 use crate::git::{Clonable, CloneError};
 use structopt::StructOpt;
@@ -20,11 +18,10 @@ pub struct CloneArgs {
 
 impl CloneArgs {
     pub fn clone(&self) -> anyhow::Result<()> {
-        let user_token = get_user_token()?;
+        let user_token = common::get_user_token()?;
 
-        let remote_repos = get_remote_repos(&user_token, &self.organisation)?;
-
-        let filtered_repos = RemoteRepo::filter_with_option(remote_repos, &self.regex);
+        let filtered_repos =
+            common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;
 
         let git_repos: Vec<GitRepo> = try_from(filtered_repos)?;
 
@@ -36,26 +33,6 @@ impl CloneArgs {
         print_results(&results);
 
         Ok(())
-    }
-}
-
-fn get_user_token() -> Result<String> {
-    User::get_token()
-        .context("Cannot get user token from the config file. Run dadmin init with a valid token")
-}
-
-fn get_remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match github::list_org_repos(token, org).context("Fetching repositories") {
-        Ok(repos) => Ok(repos),
-        Err(e) => {
-            if e.downcast_ref::<NoReposFound>().is_some() {
-                anyhow::bail!("No repositories found");
-            }
-            if e.downcast_ref::<Unauthorized>().is_some() {
-                anyhow::bail!("User token invalid. Run dadmin init with a valid token");
-            }
-            Err(e)
-        }
     }
 }
 
