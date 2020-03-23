@@ -14,12 +14,12 @@ pub struct AddUsersArgs {
     #[structopt(long, short)]
     pub users: Vec<String>,
     #[structopt(long, short)]
-    pub team_name: Option<String>,
+    pub team_slug: Option<String>,
 }
 
 impl AddUsersArgs {
     pub fn add_users(&self) -> Result<()> {
-        match &self.team_name {
+        match &self.team_slug {
             Some(name) => self.add_users_to_team(&name),
             None => self.add_users_to_org(),
         }
