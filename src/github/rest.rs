@@ -181,6 +181,21 @@ pub struct CreateTeamResponse {
     pub html_url: String,
 }
 
+pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/memberships/{}",
+        org, team, user
+    );
+
+    let body = AddUserToOrgBody {
+        role: role.to_string(),
+    };
+
+    let response = put(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
 pub fn add_user_to_org(org: &str, role: &str, user: &str, token: &str) -> Result<()> {
     let url = format!("https://api.github.com/orgs/{}/memberships/{}", org, user);
 
