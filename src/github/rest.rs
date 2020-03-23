@@ -31,7 +31,7 @@ fn put<T: Serialize + ?Sized>(
         .put(url)
         .bearer_auth(token)
         .header("User-Agent", "dadmin")
-        .header("Accept", "application/vnd.github.luke-cage-preview+json")
+        .header("Accept", "application/vnd.github.v3+json")
         .json(body)
         .send()
 }
@@ -63,16 +63,8 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
         default_branch: branch.to_string(),
     };
     let response = patch(&url, &body, token)?;
-    let status = response.status();
-    if status == StatusCode::UNAUTHORIZED {
-        return Err(models::Unauthorized.into());
-    }
 
-    if !status.is_success() {
-        return Err(models::Unsuccessful(status).into());
-    }
-
-    Ok(())
+    process_response(&response).map(|_| ())
 }
 
 #[derive(Serialize, Debug)]
@@ -123,20 +115,18 @@ pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Res
 
     log::debug!("Body {:?}", body);
 
-    let response = put(&url, &body, token)?;
+    let client = req::Client::new();
+    let response = client
+        .put(&url)
+        .bearer_auth(token)
+        .header("User-Agent", "dadmin")
+        .header("Accept", "application/vnd.github.luke-cage-preview+json")
+        .json(&body)
+        .send()?;
+
     log::debug!("Response: {:?}", response);
 
-    let status = response.status();
-
-    if status == StatusCode::UNAUTHORIZED {
-        return Err(models::Unauthorized.into());
-    }
-
-    if !status.is_success() {
-        return Err(models::Unsuccessful(status).into());
-    }
-
-    Ok(())
+    process_response(&response).map(|_| ())
 }
 
 pub fn create_team(
@@ -189,4 +179,35 @@ struct CreateTeamBody {
 pub struct CreateTeamResponse {
     pub id: i32,
     pub html_url: String,
+}
+
+pub fn add_user_to_org(org: &str, role: &str, user: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/orgs/{}/memberships/{}", org, user);
+
+    let body = AddUserToOrgBody {
+        role: role.to_string(),
+    };
+
+    let response = put(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct AddUserToOrgBody {
+    role: String,
+}
+
+fn process_response(response: &req::Response) -> Result<&req::Response> {
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    Ok(response)
 }
