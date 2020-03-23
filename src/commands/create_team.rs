@@ -24,12 +24,13 @@ impl CreateTeamArgs {
     pub fn create_team(&self) -> Result<()> {
         let user_token = common::get_user_token()?;
 
-        let response = create_team(self, &user_token)?;
-
-        println!(
+        match create_team(self, &user_token) {
+            Ok(r) => println!(
             "You created a team named: {} successfully with id: {} and link : {}",
-            self.team_name, response.id, response.html_url
-        );
+            self.team_name, r.id, r.html_url
+        ),
+            Err(e) => println!("Failed to create team named: {} because of {}\n. Please notice that you need to add users to your organisation before adding them to a team.", self.team_name, e)
+        }
 
         Ok(())
     }
