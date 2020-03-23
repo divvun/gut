@@ -24,7 +24,10 @@ impl CreateTeamArgs {
     pub fn create_team(&self) -> Result<()> {
         let user_token = get_user_token()?;
         let response = create_team(self, &user_token)?;
-        println!("Response {:?}", response);
+        println!(
+            "You created a team named: {} successfully with id: {} and link : {}",
+            self.team_name, response.id, response.html_url
+        );
         Ok(())
     }
 }

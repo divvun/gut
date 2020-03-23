@@ -187,6 +187,6 @@ struct CreateTeamBody {
 
 #[derive(Deserialize, Debug)]
 pub struct CreateTeamResponse {
-    id: i32,
-    url: String,
+    pub id: i32,
+    pub html_url: String,
 }
