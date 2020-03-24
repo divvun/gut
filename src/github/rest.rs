@@ -243,6 +243,37 @@ struct AddUserToOrgBody {
     role: String,
 }
 
+pub fn create_discusstion(
+    org: &str,
+    team: &str,
+    title: &str,
+    content: &str,
+    is_private: bool,
+    token: &str,
+) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/discussions",
+        org, team
+    );
+
+    let body = CreateDiscussionBody {
+        title: title.to_string(),
+        body: content.to_string(),
+        private: is_private,
+    };
+
+    let response = post(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct CreateDiscussionBody {
+    title: String,
+    body: String,
+    private: bool,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 
