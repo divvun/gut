@@ -1,6 +1,6 @@
 use super::common;
 use crate::github;
-use crate::github::{CreateTeamResponse, Unauthorized};
+use crate::github::Unauthorized;
 
 use anyhow::Result;
 
@@ -24,10 +24,28 @@ impl CreateDiscussionArgs {
     pub fn create_discusstion(&self) -> Result<()> {
         let token = common::get_user_token()?;
 
-        match github::create_discusstion(&self.organisation,
-            &self.team_slug, &self.title, &self.body, self.private, &token) {
-            Ok(r) => println!("You created a team discussion for team {} at {}", self.team_slug, r.html_url),
-            Err(e) => println!("Failed to create a disscusion for team {} because of {}", self.team_slug, e),
+        match github::create_discusstion(
+            &self.organisation,
+            &self.team_slug,
+            &self.title,
+            &self.body,
+            self.private,
+            &token,
+        ) {
+            Ok(r) => println!(
+                "You created a team discussion for team {} at {}",
+                self.team_slug, r.html_url
+            ),
+            Err(e) => {
+                if e.downcast_ref::<Unauthorized>().is_some() {
+                    anyhow::bail!("User token invalid. Run dadmin init with a valid token");
+                } else {
+                    println!(
+                        "Failed to create a disscusion for team {} because of {}",
+                        self.team_slug, e
+                    );
+                }
+            }
         }
 
         Ok(())
