@@ -47,6 +47,7 @@ fn main() -> Result<()> {
         Commands::CreateTeam(args) => args.create_team(),
         Commands::AddUsers(args) => args.add_users(),
         Commands::RemoveUsers(args) => args.remove_users(),
+        Commands::CreateDiscussion(args) => args.create_discusstion(),
         _ => Ok(()),
     }
 }
