@@ -1,7 +1,7 @@
 use super::path::RootDirectory;
 use crate::commands::{
     AddUsersArgs, CloneArgs, CreateBranchArgs, CreateDiscussionArgs, CreateTeamArgs,
-    DefaultBranchArgs, ListRepoArgs, ProtectedBranchArgs, RemoveUsersArgs,
+    DefaultBranchArgs, ListRepoArgs, ProtectedBranchArgs, RemoveUsersArgs, SetTeamPermissionArgs,
 };
 use crate::filter::Filter;
 use structopt::StructOpt;
@@ -37,6 +37,8 @@ pub enum Commands {
     RemoveUsers(RemoveUsersArgs),
     #[structopt(name = "cd", aliases = &["create-discussion"])]
     CreateDiscussion(CreateDiscussionArgs),
+    #[structopt(name = "sp", aliases = &["set-permission"])]
+    SetTeamPermission(SetTeamPermissionArgs),
 }
 
 #[derive(Debug, StructOpt)]
