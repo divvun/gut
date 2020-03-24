@@ -247,8 +247,8 @@ pub fn create_discusstion(
     org: &str,
     team: &str,
     title: &str,
-    content: &str,
-    is_private: bool,
+    body: &str,
+    private: bool,
     token: &str,
 ) -> Result<CreateDiscussionResponse> {
     let url = format!(
@@ -258,8 +258,8 @@ pub fn create_discusstion(
 
     let body = CreateDiscussionBody {
         title: title.to_string(),
-        body: content.to_string(),
-        private: is_private,
+        body: body.to_string(),
+        private,
     };
 
     let response = post(&url, &body, token)?;
