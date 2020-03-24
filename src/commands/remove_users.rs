@@ -24,7 +24,6 @@ impl RemoveUsersArgs {
     }
 
     fn remove_users_from_org(&self) -> Result<()> {
-
         let user_token = common::get_user_token()?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
@@ -36,23 +35,17 @@ impl RemoveUsersArgs {
         Ok(())
     }
 
-    fn remove_users_from_team(&self, team_name: &str) -> Result<()>{
+    fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::get_user_token()?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_team(
-            &self.organisation,
-            team_name,
-            users,
-            &user_token,
-        );
+        let results = remove_list_user_from_team(&self.organisation, team_name, users, &user_token);
 
         print_results_team(&results, team_name);
 
         Ok(())
     }
-
 }
 
 fn remove_list_user_from_org(
@@ -86,14 +79,8 @@ fn remove_list_user_from_team(
 fn print_results_org(results: &[(String, Result<()>)], org: &str) {
     for (user, result) in results {
         match result {
-            Ok(_) => println!(
-                "Removed successfully user {} from {}",
-                user, org
-            ),
-            Err(e) => println!(
-                "Failed to remove user {} to {} because of {}",
-                user, org, e
-            ),
+            Ok(_) => println!("Removed successfully user {} from {}", user, org),
+            Err(e) => println!("Failed to remove user {} to {} because of {}", user, org, e),
         }
     }
 }
@@ -101,10 +88,7 @@ fn print_results_org(results: &[(String, Result<()>)], org: &str) {
 fn print_results_team(results: &[(String, Result<()>)], team: &str) {
     for (user, result) in results {
         match result {
-            Ok(_) => println!(
-                "Removed successfully user {} from team {}",
-                user, team
-            ),
+            Ok(_) => println!("Removed successfully user {} from team {}", user, team),
             Err(e) => println!(
                 "Failed to remove user {} from team {} because of {}",
                 user, team, e
