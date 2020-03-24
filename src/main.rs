@@ -48,6 +48,7 @@ fn main() -> Result<()> {
         Commands::AddUsers(args) => args.add_users(),
         Commands::RemoveUsers(args) => args.remove_users(),
         Commands::CreateDiscussion(args) => args.create_discusstion(),
+        Commands::SetTeamPermission(args) => args.set_permission(),
         _ => Ok(()),
     }
 }
