@@ -52,6 +52,17 @@ fn post<T: Serialize + ?Sized>(
         .send()
 }
 
+fn delete(url: &str, token: &str) -> Result<req::Response, reqwest::Error> {
+    log::debug!("DELETE: {}", url);
+    let client = req::Client::new();
+    client
+        .delete(url)
+        .bearer_auth(token)
+        .header("User-Agent", "dadmin")
+        .header("Accept", "application/vnd.github.v3+json")
+        .send()
+}
+
 #[derive(Serialize, Debug)]
 struct DefaultBranch {
     default_branch: String,
@@ -179,6 +190,25 @@ struct CreateTeamBody {
 pub struct CreateTeamResponse {
     pub id: i32,
     pub html_url: String,
+}
+
+pub fn remove_user_from_org(org: &str, user: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/orgs/{}/memberships/{}", org, user);
+
+    let response = delete(&url, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+pub fn remove_user_from_team(org: &str, team: &str, user: &str, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/memberships/{}",
+        org, team, user
+    );
+
+    let response = delete(&url, token)?;
+
+    process_response(&response).map(|_| ())
 }
 
 pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &str) -> Result<()> {

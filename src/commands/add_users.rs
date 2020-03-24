@@ -56,6 +56,18 @@ impl AddUsersArgs {
     }
 }
 
+fn add_list_user_to_org(
+    org: &str,
+    role: &str,
+    users: Vec<String>,
+    token: &str,
+) -> Vec<(String, Result<()>)> {
+    users
+        .into_iter()
+        .map(|u| (u.clone(), github::add_user_to_org(org, role, &u, token)))
+        .collect()
+}
+
 fn add_list_user_to_team(
     org: &str,
     team: &str,
@@ -71,18 +83,6 @@ fn add_list_user_to_team(
                 github::add_user_to_team(org, team, role, &u, token),
             )
         })
-        .collect()
-}
-
-fn add_list_user_to_org(
-    org: &str,
-    role: &str,
-    users: Vec<String>,
-    token: &str,
-) -> Vec<(String, Result<()>)> {
-    users
-        .into_iter()
-        .map(|u| (u.clone(), github::add_user_to_org(org, role, &u, token)))
         .collect()
 }
 

@@ -46,6 +46,7 @@ fn main() -> Result<()> {
         Commands::ProtectedBranch(args) => args.set_protected_branch(),
         Commands::CreateTeam(args) => args.create_team(),
         Commands::AddUsers(args) => args.add_users(),
+        Commands::RemoveUsers(args) => args.remove_users(),
         _ => Ok(()),
     }
 }
