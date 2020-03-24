@@ -290,6 +290,33 @@ pub struct CreateDiscussionResponse {
     pub html_url: String,
 }
 
+pub fn set_team_permission(
+    org: &str,
+    team: &str,
+    owner: &str,
+    repo: &str,
+    permission: &str,
+    token: &str,
+) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/repos/{}/{}",
+        org, team, owner, repo
+    );
+
+    let body = SetTeamPermissionBody {
+        permission: permission.to_string(),
+    };
+
+    let response = put(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct SetTeamPermissionBody {
+    permission: String,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 

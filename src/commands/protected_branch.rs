@@ -32,7 +32,7 @@ impl ProtectedBranchArgs {
                     self.protected_branch, repo.name
                 ),
                 Err(e) => println!(
-                    "Could not set protected branch {} for repo {} because {}",
+                    "Could not set protected branch {} for repo {} because of {}",
                     self.protected_branch, repo.name, e
                 ),
             }

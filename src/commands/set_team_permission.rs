@@ -1,13 +1,9 @@
 use super::common;
-use crate::github::RemoteRepo;
-use std::convert::TryFrom;
+use crate::github;
 
 use anyhow::Result;
 
 use crate::filter::Filter;
-use crate::git::branch;
-use crate::git::models::GitRepo;
-use crate::git::push;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -24,7 +20,32 @@ pub struct SetTeamPermissionArgs {
 
 impl SetTeamPermissionArgs {
     pub fn set_permission(&self) -> Result<()> {
-        println!("SetTeamPermissionArgs {:?}", self);
+        let user_token = common::get_user_token()?;
+
+        let filtered_repos =
+            common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;
+
+        for repo in filtered_repos {
+            let result = github::set_team_permission(
+                &self.organisation,
+                &self.team_slug,
+                &repo.owner,
+                &repo.name,
+                &self.permission,
+                &user_token,
+            );
+            match result {
+                Ok(_) => println!(
+                    "Set team {} with permission {} for repo {} successfully",
+                    self.team_slug, self.permission, repo.name
+                ),
+                Err(e) => println!(
+                    "Could not set team {} with permission {} for repo {} because of {}",
+                    self.team_slug, self.permission, repo.name, e
+                ),
+            }
+        }
+
         Ok(())
     }
 }
