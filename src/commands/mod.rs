@@ -7,6 +7,7 @@ pub mod default_branch;
 pub mod list_repo;
 pub mod protected_branch;
 pub mod remove_users;
+pub mod create_discussion;
 
 pub use add_users::*;
 pub use clone::*;
@@ -16,3 +17,4 @@ pub use default_branch::*;
 pub use list_repo::*;
 pub use protected_branch::*;
 pub use remove_users::*;
+pub use create_discussion::*;

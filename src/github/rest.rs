@@ -250,7 +250,7 @@ pub fn create_discusstion(
     content: &str,
     is_private: bool,
     token: &str,
-) -> Result<()> {
+) -> Result<CreateDiscussionResponse> {
     let url = format!(
         "https://api.github.com/orgs/{}/teams/{}/discussions",
         org, team
@@ -264,7 +264,18 @@ pub fn create_discusstion(
 
     let response = post(&url, &body, token)?;
 
-    process_response(&response).map(|_| ())
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: CreateDiscussionResponse = response.json()?;
+    Ok(response_body)
 }
 
 #[derive(Serialize, Debug)]
@@ -272,6 +283,11 @@ struct CreateDiscussionBody {
     title: String,
     body: String,
     private: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CreateDiscussionResponse {
+    pub html_url: String,
 }
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
