@@ -4,9 +4,8 @@ use crate::path::get_local_path;
 use std::io::{Error, ErrorKind};
 
 pub fn try_from_one(repo: RemoteRepo, use_https: bool) -> Result<GitRepo, Error> {
-    let local_path = get_local_path(&repo.owner, &repo.name).ok_or_else(|| {
-        Error::new(ErrorKind::Other, "Cannot create local path")
-    })?;
+    let local_path = get_local_path(&repo.owner, &repo.name)
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Cannot create local path"))?;
 
     let remote_url = if use_https {
         format!("{}.git", repo.https_url)
@@ -20,5 +19,7 @@ pub fn try_from_one(repo: RemoteRepo, use_https: bool) -> Result<GitRepo, Error>
 }
 
 pub fn try_from(vec: Vec<RemoteRepo>, use_https: bool) -> Result<Vec<GitRepo>, Error> {
-    vec.into_iter().map(|repo| try_from_one(repo, use_https)).collect()
+    vec.into_iter()
+        .map(|repo| try_from_one(repo, use_https))
+        .collect()
 }

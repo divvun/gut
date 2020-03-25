@@ -15,7 +15,7 @@ pub struct CloneArgs {
     #[structopt(long, short)]
     pub regex: Option<Filter>,
     #[structopt(long, short)]
-    pub use_https: bool
+    pub use_https: bool,
 }
 
 impl CloneArgs {

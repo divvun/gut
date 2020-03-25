@@ -20,7 +20,7 @@ pub struct CreateBranchArgs {
     #[structopt(long, short)]
     pub base_branch: Option<String>,
     #[structopt(long, short)]
-    pub use_https: bool
+    pub use_https: bool,
 }
 
 impl CreateBranchArgs {
@@ -34,7 +34,8 @@ impl CreateBranchArgs {
         let base_branch: &str = self.base_branch.as_ref().unwrap_or(default_base_branch);
 
         for repo in filtered_repos {
-            let result = create_branch(repo.clone(), &self.new_branch, &base_branch, self.use_https);
+            let result =
+                create_branch(repo.clone(), &self.new_branch, &base_branch, self.use_https);
             match result {
                 Ok(_) => println!(
                     "Created branch {} for repo {} successfully",
@@ -57,7 +58,12 @@ impl CreateBranchArgs {
 /// 3. Check out the base branch
 /// 4. Create new_branch
 /// 5. Push it to origin
-fn create_branch(remote_repo: RemoteRepo, new_branch: &str, base_branch: &str, use_https: bool) -> Result<()> {
+fn create_branch(
+    remote_repo: RemoteRepo,
+    new_branch: &str,
+    base_branch: &str,
+    use_https: bool,
+) -> Result<()> {
     log::debug!(
         "Create new branch {} base on {} for: {:?}",
         new_branch,
