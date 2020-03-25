@@ -3,8 +3,9 @@ use reqwest::StatusCode;
 #[derive(Debug, Clone)]
 pub struct RemoteRepo {
     pub name: String,
-    pub ssh_url: String,
     pub owner: String,
+    pub ssh_url: String,
+    pub https_url: String,
 }
 
 #[derive(thiserror::Error, Debug)]

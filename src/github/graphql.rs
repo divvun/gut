@@ -90,6 +90,7 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
             name: x.name.to_string(),
             ssh_url: x.ssh_url.to_string(),
             owner: org.to_string(),
+            https_url: x.url.to_string(),
         })
         .collect();
     Ok(list_repo)

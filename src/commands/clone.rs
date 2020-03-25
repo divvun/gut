@@ -14,6 +14,8 @@ pub struct CloneArgs {
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
+    #[structopt(long, short)]
+    pub use_https: bool,
 }
 
 impl CloneArgs {
@@ -23,7 +25,7 @@ impl CloneArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;
 
-        let git_repos: Vec<GitRepo> = try_from(filtered_repos)?;
+        let git_repos: Vec<GitRepo> = try_from(filtered_repos, self.use_https)?;
 
         let results: Vec<Result<GitRepo, CloneError>> = GitRepo::gclone_list(git_repos)
             .into_iter()
