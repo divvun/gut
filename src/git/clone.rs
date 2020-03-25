@@ -45,3 +45,42 @@ pub fn clone(remote_url: &str, local_path: &Path) -> Result<git2::Repository, Cl
             remote_url: remote_url.to_string(),
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::models::GitRepo;
+    use super::*;
+    use tempfile::tempdir;
+    #[test]
+    #[ignore]
+    fn test_clone() -> anyhow::Result<()> {
+        let dir = tempdir()?;
+        let repo1_path = dir.path().join("public-ssh-1");
+        let repo1 = GitRepo {
+            remote_url: "git@github.com:dadmin-test/test-1.git".to_string(),
+            local_path: repo1_path.clone(),
+        };
+        let repo2_path = dir.path().join("public-https-1");
+        let repo2 = GitRepo {
+            remote_url: "https://github.com/dadmin-test/test-1.git".to_string(),
+            local_path: repo2_path.clone(),
+        };
+        let repo3_path = dir.path().join("private-https-1");
+        let repo3 = GitRepo {
+            remote_url: "https://github.com/dadmin-test/private-test-1.git".to_string(),
+            local_path: repo3_path.clone(),
+        };
+        let repo4_path = dir.path().join("private-ssh-1");
+        let repo4 = GitRepo {
+            remote_url: "git@github.com:dadmin-test/private-test-1.git".to_string(),
+            local_path: repo4_path.clone(),
+        };
+        let vec = vec![repo1, repo2, repo3, repo4];
+        let results = GitRepo::gclone_list(vec.clone());
+        let results: Result<Vec<_>, CloneError> = results.into_iter().collect();
+        let results: Vec<GitRepo> = results.unwrap().into_iter().map(|(g, _)| g).collect();
+        assert_eq!(vec, results);
+        dir.close()?;
+        Ok(())
+    }
+}
