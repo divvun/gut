@@ -33,13 +33,13 @@ pub fn clone(
         remote_url: remote_url.to_string(),
     })?;
 
-    let credentialUI: Box<dyn CredentialUI> = match cred {
+    let credential_ui: Box<dyn CredentialUI> = match cred {
         Some(gc) => Box::new(gc),
         _ => Box::new(CredentialUI4Dialoguer {}),
     };
 
     // Prepare callbacks.
-    let mut ch = CredentialHandler::new_with_ui(git_config, credentialUI);
+    let mut ch = CredentialHandler::new_with_ui(git_config, credential_ui);
 
     cb.credentials(move |url, username, allowed| ch.try_next_credential(url, username, allowed));
 
