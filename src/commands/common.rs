@@ -16,6 +16,11 @@ pub fn query_and_filter_repositories(
     Ok(RemoteRepo::filter_with_option(remote_repos, regex))
 }
 
+pub fn get_user() -> Result<User> {
+    User::get_user()
+        .context("Cannot get user token from the config file. Run dadmin init with a valid token")
+}
+
 pub fn get_user_token() -> Result<String> {
     User::get_token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
