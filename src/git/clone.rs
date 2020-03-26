@@ -95,6 +95,7 @@ mod tests {
             local_path: repo4_path,
             cred: cred.clone(),
         };
+
         let vec = vec![repo1, repo2, repo3, repo4];
         let results = GitRepo::gclone_list(vec.clone());
         let results: Result<Vec<_>, CloneError> = results.into_iter().collect();
