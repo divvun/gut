@@ -40,7 +40,7 @@ fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, 
         .send()
 }
 
-pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
+pub fn is_valid_token(token: &str) -> anyhow::Result<String> {
     let q = UserQuery::build_query(user_query::Variables {});
 
     let res = query(token, &q)?;
@@ -54,7 +54,16 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<()> {
         return Err(Unsuccessful(response_status).into());
     }
 
-    Ok(())
+    let response_body: Response<user_query::ResponseData> = res.json()?;
+
+    let username: &str = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .viewer
+        .login
+        .as_ref();
+    Ok(username.to_string())
 }
 
 pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {

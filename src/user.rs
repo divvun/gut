@@ -7,13 +7,14 @@ use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
-    token: String,
+    pub token: String,
+    pub username: String,
 }
 
 impl User {
     pub fn new(token: String) -> Result<User> {
-        github::is_valid_token(&token)?;
-        let user = User { token };
+        let username = github::is_valid_token(&token)?;
+        let user = User { token, username };
         println!("Authorization successful!");
         Ok(user)
     }
