@@ -317,6 +317,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "color-backtrace",
+ "dialoguer",
  "dirs",
  "git2",
  "git2_credentials",

@@ -19,13 +19,13 @@ pub struct CloneArgs {
 }
 
 impl CloneArgs {
-    pub fn clone(&self) -> anyhow::Result<()> {
-        let user_token = common::get_user_token()?;
+    pub fn clone(&self) -> Result<()> {
+        let user = common::get_user()?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;
+            common::query_and_filter_repositories(&self.organisation, &self.regex, &user.token)?;
 
-        let git_repos: Vec<GitRepo> = try_from(filtered_repos, self.use_https)?;
+        let git_repos: Vec<GitRepo> = try_from(filtered_repos, &user, self.use_https)?;
 
         let results: Vec<Result<GitRepo, CloneError>> = GitRepo::gclone_list(git_repos)
             .into_iter()
