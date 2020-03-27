@@ -4,15 +4,19 @@ query UserQuery {
   }
 }
 
-query OrganizationRepositories($login: String!) {
+query OrganizationRepositories($login: String!, $after: String) {
   organization(login: $login) {
-    repositories(first: 100) {
+    repositories(first: 100, after: $after) {
       totalCount
       nodes{
         name,
         nameWithOwner,
         sshUrl,
         url
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }
