@@ -93,7 +93,7 @@ mod tests {
         let repo4 = GitRepo {
             remote_url: "git@github.com:dadmin-test/private-test-1.git".to_string(),
             local_path: repo4_path,
-            cred: cred.clone(),
+            cred,
         };
 
         let vec = vec![repo1, repo2, repo3, repo4];

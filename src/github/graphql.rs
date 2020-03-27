@@ -93,10 +93,7 @@ fn list_org_repos_rec(
         .as_ref()
         .ok_or(InvalidRepoResponse)?;
 
-    let repositories = org_data
-        .repositories
-        .nodes
-        .as_ref();
+    let repositories = org_data.repositories.nodes.as_ref();
 
     let mut list_repo: Vec<RemoteRepo> = repositories
         .ok_or(NoReposFound)?
