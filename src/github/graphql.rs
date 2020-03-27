@@ -66,9 +66,14 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<String> {
     Ok(username.to_string())
 }
 
-pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {
+fn list_org_repos_rec(
+    token: &str,
+    org: &str,
+    after: Option<String>,
+) -> anyhow::Result<Vec<RemoteRepo>> {
     let q = OrganizationRepositories::build_query(organization_repositories::Variables {
         login: org.to_string(),
+        after,
     });
 
     let res = query(token, &q)?;
@@ -80,18 +85,20 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
 
     let response_body: Response<organization_repositories::ResponseData> = res.json()?;
 
-    let repositories = response_body
+    let org_data = response_body
         .data
         .as_ref()
         .ok_or(InvalidRepoResponse)?
         .organization
         .as_ref()
-        .ok_or(InvalidRepoResponse)?
+        .ok_or(InvalidRepoResponse)?;
+
+    let repositories = org_data
         .repositories
         .nodes
         .as_ref();
 
-    let list_repo: Vec<RemoteRepo> = repositories
+    let mut list_repo: Vec<RemoteRepo> = repositories
         .ok_or(NoReposFound)?
         .iter()
         .filter_map(|repo| repo.as_ref())
@@ -102,7 +109,21 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
             https_url: x.url.to_string(),
         })
         .collect();
+
+    let page_info = &org_data.repositories.page_info;
+
+    if page_info.has_next_page {
+        let after = page_info.end_cursor.as_ref().map(|x| x.to_string());
+        match list_org_repos_rec(token, org, after) {
+            Ok(mut l) => list_repo.append(&mut l),
+            Err(e) => return Err(e),
+        }
+    }
     Ok(list_repo)
+}
+
+pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {
+    list_org_repos_rec(token, org, None)
 }
 
 #[allow(dead_code)]

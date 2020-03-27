@@ -4,9 +4,9 @@ query UserQuery {
   }
 }
 
-query OrganizationRepositories($login: String!) {
-  organization(login: $login, after: $after) {
-    repositories(first: 100) {
+query OrganizationRepositories($login: String!, $after: String) {
+  organization(login: $login) {
+    repositories(first: 100, after: $after) {
       totalCount
       nodes{
         name,
