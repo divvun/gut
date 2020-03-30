@@ -36,4 +36,6 @@ pub enum Commands {
     CreateDiscussion(CreateDiscussionArgs),
     #[structopt(name = "sp", aliases = &["set-permission"])]
     SetTeamPermission(SetTeamPermissionArgs),
+    #[structopt(name = "sc", aliases = &["show-config"])]
+    Showconfig,
 }

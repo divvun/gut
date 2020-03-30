@@ -10,6 +10,7 @@ pub mod list_repo;
 pub mod protected_branch;
 pub mod remove_users;
 pub mod set_team_permission;
+pub mod show_config;
 
 pub use add_users::*;
 pub use clone::*;
@@ -22,3 +23,4 @@ pub use list_repo::*;
 pub use protected_branch::*;
 pub use remove_users::*;
 pub use set_team_permission::*;
+pub use show_config::show_config;
