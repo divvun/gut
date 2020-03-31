@@ -19,7 +19,7 @@ pub struct ProtectedBranchArgs {
 
 impl ProtectedBranchArgs {
     pub fn set_protected_branch(&self) -> Result<()> {
-        let user_token = common::get_user_token()?;
+        let user_token = common::user_token()?;
 
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;

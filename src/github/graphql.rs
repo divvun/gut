@@ -124,7 +124,7 @@ pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>>
 }
 
 #[allow(dead_code)]
-pub fn get_default_branch(repo: &RemoteRepo, token: &str) -> anyhow::Result<String> {
+pub fn default_branch(repo: &RemoteRepo, token: &str) -> anyhow::Result<String> {
     let q = RepositoryDefaultBranch::build_query(repository_default_branch::Variables {
         owner: repo.owner.clone(),
         name: repo.name.clone(),

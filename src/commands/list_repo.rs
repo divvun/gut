@@ -13,7 +13,7 @@ pub struct ListRepoArgs {
 
 impl ListRepoArgs {
     pub fn show(&self) -> anyhow::Result<()> {
-        let user_token = common::get_user_token()?;
+        let user_token = common::user_token()?;
 
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, &self.regex, &user_token)?;

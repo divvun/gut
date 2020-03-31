@@ -1,24 +1,23 @@
 use super::config::Config;
-use dirs::config_dir;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-fn get_config_dir() -> Option<PathBuf> {
-    let config_dir = config_dir().map(|p| p.join("dadmin"))?;
+fn config_dir() -> Option<PathBuf> {
+    let config_dir = dirs::config_dir().map(|p| p.join("dadmin"))?;
     let config_dir = config_dir.ensure_dir_exists().ok()?;
     Some(config_dir)
 }
 
 pub fn config_path() -> Option<PathBuf> {
-    let dir = get_config_dir()?;
+    let dir = config_dir()?;
     let config = dir.join("app.toml");
     Some(config)
 }
 
 pub fn user_path() -> Option<PathBuf> {
-    let dir = get_config_dir()?;
+    let dir = config_dir()?;
     let config = dir.join("user.toml");
     Some(config)
 }
@@ -49,8 +48,8 @@ pub fn validate_root(root: &str) -> Result<String, RootError> {
     }
 }
 
-pub fn get_local_path(organisation: &str, name: &str) -> Option<PathBuf> {
-    let root = Config::get_root().ok()?;
+pub fn local_path(organisation: &str, name: &str) -> Option<PathBuf> {
+    let root = Config::root().ok()?;
     let root_dir = Path::new(&root);
     let local_path = root_dir.join(organisation).join(name);
     Some(local_path)

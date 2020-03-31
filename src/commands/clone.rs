@@ -20,7 +20,7 @@ pub struct CloneArgs {
 
 impl CloneArgs {
     pub fn clone(&self) -> Result<()> {
-        let user = common::get_user()?;
+        let user = common::user()?;
 
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, &self.regex, &user.token)?;

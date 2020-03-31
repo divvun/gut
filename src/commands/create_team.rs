@@ -22,7 +22,7 @@ pub struct CreateTeamArgs {
 
 impl CreateTeamArgs {
     pub fn create_team(&self) -> Result<()> {
-        let user_token = common::get_user_token()?;
+        let user_token = common::user_token()?;
 
         match create_team(self, &user_token) {
             Ok(r) => println!(
