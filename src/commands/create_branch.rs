@@ -18,8 +18,8 @@ pub struct CreateBranchArgs {
     pub regex: Option<Filter>,
     #[structopt(long, short)]
     pub new_branch: String,
-    #[structopt(long, short)]
-    pub base_branch: Option<String>,
+    #[structopt(long, short, default_value = "master")]
+    pub base_branch: String,
     #[structopt(long, short)]
     pub use_https: bool,
 }
@@ -31,14 +31,11 @@ impl CreateBranchArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, &self.regex, &user.token)?;
 
-        let default_base_branch = &"master".to_string();
-        let base_branch: &str = self.base_branch.as_ref().unwrap_or(default_base_branch);
-
         for repo in filtered_repos {
             let result = create_branch(
                 repo.clone(),
                 &self.new_branch,
-                &base_branch,
+                &self.base_branch,
                 &user,
                 self.use_https,
             );
