@@ -37,5 +37,6 @@ fn main() -> Result<()> {
         Commands::CreateDiscussion(args) => args.create_discusstion(),
         Commands::SetTeamPermission(args) => args.set_permission(),
         Commands::ShowConfig => commands::show_config(),
+        Commands::Create(args) => args.do_create(),
     }
 }

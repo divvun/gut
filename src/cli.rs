@@ -1,5 +1,5 @@
 use crate::commands::{
-    AddUsersArgs, CloneArgs, CreateBranchArgs, CreateDiscussionArgs, CreateTeamArgs,
+    AddUsersArgs, CloneArgs, CreateArgs, CreateBranchArgs, CreateDiscussionArgs, CreateTeamArgs,
     DefaultBranchArgs, InitArgs, ListRepoArgs, ProtectedBranchArgs, RemoveUsersArgs,
     SetTeamPermissionArgs,
 };
@@ -38,4 +38,6 @@ pub enum Commands {
     SetTeamPermission(SetTeamPermissionArgs),
     #[structopt(name = "sc", aliases = &["show-config"])]
     ShowConfig,
+    #[structopt(name = "create")]
+    Create(CreateArgs),
 }
