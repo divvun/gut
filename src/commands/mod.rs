@@ -1,4 +1,5 @@
 pub mod add_users;
+pub mod branch;
 pub mod clone;
 pub mod common;
 pub mod create;
@@ -15,11 +16,10 @@ pub mod show_config;
 pub mod show_repos;
 
 pub use add_users::*;
+pub use branch::*;
 pub use clone::*;
 pub use create::*;
-pub use default_branch::*;
 pub use init_config::*;
-pub use protected_branch::*;
 pub use remove_users::*;
 pub use set_team_permission::*;
 pub use show::*;

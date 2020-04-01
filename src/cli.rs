@@ -1,6 +1,6 @@
 use crate::commands::{
-    AddUsersArgs, CloneArgs, CreateArgs, DefaultBranchArgs, InitArgs, ProtectedBranchArgs,
-    RemoveUsersArgs, SetTeamPermissionArgs, ShowArgs,
+    AddUsersArgs, BranchArgs, CloneArgs, CreateArgs, InitArgs, RemoveUsersArgs,
+    SetTeamPermissionArgs, ShowArgs,
 };
 use structopt::StructOpt;
 
@@ -19,10 +19,8 @@ pub enum Commands {
     Show(ShowArgs),
     #[structopt(name = "cl", aliases = &["clone"])]
     CloneRepos(CloneArgs),
-    #[structopt(name = "db", aliases = &["default-branch"])]
-    DefaultBranch(DefaultBranchArgs),
-    #[structopt(name = "pb", aliases = &["protected-branch"])]
-    ProtectedBranch(ProtectedBranchArgs),
+    #[structopt(name = "br", aliases = &["branch"])]
+    Branch(BranchArgs),
     #[structopt(name = "au", aliases = &["add-users"])]
     AddUsers(AddUsersArgs),
     #[structopt(name = "ru", aliases = &["remove-users"])]
