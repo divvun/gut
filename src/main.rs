@@ -28,7 +28,7 @@ fn main() -> Result<()> {
         Commands::Init(args) => args.save_config(),
         Commands::CloneRepos(clone_args) => clone_args.clone(),
         Commands::Add(args) => args.run(),
-        Commands::RemoveUsers(args) => args.remove_users(),
+        Commands::Remove(args) => args.run(),
         Commands::Set(args) => args.run(),
         Commands::Show(args) => args.show(),
         Commands::Create(args) => args.do_create(),
