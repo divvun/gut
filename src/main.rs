@@ -25,17 +25,13 @@ fn main() -> Result<()> {
     log::debug!("Arguments: {:?}", args);
 
     match args.command {
+        Commands::Add(args) => args.run(),
+        Commands::Branch(args) => args.run(),
+        Commands::Clone(args) => args.run(),
+        Commands::Create(args) => args.run(),
         Commands::Init(args) => args.save_config(),
-        Commands::ListRepos(list_repo_args) => list_repo_args.show(),
-        Commands::CloneRepos(clone_args) => clone_args.clone(),
-        Commands::CreateBranch(args) => args.create_branch(),
-        Commands::DefaultBranch(args) => args.set_default_branch(),
-        Commands::ProtectedBranch(args) => args.set_protected_branch(),
-        Commands::CreateTeam(args) => args.create_team(),
-        Commands::AddUsers(args) => args.add_users(),
-        Commands::RemoveUsers(args) => args.remove_users(),
-        Commands::CreateDiscussion(args) => args.create_discusstion(),
-        Commands::SetTeamPermission(args) => args.set_permission(),
-        Commands::ShowConfig => commands::show_config(),
+        Commands::Remove(args) => args.run(),
+        Commands::Set(args) => args.run(),
+        Commands::Show(args) => args.run(),
     }
 }

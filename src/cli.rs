@@ -1,7 +1,5 @@
 use crate::commands::{
-    AddUsersArgs, CloneArgs, CreateBranchArgs, CreateDiscussionArgs, CreateTeamArgs,
-    DefaultBranchArgs, InitArgs, ListRepoArgs, ProtectedBranchArgs, RemoveUsersArgs,
-    SetTeamPermissionArgs,
+    AddArgs, BranchArgs, CloneArgs, CreateArgs, InitArgs, RemoveArgs, SetArgs, ShowArgs,
 };
 use structopt::StructOpt;
 
@@ -14,28 +12,20 @@ pub struct Args {
 
 #[derive(Debug, StructOpt)]
 pub enum Commands {
+    #[structopt(name = "add")]
+    Add(AddArgs),
+    #[structopt(name = "branch", aliases = &["br"])]
+    Branch(BranchArgs),
+    #[structopt(name = "clone", aliases = &["cl"])]
+    Clone(CloneArgs),
+    #[structopt(name = "create", aliases = &["cr"])]
+    Create(CreateArgs),
     #[structopt(name = "init")]
     Init(InitArgs),
-    #[structopt(name = "lr", aliases = &["list-repos"])]
-    ListRepos(ListRepoArgs),
-    #[structopt(name = "cl", aliases = &["clone"])]
-    CloneRepos(CloneArgs),
-    #[structopt(name = "cb", aliases = &["create-branch"])]
-    CreateBranch(CreateBranchArgs),
-    #[structopt(name = "db", aliases = &["default-branch"])]
-    DefaultBranch(DefaultBranchArgs),
-    #[structopt(name = "pb", aliases = &["protected-branch"])]
-    ProtectedBranch(ProtectedBranchArgs),
-    #[structopt(name = "ct", aliases = &["create-team"])]
-    CreateTeam(CreateTeamArgs),
-    #[structopt(name = "au", aliases = &["add-users"])]
-    AddUsers(AddUsersArgs),
-    #[structopt(name = "ru", aliases = &["remove-users"])]
-    RemoveUsers(RemoveUsersArgs),
-    #[structopt(name = "cd", aliases = &["create-discussion"])]
-    CreateDiscussion(CreateDiscussionArgs),
-    #[structopt(name = "sp", aliases = &["set-permission"])]
-    SetTeamPermission(SetTeamPermissionArgs),
-    #[structopt(name = "sc", aliases = &["show-config"])]
-    ShowConfig,
+    #[structopt(name = "remove")]
+    Remove(RemoveArgs),
+    #[structopt(name = "set")]
+    Set(SetArgs),
+    #[structopt(name = "show")]
+    Show(ShowArgs),
 }
