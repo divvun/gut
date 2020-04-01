@@ -15,7 +15,7 @@ pub enum CreateArgs {
 }
 
 impl CreateArgs {
-    pub fn do_create(&self) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
             CreateArgs::Discussion(args) => args.create_discusstion(),
             CreateArgs::Team(args) => args.create_team(),

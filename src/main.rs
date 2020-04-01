@@ -25,13 +25,13 @@ fn main() -> Result<()> {
     log::debug!("Arguments: {:?}", args);
 
     match args.command {
-        Commands::Init(args) => args.save_config(),
-        Commands::CloneRepos(clone_args) => clone_args.clone(),
         Commands::Add(args) => args.run(),
+        Commands::Branch(args) => args.run(),
+        Commands::Clone(args) => args.run(),
+        Commands::Create(args) => args.run(),
+        Commands::Init(args) => args.save_config(),
         Commands::Remove(args) => args.run(),
         Commands::Set(args) => args.run(),
-        Commands::Show(args) => args.show(),
-        Commands::Create(args) => args.do_create(),
-        Commands::Branch(args) => args.run(),
+        Commands::Show(args) => args.run(),
     }
 }

@@ -12,20 +12,20 @@ pub struct Args {
 
 #[derive(Debug, StructOpt)]
 pub enum Commands {
-    #[structopt(name = "init")]
-    Init(InitArgs),
-    #[structopt(name = "show")]
-    Show(ShowArgs),
-    #[structopt(name = "clone", aliases = &["cl"])]
-    CloneRepos(CloneArgs),
-    #[structopt(name = "branch", aliases = &["br"])]
-    Branch(BranchArgs),
     #[structopt(name = "add")]
     Add(AddArgs),
+    #[structopt(name = "branch", aliases = &["br"])]
+    Branch(BranchArgs),
+    #[structopt(name = "clone", aliases = &["cl"])]
+    Clone(CloneArgs),
+    #[structopt(name = "create", aliases = &["cr"])]
+    Create(CreateArgs),
+    #[structopt(name = "init")]
+    Init(InitArgs),
     #[structopt(name = "remove")]
     Remove(RemoveArgs),
     #[structopt(name = "set")]
     Set(SetArgs),
-    #[structopt(name = "create", aliases = &["cr"])]
-    Create(CreateArgs),
+    #[structopt(name = "show")]
+    Show(ShowArgs),
 }

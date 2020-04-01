@@ -12,7 +12,7 @@ pub enum ShowArgs {
 }
 
 impl ShowArgs {
-    pub fn show(&self) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
             ShowArgs::Config => show_config(),
             ShowArgs::Repos(args) => args.show(),
