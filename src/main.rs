@@ -27,7 +27,7 @@ fn main() -> Result<()> {
     match args.command {
         Commands::Init(args) => args.save_config(),
         Commands::CloneRepos(clone_args) => clone_args.clone(),
-        Commands::AddUsers(args) => args.add_users(),
+        Commands::Add(args) => args.run(),
         Commands::RemoveUsers(args) => args.remove_users(),
         Commands::Set(args) => args.run(),
         Commands::Show(args) => args.show(),

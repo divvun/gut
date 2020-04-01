@@ -1,3 +1,4 @@
+pub mod add;
 pub mod add_users;
 pub mod branch;
 pub mod clone;
@@ -16,7 +17,7 @@ pub mod show;
 pub mod show_config;
 pub mod show_repos;
 
-pub use add_users::*;
+pub use add::*;
 pub use branch::*;
 pub use clone::*;
 pub use create::*;
