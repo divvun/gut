@@ -22,7 +22,7 @@ pub struct CreateDiscussionArgs {
 
 impl CreateDiscussionArgs {
     pub fn create_discusstion(&self) -> Result<()> {
-        let token = common::get_user_token()?;
+        let token = common::user_token()?;
 
         match github::create_discusstion(
             &self.organisation,

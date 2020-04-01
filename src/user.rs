@@ -20,24 +20,24 @@ impl User {
     }
 
     pub fn save_user(&self) -> Result<()> {
-        write_to_file(get_path(), self)
+        write_to_file(
+            path().ok_or_else(|| anyhow::anyhow!("No user path found"))?,
+            self,
+        )
     }
 
-    pub fn get_user() -> Result<User> {
-        read_file(get_path())
+    pub fn user() -> Result<User> {
+        read_file(path().ok_or_else(|| anyhow::anyhow!("No user path found"))?)
     }
 
-    pub fn get_token() -> Result<String> {
-        let user = User::get_user()?;
+    pub fn token() -> Result<String> {
+        let user = User::user()?;
         Ok(user.token)
     }
 }
 
-fn get_path() -> PathBuf {
+fn path() -> Option<PathBuf> {
     let path = user_path();
     log::info!("User path: {:?}", path);
-    match path {
-        Some(p) => p,
-        None => panic!("Cannot read the config directory. We need to read our config file in your config directory."),
-    }
+    path
 }

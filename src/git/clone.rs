@@ -67,7 +67,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_clone() -> anyhow::Result<()> {
-        let user = crate::commands::common::get_user()?;
+        let user = crate::commands::common::user()?;
         let cred = Some(GitCredential::from(&user));
 
         let dir = tempdir()?;

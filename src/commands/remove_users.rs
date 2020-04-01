@@ -24,7 +24,7 @@ impl RemoveUsersArgs {
     }
 
     fn remove_users_from_org(&self) -> Result<()> {
-        let user_token = common::get_user_token()?;
+        let user_token = common::user_token()?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
@@ -36,7 +36,7 @@ impl RemoveUsersArgs {
     }
 
     fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
-        let user_token = common::get_user_token()?;
+        let user_token = common::user_token()?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 

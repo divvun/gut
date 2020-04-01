@@ -36,6 +36,6 @@ fn main() -> Result<()> {
         Commands::RemoveUsers(args) => args.remove_users(),
         Commands::CreateDiscussion(args) => args.create_discusstion(),
         Commands::SetTeamPermission(args) => args.set_permission(),
-        Commands::Showconfig => commands::show_config(),
+        Commands::ShowConfig => commands::show_config(),
     }
 }
