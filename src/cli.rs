@@ -31,6 +31,6 @@ pub enum Commands {
     SetTeamPermission(SetTeamPermissionArgs),
     #[structopt(name = "sc", aliases = &["show-config"])]
     ShowConfig,
-    #[structopt(name = "create")]
+    #[structopt(name = "cr", aliases = &["create"])]
     Create(CreateArgs),
 }
