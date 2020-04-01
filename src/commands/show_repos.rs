@@ -4,14 +4,14 @@ use crate::filter::Filter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-pub struct ListRepoArgs {
+pub struct ShowReposArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
 }
 
-impl ListRepoArgs {
+impl ShowReposArgs {
     pub fn show(&self) -> anyhow::Result<()> {
         let user_token = common::user_token()?;
 
