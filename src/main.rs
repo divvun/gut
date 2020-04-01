@@ -29,7 +29,7 @@ fn main() -> Result<()> {
         Commands::CloneRepos(clone_args) => clone_args.clone(),
         Commands::AddUsers(args) => args.add_users(),
         Commands::RemoveUsers(args) => args.remove_users(),
-        Commands::SetTeamPermission(args) => args.set_permission(),
+        Commands::Set(args) => args.run(),
         Commands::Show(args) => args.show(),
         Commands::Create(args) => args.do_create(),
         Commands::Branch(args) => args.run(),
