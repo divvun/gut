@@ -13,7 +13,7 @@ pub struct CreateDiscussionArgs {
     #[structopt(long, short)]
     pub team_slug: String,
     #[structopt(long, short)]
-    pub header: String,
+    pub subject: String,
     #[structopt(long, short)]
     pub body: String,
     #[structopt(long, short)]
@@ -27,7 +27,7 @@ impl CreateDiscussionArgs {
         match github::create_discusstion(
             &self.organisation,
             &self.team_slug,
-            &self.header,
+            &self.subject,
             &self.body,
             self.private,
             &token,
