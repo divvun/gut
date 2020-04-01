@@ -16,9 +16,9 @@ pub enum Commands {
     Init(InitArgs),
     #[structopt(name = "show")]
     Show(ShowArgs),
-    #[structopt(name = "cl", aliases = &["clone"])]
+    #[structopt(name = "clone", aliases = &["cl"])]
     CloneRepos(CloneArgs),
-    #[structopt(name = "br", aliases = &["branch"])]
+    #[structopt(name = "branch", aliases = &["br"])]
     Branch(BranchArgs),
     #[structopt(name = "au", aliases = &["add-users"])]
     AddUsers(AddUsersArgs),
@@ -26,6 +26,6 @@ pub enum Commands {
     RemoveUsers(RemoveUsersArgs),
     #[structopt(name = "set")]
     Set(SetArgs),
-    #[structopt(name = "cr", aliases = &["create"])]
+    #[structopt(name = "create", aliases = &["cr"])]
     Create(CreateArgs),
 }
