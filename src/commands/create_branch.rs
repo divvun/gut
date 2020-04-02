@@ -87,7 +87,7 @@ fn create_branch(
         cloned_repo.path()
     );
 
-    push::push_branch(&cloned_repo, new_branch, "origin")?;
+    push::push_branch(&cloned_repo, new_branch, "origin", git_repo.cred)?;
 
     Ok(())
 }
