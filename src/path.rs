@@ -110,3 +110,37 @@ impl EnsureDirExists for std::path::PathBuf {
         Ok(self)
     }
 }
+
+#[derive(Debug)]
+pub struct Directory {
+    pub path: String,
+}
+
+impl FromStr for Directory {
+    type Err = DirError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        validate_dir(s).map(|path| Directory { path })
+    }
+}
+#[derive(thiserror::Error, Debug)]
+pub enum DirError {
+    #[error("{path} is not a dir")]
+    NotADir { path: String },
+    #[error("{path} is not exist")]
+    NotExist { path: String },
+}
+
+pub fn validate_dir(dir: &str) -> Result<String, DirError> {
+    let path = Path::new(dir);
+
+    if path.exists() {
+        if path.is_dir() {
+            Ok(dir.to_string())
+        } else {
+            Err(DirError::NotADir{ path: dir.to_string()})
+        }
+    } else {
+        Err(DirError::NotExist{path: dir.to_string()})
+    }
+}

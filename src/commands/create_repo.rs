@@ -3,6 +3,7 @@ use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use crate::user::User;
 
+use crate::path::Directory;
 use anyhow::Result;
 
 use crate::filter::Filter;
@@ -17,7 +18,7 @@ pub struct CreateRepoArgs {
     #[structopt(long, short)]
     pub regex: Filter,
     #[structopt(long, short)]
-    pub dir: Option<String>,
+    pub dir: Option<Directory>,
     #[structopt(long, short)]
     pub public: bool,
 }
