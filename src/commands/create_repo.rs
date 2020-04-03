@@ -66,8 +66,10 @@ fn create_repo(org: &str, dir: &PathBuf, public: &bool, token: &str) -> Result<(
     let local_repo =
         open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
     let repo_name = dir
+        .file_name()
+        .ok_or(anyhow!("{:?} does not have a vaild name"))?
         .to_str()
-        .ok_or(anyhow!("{:?} is not a valid name", dir))?;
+        .ok_or(anyhow!("{:?} doesn not have a valid name", dir))?;
     let new_repo = create_org_repo(org, repo_name, public, token)?;
     log::debug!("new created repo: {:?}", new_repo.html_url);
     Ok(())
