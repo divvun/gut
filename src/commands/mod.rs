@@ -1,5 +1,4 @@
 pub mod add;
-pub mod create_repo;
 pub mod add_users;
 pub mod branch;
 pub mod clone;
@@ -7,6 +6,7 @@ pub mod common;
 pub mod create;
 pub mod create_branch;
 pub mod create_discussion;
+pub mod create_repo;
 pub mod create_team;
 pub mod default_branch;
 pub mod init_config;

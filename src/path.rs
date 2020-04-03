@@ -62,7 +62,6 @@ pub fn local_path_org(organisation: &str) -> anyhow::Result<PathBuf> {
     Ok(local_path)
 }
 
-
 #[derive(thiserror::Error, Debug)]
 pub enum RootError {
     #[error("{path} is a file. Root directory cannot be a file")]
@@ -146,9 +145,13 @@ pub fn validate_dir(dir: &str) -> Result<PathBuf, DirError> {
         if path.is_dir() {
             Ok(path.to_path_buf())
         } else {
-            Err(DirError::NotADir{ path: dir.to_string()})
+            Err(DirError::NotADir {
+                path: dir.to_string(),
+            })
         }
     } else {
-        Err(DirError::NotExist{path: dir.to_string()})
+        Err(DirError::NotExist {
+            path: dir.to_string(),
+        })
     }
 }
