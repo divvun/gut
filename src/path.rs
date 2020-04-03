@@ -55,6 +55,14 @@ pub fn local_path(organisation: &str, name: &str) -> Option<PathBuf> {
     Some(local_path)
 }
 
+pub fn local_path_org(organisation: &str) -> anyhow::Result<PathBuf> {
+    let root = Config::root()?;
+    let root_dir = Path::new(&root);
+    let local_path = root_dir.join(organisation);
+    Ok(local_path)
+}
+
+
 #[derive(thiserror::Error, Debug)]
 pub enum RootError {
     #[error("{path} is a file. Root directory cannot be a file")]
@@ -113,7 +121,7 @@ impl EnsureDirExists for std::path::PathBuf {
 
 #[derive(Debug)]
 pub struct Directory {
-    pub path: String,
+    pub path: PathBuf,
 }
 
 impl FromStr for Directory {
@@ -131,12 +139,12 @@ pub enum DirError {
     NotExist { path: String },
 }
 
-pub fn validate_dir(dir: &str) -> Result<String, DirError> {
+pub fn validate_dir(dir: &str) -> Result<PathBuf, DirError> {
     let path = Path::new(dir);
 
     if path.exists() {
         if path.is_dir() {
-            Ok(dir.to_string())
+            Ok(path.to_path_buf())
         } else {
             Err(DirError::NotADir{ path: dir.to_string()})
         }

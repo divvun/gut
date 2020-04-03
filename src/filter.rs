@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use crate::github::RemoteRepo;
 use regex::{Error as RegexError, Regex, RegexBuilder};
 use std::{fmt, str::FromStr};
@@ -46,5 +47,14 @@ pub trait Filterable {
 impl Filterable for RemoteRepo {
     fn is_match(&self, filter: &Filter) -> bool {
         filter.is_match(&self.name)
+    }
+}
+
+impl Filterable for PathBuf {
+    fn is_match(&self, filter: &Filter) -> bool {
+        match self.to_str() {
+            Some(v) => filter.is_match(v),
+            None => false
+        }
     }
 }
