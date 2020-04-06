@@ -1,16 +1,10 @@
-use super::common;
-use crate::convert::try_from_one;
-use crate::github::RemoteRepo;
-use crate::user::User;
-
 use anyhow::Result;
 
 use crate::filter::Filter;
-use crate::git::push;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-pub struct PushBranchArgs {
+pub struct PushArgs {
     #[structopt(long, short)]
     pub organisation: String,
     #[structopt(long, short)]
@@ -19,8 +13,8 @@ pub struct PushBranchArgs {
     pub branch: String,
 }
 
-impl PushBranchArgs {
-    pub fn push_branch(&self) -> Result<()> {
+impl PushArgs {
+    pub fn run(&self) -> Result<()> {
         println!("push branch {:?}", self);
         Ok(())
     }
