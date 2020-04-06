@@ -24,6 +24,8 @@ pub struct CreateRepoArgs {
     pub public: bool,
     #[structopt(long, short)]
     pub use_https: bool,
+    #[structopt(long, short)]
+    pub no_push: bool,
 }
 
 impl CreateRepoArgs {
@@ -47,6 +49,7 @@ impl CreateRepoArgs {
                 &user,
                 &"origin",
                 self.use_https,
+                self.no_push,
             ) {
                 Ok((name, url)) => println!("Created repo for {} successfully at: {}", name, url),
                 Err(e) => println!("Failed to create repo for dir: {:?} because {:?}", &dir, e),
@@ -83,6 +86,7 @@ fn create_repo(
     user: &User,
     remote_name: &str,
     use_https: bool,
+    no_push: bool,
 ) -> Result<(String, String)> {
     let local_repo =
         open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
@@ -111,8 +115,10 @@ fn create_repo(
 
     let mut remote = local_repo.remote(remote_name, &remote_url)?;
 
-    let cred = GitCredential::from(user);
-    push::push(&local_repo, &mut remote, Some(cred))?;
+    if !no_push {
+        let cred = GitCredential::from(user);
+        push::push(&local_repo, &mut remote, Some(cred))?;
+    }
 
     Ok((repo_name.to_string(), created_repo.html_url))
 }
