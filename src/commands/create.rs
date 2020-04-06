@@ -1,5 +1,6 @@
 use super::create_branch::*;
 use super::create_discussion::*;
+use super::create_repo::*;
 use super::create_team::*;
 use anyhow::Result;
 use structopt::StructOpt;
@@ -12,6 +13,8 @@ pub enum CreateArgs {
     Discussion(CreateDiscussionArgs),
     #[structopt(name = "branch")]
     Branch(CreateBranchArgs),
+    #[structopt(name = "repo", aliases = &["repository"])]
+    Repo(CreateRepoArgs),
 }
 
 impl CreateArgs {
@@ -20,6 +23,7 @@ impl CreateArgs {
             CreateArgs::Discussion(args) => args.create_discusstion(),
             CreateArgs::Team(args) => args.create_team(),
             CreateArgs::Branch(args) => args.create_branch(),
+            CreateArgs::Repo(args) => args.create_repo(),
         }
     }
 }

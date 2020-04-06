@@ -1,3 +1,4 @@
+use super::open;
 use crate::git::clone;
 use crate::user::User;
 use dialoguer::PasswordInput;
@@ -22,12 +23,8 @@ impl clone::Clonable for GitRepo {
 }
 
 impl GitRepo {
-    pub fn open(&self) -> Result<Repository, Error> {
-        match Repository::open(&self.local_path) {
-            Ok(repo) => Ok(repo),
-            Err(_) => clone::clone(&self.remote_url, &self.local_path, self.cred.clone())
-                .map_err(|e| e.source),
-        }
+    pub fn open_or_clone(&self) -> Result<Repository, Error> {
+        open::open_or_clone(&self.local_path, &self.remote_url, &self.cred)
     }
 }
 

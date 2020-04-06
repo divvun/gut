@@ -77,7 +77,7 @@ fn create_branch(
 
     let git_repo = try_from_one(remote_repo, user, use_https)?;
 
-    let cloned_repo = git_repo.open()?;
+    let cloned_repo = git_repo.open_or_clone()?;
     log::debug!("Cloned repo: {:?}", cloned_repo.path());
 
     branch::create_branch(&cloned_repo, new_branch, base_branch)?;

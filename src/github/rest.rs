@@ -317,6 +317,48 @@ struct SetTeamPermissionBody {
     permission: String,
 }
 
+pub fn create_org_repo(
+    org: &str,
+    name: &str,
+    public: bool,
+    token: &str,
+) -> Result<CreateRepoResponse> {
+    let url = format!("https://api.github.com/orgs/{}/repos", org);
+
+    let body = CreateRepoBody {
+        name: name.to_string(),
+        private: !public,
+    };
+
+    let response = post(&url, &body, token)?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: CreateRepoResponse = response.json()?;
+    Ok(response_body)
+}
+
+#[derive(Serialize, Debug)]
+struct CreateRepoBody {
+    name: String,
+    private: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CreateRepoResponse {
+    pub full_name: String,
+    pub html_url: String,
+    pub ssh_url: String,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 
