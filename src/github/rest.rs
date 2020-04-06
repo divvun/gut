@@ -320,7 +320,7 @@ struct SetTeamPermissionBody {
 pub fn create_org_repo(
     org: &str,
     name: &str,
-    public: &bool,
+    public: bool,
     token: &str,
 ) -> Result<CreateRepoResponse> {
     let url = format!("https://api.github.com/orgs/{}/repos", org);
@@ -356,6 +356,7 @@ struct CreateRepoBody {
 pub struct CreateRepoResponse {
     pub full_name: String,
     pub html_url: String,
+    pub ssh_url: String,
 }
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
