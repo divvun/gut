@@ -59,7 +59,6 @@ impl CreateRepoArgs {
     }
 }
 
-
 /// Check if {dir} is a git repository
 /// Check if {dir} has {remote} remote
 /// Create a new repository in organization {org}
