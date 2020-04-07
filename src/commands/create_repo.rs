@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use crate::path::{local_path_org, Directory};
 use anyhow::{anyhow, Context, Result};
 
-use crate::filter::{Filter, Filterable};
+use crate::filter::Filter;
 use crate::git::open;
 use crate::git::push;
 use crate::git::GitCredential;
@@ -37,7 +37,7 @@ impl CreateRepoArgs {
             None => local_path_org(&self.organisation)?,
         };
 
-        let sub_dirs = read_dirs(&dir, &self.regex)?;
+        let sub_dirs = common::read_dirs(&dir, &self.regex)?;
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
         let user = common::user()?;
@@ -57,20 +57,6 @@ impl CreateRepoArgs {
         }
         Ok(())
     }
-}
-
-/// Read all dirs inside a path
-/// Filter directories
-/// Filter directory's name by regex
-
-fn read_dirs(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
-    let entries = path.read_dir()?;
-    let dirs = entries
-        .filter_map(|x| x.ok())
-        .map(|x| x.path())
-        .filter(|x| x.is_dir())
-        .collect();
-    Ok(PathBuf::filter(dirs, filter))
 }
 
 /// Check if {dir} is a git repository

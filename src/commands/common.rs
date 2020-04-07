@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::path::PathBuf;
 
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
@@ -39,4 +40,17 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
             Err(e)
         }
     }
+}
+
+/// Read all dirs inside a path
+/// Filter directories
+/// Filter directory's name by regex
+pub fn read_dirs(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
+    let entries = path.read_dir()?;
+    let dirs = entries
+        .filter_map(|x| x.ok())
+        .map(|x| x.path())
+        .filter(|x| x.is_dir())
+        .collect();
+    Ok(PathBuf::filter(dirs, filter))
 }

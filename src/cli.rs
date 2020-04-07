@@ -1,5 +1,5 @@
 use crate::commands::{
-    AddArgs, BranchArgs, CloneArgs, CreateArgs, InitArgs, RemoveArgs, SetArgs, ShowArgs,
+    AddArgs, BranchArgs, CloneArgs, CreateArgs, InitArgs, PushArgs, RemoveArgs, SetArgs, ShowArgs,
 };
 use structopt::StructOpt;
 
@@ -22,6 +22,8 @@ pub enum Commands {
     Create(CreateArgs),
     #[structopt(name = "init")]
     Init(InitArgs),
+    #[structopt(name = "push")]
+    Push(PushArgs),
     #[structopt(name = "remove")]
     Remove(RemoveArgs),
     #[structopt(name = "set")]
