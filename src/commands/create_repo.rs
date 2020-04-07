@@ -26,6 +26,8 @@ pub struct CreateRepoArgs {
     pub use_https: bool,
     #[structopt(long, short)]
     pub no_push: bool,
+    #[structopt(long)]
+    pub override_origin: bool,
 }
 
 impl CreateRepoArgs {
@@ -50,6 +52,7 @@ impl CreateRepoArgs {
                 &"origin",
                 self.use_https,
                 self.no_push,
+                self.override_origin,
             ) {
                 Ok((name, url)) => println!("Created repo for {} successfully at: {}", name, url),
                 Err(e) => println!("Failed to create repo for dir: {:?} because {:?}", &dir, e),
@@ -73,21 +76,20 @@ fn create_repo(
     remote_name: &str,
     use_https: bool,
     no_push: bool,
+    override_remote: bool,
 ) -> Result<(String, String)> {
     let git_repo = open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
     if git_repo.find_remote(remote_name).is_ok() {
-        return Err(anyhow!(
-            "This repo already has a remote named: {}",
-            remote_name
-        ));
+        if override_remote {
+            git_repo.remote_delete(remote_name)?;
+        } else {
+            return Err(anyhow!(
+                "This repo already has a remote named: {}",
+                remote_name
+            ));
+        }
     }
-
-    let repo_name = dir
-        .file_name()
-        .ok_or_else(|| anyhow!("{:?} does not have a vaild name"))?
-        .to_str()
-        .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
 
     let branches: Vec<String> = git_repo
         .branches(Some(git2::BranchType::Local))
@@ -99,6 +101,12 @@ fn create_repo(
     if branches.is_empty() {
         return Err(anyhow!("This repository doesn't have any local branch"));
     }
+
+    let repo_name = dir
+        .file_name()
+        .ok_or_else(|| anyhow!("{:?} does not have a vaild name"))?
+        .to_str()
+        .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
 
     let created_repo = create_org_repo(org, repo_name, public, &user.token)?;
     log::debug!("new created repo: {:?}", created_repo.html_url);
