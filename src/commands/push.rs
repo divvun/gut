@@ -1,21 +1,22 @@
 use super::common;
-use crate::convert::try_from_one;
-use crate::github::RemoteRepo;
+use crate::git::open;
 use crate::user::User;
+use crate::path::local_path_org;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use crate::filter::Filter;
 use structopt::StructOpt;
 use crate::git::push;
-use git2::Repository;
+use std::path::PathBuf;
+use crate::git::GitCredential;
 
 #[derive(Debug, StructOpt)]
 pub struct PushArgs {
     #[structopt(long, short)]
     pub organisation: String,
     #[structopt(long, short)]
-    pub regex: Option<Filter>,
+    pub regex: Filter,
     #[structopt(long, short)]
     pub branch: String,
 }
@@ -26,18 +27,32 @@ impl PushArgs {
 
         let user = common::user()?;
 
-        let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, &self.regex, &user.token)?;
+        let target_dir = local_path_org(&self.organisation)?;
+
+        let sub_dirs = common::read_dirs(&target_dir, &self.regex)?;
+
+        for dir in sub_dirs {
+            match push_branch(&dir, &self.branch, &user, &"origin") {
+                Ok(_) => println!("Success {:?}", dir),
+                Err(e) => println!("failed {:?} because {:?}", dir, e),
+            }
+        }
 
         Ok(())
     }
 }
 
 fn push_branch(
-    repo: &Repository,
+    dir: &PathBuf,
     branch: &str,
     user: &User,
+    remote_name: &str,
 ) -> Result<()> {
 
+    let git_repo =
+        open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+
+    let cred = GitCredential::from(user);
+    push::push_branch(&git_repo, branch, remote_name, Some(cred))?;
     Ok(())
 }
