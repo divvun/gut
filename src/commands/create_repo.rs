@@ -88,10 +88,9 @@ fn create_repo(
     use_https: bool,
     no_push: bool,
 ) -> Result<(String, String)> {
-    let local_repo =
-        open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+    let git_repo = open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    if local_repo.find_remote(remote_name).is_ok() {
+    if git_repo.find_remote(remote_name).is_ok() {
         return Err(anyhow!(
             "This repo already has a remote named: {}",
             remote_name
@@ -104,6 +103,17 @@ fn create_repo(
         .to_str()
         .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
 
+    let branches: Vec<String> = git_repo
+        .branches(Some(git2::BranchType::Local))
+        .unwrap()
+        .map(|a| a.unwrap())
+        .map(|(a, _)| a.name().unwrap().unwrap().to_string())
+        .collect();
+
+    if branches.is_empty() {
+        return Err(anyhow!("This repository doesn't have any local branch"));
+    }
+
     let created_repo = create_org_repo(org, repo_name, public, &user.token)?;
     log::debug!("new created repo: {:?}", created_repo.html_url);
 
@@ -113,11 +123,11 @@ fn create_repo(
         created_repo.ssh_url.clone()
     };
 
-    let mut remote = local_repo.remote(remote_name, &remote_url)?;
+    let mut remote = git_repo.remote(remote_name, &remote_url)?;
 
     if !no_push {
         let cred = GitCredential::from(user);
-        push::push(&local_repo, &mut remote, Some(cred))?;
+        push::push(&git_repo, &mut remote, Some(cred))?;
     }
 
     Ok((repo_name.to_string(), created_repo.html_url))

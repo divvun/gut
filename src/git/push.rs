@@ -1,5 +1,5 @@
 use super::models::GitCredential;
-use git2::{Error, Remote, Repository};
+use git2::{BranchType, Error, Remote, Repository};
 use git2_credentials::ui4dialoguer::CredentialUI4Dialoguer;
 use git2_credentials::CredentialHandler;
 use git2_credentials::CredentialUI;
@@ -60,7 +60,7 @@ pub fn push(
     po.remote_callbacks(cb);
 
     let branches: Vec<String> = repo
-        .branches(None)
+        .branches(Some(BranchType::Local))
         .unwrap()
         .map(|a| a.unwrap())
         .map(|(a, _)| a.name().unwrap().unwrap().to_string())
