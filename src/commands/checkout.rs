@@ -64,7 +64,7 @@ fn checkout_branch(
         let cred = GitCredential::from(user);
         git::checkout_remote_branch(&git_repo, branch, remote_name, Some(cred))?;
     } else {
-        return Err(anyhow!("There is no local branch with name: {}.\n You can you `--remote` option to checkout a remote branch.", branch));
+        return Err(anyhow!("There is no local branch with name: {}.\n You can use `--remote` option to checkout a remote branch.", branch));
     };
 
     Ok(())
