@@ -1,7 +1,7 @@
 use super::fetch;
 use super::models::GitCredential;
 use anyhow::{anyhow, Result};
-use git2::{Branch, BranchType, Error, Repository};
+use git2::{Branch, BranchType, Commit, Error, Repository};
 
 pub trait CreateBranch<'a> {
     fn create_branch(&self, new_branch: &str, base_branch: &str) -> Result<Branch<'a>, Error>;
@@ -26,6 +26,22 @@ pub fn checkout_local_branch<'a>(repo: &'a Repository, branch: &str) -> Result<(
     Ok(())
 }
 
+pub fn checkout_branch<'a>(
+    repo: &'a Repository,
+    branch: &'a Branch,
+    branch_name: &str,
+) -> Result<()> {
+    let oid = branch.get().target().unwrap();
+    let commit = repo.find_commit(oid)?;
+    repo.branch(branch_name, &commit, false)?;
+
+    let obj = repo.revparse_single(&("refs/heads/".to_owned() + branch_name))?;
+    repo.checkout_tree(&obj, None)?;
+    repo.set_head(&("refs/heads/".to_owned() + branch_name))?;
+
+    Ok(())
+}
+
 pub fn checkout_remote_branch<'a>(
     repo: &'a Repository,
     branch: &str,
@@ -40,14 +56,8 @@ pub fn checkout_remote_branch<'a>(
 
     let remote_branch = format!("{}/{}", remote_name, branch);
 
-    if repo
-        .find_branch(&remote_branch, BranchType::Remote)
-        .is_err()
-    {
-        return Err(anyhow!("There is no remote branch named: {}", branch));
-    } else {
-        checkout_local_branch(repo, branch)?;
+    match repo.find_branch(&remote_branch, BranchType::Remote) {
+        Err(_) => Err(anyhow!("There is no remote branch named: {}", branch)),
+        Ok(found_branch) => Ok(checkout_branch(repo, &found_branch, branch)?),
     }
-
-    Ok(())
 }
