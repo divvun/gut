@@ -38,7 +38,7 @@ impl PushArgs {
                     &self.branch, dir
                 ),
                 Err(e) => println!(
-                    "Failed to pusb branch {} of repo {:?} because {:?}",
+                    "Failed to push branch {} of repo {:?} because {:?}",
                     &self.branch, dir, e
                 ),
             }

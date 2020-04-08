@@ -4,7 +4,7 @@ pub mod models;
 pub mod open;
 pub mod push;
 
-pub use branch::create_branch;
+pub use branch::*;
 pub use clone::{Clonable, CloneError};
 pub use models::*;
 pub use open::*;
