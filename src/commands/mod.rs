@@ -19,6 +19,7 @@ pub mod set_team_permission;
 pub mod show;
 pub mod show_config;
 pub mod show_repos;
+pub mod checkout;
 
 pub use add::*;
 pub use branch::*;
@@ -29,3 +30,4 @@ pub use push::*;
 pub use remove::*;
 pub use set::*;
 pub use show::*;
+pub use checkout::*;
