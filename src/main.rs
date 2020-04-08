@@ -27,6 +27,7 @@ fn main() -> Result<()> {
     match args.command {
         Commands::Add(args) => args.run(),
         Commands::Branch(args) => args.run(),
+        Commands::Checkout(args) => args.run(),
         Commands::Clone(args) => args.run(),
         Commands::Create(args) => args.run(),
         Commands::Init(args) => args.save_config(),

@@ -1,6 +1,7 @@
 pub mod add;
 pub mod add_users;
 pub mod branch;
+pub mod checkout;
 pub mod clone;
 pub mod common;
 pub mod create;
@@ -22,6 +23,7 @@ pub mod show_repos;
 
 pub use add::*;
 pub use branch::*;
+pub use checkout::*;
 pub use clone::*;
 pub use create::*;
 pub use init_config::*;
