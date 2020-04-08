@@ -1,10 +1,6 @@
+use super::common;
 use super::models::GitCredential;
-use git2_credentials::ui4dialoguer::CredentialUI4Dialoguer;
 use std::path::Path;
-
-use git2;
-use git2_credentials::CredentialHandler;
-use git2_credentials::CredentialUI;
 
 pub trait Clonable {
     type Output;
@@ -27,25 +23,14 @@ pub fn clone(
     cred: Option<GitCredential>,
 ) -> Result<git2::Repository, CloneError> {
     log::debug!("Clone {:?} to {:?}", remote_url, local_path);
-    let mut cb = git2::RemoteCallbacks::new();
-    let git_config = git2::Config::open_default().map_err(|s| CloneError {
+    let remote_callbacks = common::create_remote_callback(&cred).map_err(|s| CloneError {
         source: s,
         remote_url: remote_url.to_string(),
     })?;
 
-    let credential_ui: Box<dyn CredentialUI> = match cred {
-        Some(gc) => Box::new(gc),
-        _ => Box::new(CredentialUI4Dialoguer {}),
-    };
-
-    // Prepare callbacks.
-    let mut ch = CredentialHandler::new_with_ui(git_config, credential_ui);
-
-    cb.credentials(move |url, username, allowed| ch.try_next_credential(url, username, allowed));
-
     let mut fo = git2::FetchOptions::new();
 
-    fo.remote_callbacks(cb)
+    fo.remote_callbacks(remote_callbacks)
         .download_tags(git2::AutotagOption::All)
         .update_fetchhead(true);
 

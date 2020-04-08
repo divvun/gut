@@ -1,11 +1,13 @@
 use super::common;
 use crate::git;
+use crate::git::GitCredential;
 use crate::path::local_path_org;
 use crate::user::User;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
+use git2::BranchType;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -17,6 +19,8 @@ pub struct CheckoutArgs {
     pub regex: Filter,
     #[structopt(long, short)]
     pub branch: String,
+    #[structopt(long)]
+    pub remote: bool,
 }
 
 impl CheckoutArgs {
@@ -29,7 +33,7 @@ impl CheckoutArgs {
         let sub_dirs = common::read_dirs(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            match checkout_branch(&dir, &self.branch, &user, &"origin") {
+            match checkout_branch(&dir, &self.branch, &user, &"origin", self.remote) {
                 Ok(_) => println!(
                     "Checkout branch {} of repo {:?} successfully",
                     &self.branch, dir
@@ -45,10 +49,23 @@ impl CheckoutArgs {
     }
 }
 
-fn checkout_branch(dir: &PathBuf, branch: &str, user: &User, remote_name: &str) -> Result<()> {
+fn checkout_branch(
+    dir: &PathBuf,
+    branch: &str,
+    user: &User,
+    remote_name: &str,
+    remote: bool,
+) -> Result<()> {
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    git::checkout_local_branch(&git_repo, branch)?;
+    if git_repo.find_branch(branch, BranchType::Local).is_ok() {
+        git::checkout_local_branch(&git_repo, branch)?;
+    } else if remote {
+        let cred = GitCredential::from(user);
+        git::checkout_remote_branch(&git_repo, branch, remote_name, Some(cred))?;
+    } else {
+        return Err(anyhow!("There is no local branch with name: {}.\n You can you `--remote` option to checkout a remote branch.", branch));
+    };
 
     Ok(())
 }
