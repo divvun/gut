@@ -49,7 +49,7 @@ fn confirm(repos: &[RemoteRepo]) -> Result<bool> {
     let key = "YES";
     common::confirm(
         &format!(
-            "Are you sure you want to delete {} repo(s)? Enter {} to continue",
+            "Are you sure you want to delete {} repo(s)? Enter {} to continue: ",
             repos.len(),
             key
         ),
