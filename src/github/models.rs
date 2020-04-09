@@ -8,6 +8,12 @@ pub struct RemoteRepo {
     pub https_url: String,
 }
 
+impl RemoteRepo {
+    pub fn full_name(&self) -> String {
+        format!("{}/{}", self.owner, self.name)
+    }
+}
+
 #[derive(thiserror::Error, Debug)]
 #[error("User unauthorized")]
 pub struct Unauthorized;

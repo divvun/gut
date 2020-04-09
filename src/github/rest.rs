@@ -359,6 +359,14 @@ pub struct CreateRepoResponse {
     pub ssh_url: String,
 }
 
+pub fn delete_repo(owner: &str, repo: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/repos/{}/{}", owner, repo);
+
+    let response = delete(&url, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 
