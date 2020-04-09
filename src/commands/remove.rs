@@ -1,4 +1,4 @@
-use super::remove_repo::*;
+use super::remove_repos::*;
 use super::remove_users::*;
 use anyhow::Result;
 use structopt::StructOpt;
