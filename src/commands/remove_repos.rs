@@ -32,22 +32,29 @@ impl RemoveReposArgs {
         let is_confirmed = confirm(&filtered_repos)?;
         if is_confirmed {
             remove(&filtered_repos, &user_token)?;
+        } else {
+            println!("Nothing got deleted!")
         }
         Ok(())
     }
 }
 
 fn confirm(repos: &[RemoteRepo]) -> Result<bool> {
-    println!("The following repos will be removed:\n");
+    println!("The following repos will be removed:");
 
     for repo in repos {
         println!("{}", repo.full_name());
     }
 
-    common::confirm(&format!(
-        "Are you sure you want to delete {} repos?",
-        repos.len()
-    ))
+    let key = "YES";
+    common::confirm(
+        &format!(
+            "Are you sure you want to delete {} repo(s)? Enter {} to continue",
+            repos.len(),
+            key
+        ),
+        key,
+    )
 }
 
 fn remove(repos: &[RemoteRepo], token: &str) -> Result<()> {

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use dialoguer::Confirmation;
+use dialoguer::Input;
 use std::path::PathBuf;
 
 use crate::github;
@@ -56,7 +56,7 @@ pub fn read_dirs(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
     Ok(PathBuf::filter(dirs, filter))
 }
 
-pub fn confirm(prompt: &str) -> Result<bool> {
-    let confirm = Confirmation::new().with_text(prompt).interact()?;
-    Ok(confirm)
+pub fn confirm(prompt: &str, key: &str) -> Result<bool> {
+    let confirm = Input::<String>::new().with_prompt(prompt).interact()?;
+    Ok(confirm == key)
 }
