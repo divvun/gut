@@ -37,11 +37,11 @@ impl ApplyArgs {
 }
 
 fn apply(dir: &PathBuf, script: &str) -> Result<()> {
-    executeScript(script);
+    executeScript(script, dir);
     Ok(())
 }
 
-fn executeScript(script: &str) -> Result<()> {
+fn executeScript(script: &str, dir: &PathBuf) -> Result<()> {
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .args(&["/C", script])
@@ -51,6 +51,7 @@ fn executeScript(script: &str) -> Result<()> {
         Command::new("sh")
                 .arg("-c")
                 .arg(script)
+                .current_dir(dir)
                 .output()
                 .expect("failed to execute process")
     };

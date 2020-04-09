@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::github;
-use crate::path::RootDirectory;
 use crate::user::User;
+use super::models::RootDirectory;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]

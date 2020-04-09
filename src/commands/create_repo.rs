@@ -3,7 +3,8 @@ use crate::github::create_org_repo;
 use crate::user::User;
 use std::path::PathBuf;
 
-use crate::path::{local_path_org, Directory};
+use crate::path::local_path_org;
+use super::models::Directory;
 use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;

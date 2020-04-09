@@ -22,6 +22,7 @@ pub mod show;
 pub mod show_config;
 pub mod show_repos;
 pub mod apply;
+pub mod models;
 
 pub use add::*;
 pub use branch::*;
@@ -35,3 +36,4 @@ pub use remove_repos::*;
 pub use set::*;
 pub use show::*;
 pub use apply::*;
+pub use models::*;
