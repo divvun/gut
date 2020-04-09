@@ -50,7 +50,7 @@ fn confirm(repos: &[RemoteRepo]) -> Result<bool> {
     ))
 }
 
-fn remove(repos: &Vec<RemoteRepo>, token: &str) -> Result<()> {
+fn remove(repos: &[RemoteRepo], token: &str) -> Result<()> {
     for repo in repos {
         match github::delete_repo(&repo.owner, &repo.name, token) {
             Ok(_) => println!("Deleted repo {} successfully", repo.full_name()),
