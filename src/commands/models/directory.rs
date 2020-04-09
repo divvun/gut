@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-
 #[derive(Debug)]
 pub struct Directory {
     pub path: PathBuf,

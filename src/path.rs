@@ -44,4 +44,3 @@ impl EnsureDirExists for std::path::PathBuf {
         Ok(self)
     }
 }
-

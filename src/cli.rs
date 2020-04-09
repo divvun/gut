@@ -1,6 +1,6 @@
 use crate::commands::{
-    AddArgs, BranchArgs, CheckoutArgs, CloneArgs, CreateArgs, InitArgs, PushArgs, RemoveArgs,
-    SetArgs, ShowArgs, ApplyArgs,
+    AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CloneArgs, CreateArgs, InitArgs, PushArgs,
+    RemoveArgs, SetArgs, ShowArgs,
 };
 use structopt::StructOpt;
 

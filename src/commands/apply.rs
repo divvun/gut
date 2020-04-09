@@ -1,11 +1,11 @@
 use super::common;
-use crate::path::local_path_org;
-use std::path::PathBuf;
-use anyhow::{Result, bail};
+use super::models::Script;
 use crate::filter::Filter;
-use structopt::StructOpt;
-
+use crate::path::local_path_org;
+use anyhow::Result;
+use std::path::PathBuf;
 use std::process::Command;
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct ApplyArgs {
@@ -14,21 +14,30 @@ pub struct ApplyArgs {
     #[structopt(long, short)]
     pub regex: Option<Filter>,
     #[structopt(long, short)]
-    pub script: String,
+    pub script: Script,
 }
 
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
-        let user = common::user()?;
-
         let target_dir = local_path_org(&self.organisation)?;
 
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
+        let script_path = self
+            .script
+            .path
+            .to_str()
+            .expect("dadmin only supports utf8 path now!");
         for dir in sub_dirs {
-            match apply(&dir, &self.script) {
-                Ok(_) => println!("Applied script {} for dir {:?} successfully", self.script, dir),
-                Err(e) => println!("Failed to apply script {} for dir {:?} because {:?}", &self.script, dir, e),
+            match apply(&dir, script_path) {
+                Ok(_) => println!(
+                    "Applied script {} for dir {:?} successfully",
+                    script_path, dir
+                ),
+                Err(e) => println!(
+                    "Failed to apply script {} for dir {:?} because {:?}",
+                    script_path, dir, e
+                ),
             }
         }
 
@@ -49,11 +58,11 @@ fn executeScript(script: &str, dir: &PathBuf) -> Result<()> {
             .expect("failed to execute process")
     } else {
         Command::new("sh")
-                .arg("-c")
-                .arg(script)
-                .current_dir(dir)
-                .output()
-                .expect("failed to execute process")
+            .arg("-c")
+            .arg(script)
+            .current_dir(dir)
+            .output()
+            .expect("failed to execute process")
     };
 
     println!("Script result {:?}", output);

@@ -1,6 +1,6 @@
 use std::fmt;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::str::FromStr;
 
 #[derive(thiserror::Error, Debug)]
@@ -47,7 +47,6 @@ impl fmt::Display for RootDirectory {
         write!(f, "{}", self.path)
     }
 }
-
 
 pub fn validate_root(root: &str) -> Result<String, RootError> {
     let path = Path::new(root);
