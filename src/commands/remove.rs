@@ -7,7 +7,7 @@ use structopt::StructOpt;
 pub enum RemoveArgs {
     #[structopt(name = "users")]
     Users(RemoveUsersArgs),
-    #[structopt(name = "repo")]
+    #[structopt(name = "repositories", aliases = &["repos"])]
     Repos(RemoveReposArgs),
 }
 
