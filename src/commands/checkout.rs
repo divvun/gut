@@ -30,7 +30,7 @@ impl CheckoutArgs {
 
         let target_dir = local_path_org(&self.organisation)?;
 
-        let sub_dirs = common::read_dirs(&target_dir, &self.regex)?;
+        let sub_dirs = common::read_dirs_with_filter(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
             match checkout_branch(&dir, &self.branch, &user, &"origin", self.remote) {

@@ -23,13 +23,11 @@ pub struct PushArgs {
 
 impl PushArgs {
     pub fn run(&self) -> Result<()> {
-        log::debug!("push branch {:?}", self);
-
         let user = common::user()?;
 
         let target_dir = local_path_org(&self.organisation)?;
 
-        let sub_dirs = common::read_dirs(&target_dir, &self.regex)?;
+        let sub_dirs = common::read_dirs_with_filter(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
             match push_branch(&dir, &self.branch, &user, &"origin") {
