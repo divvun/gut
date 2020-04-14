@@ -41,7 +41,7 @@ pub fn validate_script(script_path: &str) -> Result<PathBuf, ScriptError> {
                 Ok(path.to_path_buf())
             } else {
                 match fs::canonicalize(&path) {
-                    Ok(abs_path) => Ok(abs_path.to_path_buf()),
+                    Ok(abs_path) => Ok(abs_path),
                     Err(e) => Err(ScriptError::CannotCreateAbsPath {
                         source: e,
                         path: script_path.to_string(),
