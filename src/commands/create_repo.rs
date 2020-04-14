@@ -3,7 +3,8 @@ use crate::github::create_org_repo;
 use crate::user::User;
 use std::path::PathBuf;
 
-use crate::path::{local_path_org, Directory};
+use super::models::Directory;
+use crate::path::local_path_org;
 use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
@@ -39,7 +40,7 @@ impl CreateRepoArgs {
             None => local_path_org(&self.organisation)?,
         };
 
-        let sub_dirs = common::read_dirs(&dir, &self.regex)?;
+        let sub_dirs = common::read_dirs_with_filter(&dir, &self.regex)?;
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
         let user = common::user()?;

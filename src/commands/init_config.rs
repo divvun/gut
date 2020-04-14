@@ -1,6 +1,6 @@
+use super::models::RootDirectory;
 use crate::config::Config;
 use crate::github;
-use crate::path::RootDirectory;
 use crate::user::User;
 use structopt::StructOpt;
 

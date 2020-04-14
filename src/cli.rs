@@ -1,6 +1,6 @@
 use crate::commands::{
-    AddArgs, BranchArgs, CheckoutArgs, CloneArgs, CreateArgs, InitArgs, PushArgs, RemoveArgs,
-    SetArgs, ShowArgs,
+    AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CloneArgs, CreateArgs, InitArgs, PushArgs,
+    RemoveArgs, SetArgs, ShowArgs,
 };
 use structopt::StructOpt;
 
@@ -15,6 +15,8 @@ pub struct Args {
 pub enum Commands {
     #[structopt(name = "add")]
     Add(AddArgs),
+    #[structopt(name = "apply", aliases = &["ap"])]
+    Apply(ApplyArgs),
     #[structopt(name = "branch", aliases = &["br"])]
     Branch(BranchArgs),
     #[structopt(name = "checkout", aliases = &["co"])]

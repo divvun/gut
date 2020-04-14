@@ -43,17 +43,30 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
+/// Filter directory's name by regex
+pub fn read_dirs_with_option(path: &PathBuf, filter: &Option<Filter>) -> Result<Vec<PathBuf>> {
+    match filter {
+        Some(f) => read_dirs_with_filter(path, &f),
+        None => read_dirs(path),
+    }
+}
+
+/// Filter directory's name by regex
+pub fn read_dirs_with_filter(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
+    let dirs = read_dirs(path)?;
+    Ok(PathBuf::filter(dirs, filter))
+}
+
 /// Read all dirs inside a path
 /// Filter directories
-/// Filter directory's name by regex
-pub fn read_dirs(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
+pub fn read_dirs(path: &PathBuf) -> Result<Vec<PathBuf>> {
     let entries = path.read_dir()?;
     let dirs = entries
         .filter_map(|x| x.ok())
         .map(|x| x.path())
         .filter(|x| x.is_dir())
         .collect();
-    Ok(PathBuf::filter(dirs, filter))
+    Ok(dirs)
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {
