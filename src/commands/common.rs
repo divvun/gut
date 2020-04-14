@@ -70,6 +70,9 @@ pub fn read_dirs(path: &PathBuf) -> Result<Vec<PathBuf>> {
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {
-    let confirm = Input::<String>::new().with_prompt(prompt).interact()?;
+    let confirm = Input::<String>::new()
+        .with_prompt(prompt)
+        .allow_empty(true)
+        .interact()?;
     Ok(confirm == key)
 }

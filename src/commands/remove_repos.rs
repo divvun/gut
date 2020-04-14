@@ -33,7 +33,7 @@ impl RemoveReposArgs {
         if is_confirmed {
             remove(&filtered_repos, &user_token)?;
         } else {
-            println!("Nothing got deleted!")
+            println!("Command is aborted. Nothing got deleted!")
         }
         Ok(())
     }
@@ -49,7 +49,7 @@ fn confirm(repos: &[RemoteRepo]) -> Result<bool> {
     let key = "YES";
     common::confirm(
         &format!(
-            "Are you sure you want to delete {} repo(s)? Enter {} to continue: ",
+            "Are you sure you want to delete {} repo(s)?\nEnter {} to continue",
             repos.len(),
             key
         ),
