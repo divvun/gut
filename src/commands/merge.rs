@@ -14,7 +14,7 @@ pub struct MergeArgs {
     #[structopt(long, short)]
     pub regex: Option<Filter>,
     #[structopt(long, short)]
-    pub target_branch: String,
+    pub branch: String,
     #[structopt(long, short)]
     pub abort_if_conflict: bool,
 }
@@ -26,7 +26,7 @@ impl MergeArgs {
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            match merge(&dir, &self.target_branch, self.abort_if_conflict) {
+            match merge(&dir, &self.branch, self.abort_if_conflict) {
                 Ok(status) => match status {
                     MergeStatus::FastForward => println!("Merge fast forward"),
                     MergeStatus::NormalMerge => println!("Merge made by the 'recusive' strategy"),
@@ -40,7 +40,7 @@ impl MergeArgs {
                 },
                 Err(e) => println!(
                     "Failed to merge branch {} for dir {:?} because {:?}",
-                    self.target_branch, dir, e
+                    self.branch, dir, e
                 ),
             }
         }
