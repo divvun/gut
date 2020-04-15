@@ -1,6 +1,7 @@
 use super::common;
 use crate::filter::Filter;
 use crate::git;
+use crate::git::MergeStatus;
 use crate::path::local_path_org;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
@@ -14,8 +15,6 @@ pub struct MergeArgs {
     pub regex: Option<Filter>,
     #[structopt(long, short)]
     pub target_branch: String,
-    #[structopt(long, short, default_value = "master")]
-    pub base_branch: String,
     #[structopt(long, short)]
     pub abort_if_conflict: bool,
 }
@@ -27,19 +26,21 @@ impl MergeArgs {
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            match merge(
-                &dir,
-                &self.target_branch,
-                &self.base_branch,
-                self.abort_if_conflict,
-            ) {
-                Ok(_) => println!(
-                    "Merged branch {} into {} for {:?} successfully",
-                    self.target_branch, self.base_branch, dir
-                ),
+            match merge(&dir, &self.target_branch, self.abort_if_conflict) {
+                Ok(status) => match status {
+                    MergeStatus::FastForward => println!("Merge fast forward"),
+                    MergeStatus::NormalMerge => println!("Merge made by the 'recusive' strategy"),
+                    MergeStatus::MergeWithConflict => {
+                        println!("Auto merge failed. Fix conflicts and then commit the results.")
+                    }
+                    MergeStatus::Nothing => println!("Already up to date"),
+                    MergeStatus::SkipByConflict => {
+                        println!("There are conflict(s), and we skipped")
+                    }
+                },
                 Err(e) => println!(
-                    "Failed to merge branch {} into branch {} for dir {:?} because {:?}",
-                    self.target_branch, self.base_branch, dir, e
+                    "Failed to merge branch {} for dir {:?} because {:?}",
+                    self.target_branch, dir, e
                 ),
             }
         }
@@ -48,8 +49,9 @@ impl MergeArgs {
     }
 }
 
-fn merge(dir: &PathBuf, target: &str, base: &str, abort: bool) -> Result<()> {
+fn merge(dir: &PathBuf, target: &str, abort: bool) -> Result<git::MergeStatus> {
+    println!("Merging branch {} into head for {:?}", target, dir);
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
-    git::merge_local(&git_repo, target, base, abort)?;
-    Ok(())
+    let merge_status = git::merge_local(&git_repo, target, abort)?;
+    Ok(merge_status)
 }
