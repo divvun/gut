@@ -22,4 +22,12 @@ If you want to merge a branch `A` into branch `B`, you can check out branch `B` 
 
 ### Effect
 
-This command will try to simulate `git clean -f -d` command. It will clean all repositories that match a regex pattern.
+This command will try to simulate `git clean -f -d` command. It will clean all local repositories that match a regex pattern.
+
+## Status
+
+`dadmin status -o <org> -r <regex>`
+
+### Effect
+
+This command will try to show statuses of all local repositories that match a regex pattern.
