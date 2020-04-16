@@ -38,5 +38,6 @@ fn main() -> Result<()> {
         Commands::Remove(args) => args.run(),
         Commands::Set(args) => args.run(),
         Commands::Show(args) => args.run(),
+        Commands::Status(args) => args.run(),
     }
 }
