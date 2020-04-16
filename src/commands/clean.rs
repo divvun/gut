@@ -45,7 +45,7 @@ fn clean(dir: &PathBuf) -> Result<()> {
             path::remove_path(&rf).with_context(|| format!("Cannot remove {:?}", rf))?;
             println!("{:?}", rf);
         }
-        println!("");
+        println!();
     }
 
     Ok(())
