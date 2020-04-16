@@ -44,3 +44,11 @@ impl EnsureDirExists for std::path::PathBuf {
         Ok(self)
     }
 }
+
+pub fn remove_path(path: &PathBuf) -> std::io::Result<()> {
+    if path.is_file() {
+        std::fs::remove_file(path)
+    } else {
+        std::fs::remove_dir_all(path)
+    }
+}

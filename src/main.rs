@@ -30,6 +30,7 @@ fn main() -> Result<()> {
         Commands::Branch(args) => args.run(),
         Commands::Checkout(args) => args.run(),
         Commands::Clone(args) => args.run(),
+        Commands::Clean(args) => args.run(),
         Commands::Create(args) => args.run(),
         Commands::Init(args) => args.save_config(),
         Commands::Merge(args) => args.run(),
