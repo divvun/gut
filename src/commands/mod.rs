@@ -1,5 +1,4 @@
 pub mod add;
-pub mod status;
 pub mod add_users;
 pub mod apply;
 pub mod branch;
@@ -26,6 +25,7 @@ pub mod set_team_permission;
 pub mod show;
 pub mod show_config;
 pub mod show_repos;
+pub mod status;
 
 pub use add::*;
 pub use apply::*;
