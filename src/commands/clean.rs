@@ -1,6 +1,7 @@
 use super::common;
 use crate::filter::Filter;
 use crate::git;
+use crate::path;
 use crate::path::local_path_org;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
@@ -21,20 +22,31 @@ impl CleanArgs {
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            match clean(&dir) {
-                Ok(list) => {
-                    for l in list {
-                        println!("Removing {}", l);
-                    }
-                }
-                Err(e) => println!("Failed to clean because {:?}", e),
+            if let Err(e) = clean(&dir) {
+                println!("Failed to clean dir {:?} because {:?}", dir, e);
             }
         }
         Ok(())
     }
 }
 
-fn clean(dir: &PathBuf) -> Result<Vec<String>> {
-    println!("Cleaning dir {:?}", dir);
-    Ok(Vec::new())
+fn clean(dir: &PathBuf) -> Result<()> {
+    println!("Cleaning {:?}", dir);
+    let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+    let status = git::status(&git_repo)?;
+    //println!("git status {:?}", status);
+
+    if status.new.is_empty() {
+        println!("Nothing to clean!\n");
+    } else {
+        println!("Files/directories get removed: ");
+        for f in status.new {
+            let rf = dir.join(f);
+            path::remove_path(&rf).with_context(|| format!("Cannot remove {:?}", rf))?;
+            println!("{:?}", rf);
+        }
+        println!("");
+    }
+
+    Ok(())
 }
