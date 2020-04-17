@@ -12,6 +12,8 @@ pub struct StatusArgs {
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
+    #[structopt(long, short)]
+    pub verbose: bool,
 }
 
 impl StatusArgs {
@@ -21,7 +23,7 @@ impl StatusArgs {
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            if let Err(e) = status(&dir) {
+            if let Err(e) = status(&dir, self.verbose) {
                 println!(
                     "Failed to status git status for dir {:?} because {:?}",
                     dir, e
@@ -32,19 +34,41 @@ impl StatusArgs {
     }
 }
 
-fn status(dir: &PathBuf) -> Result<()> {
+fn status(dir: &PathBuf, verbose: bool) -> Result<()> {
     println!("Status for {:?}:", dir);
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+
     let status = git::status(&git_repo)?;
+    let current_branch = git::head_shorthand(&git_repo)?;
+
+    println!("On branch {}", current_branch);
+
+    if status.is_ahead > 0 {
+        println!(
+            "Your branch is ahead of 'origin/{}' by {} commits",
+            current_branch, status.is_ahead
+        );
+    } else if status.is_behind > 0 {
+        println!(
+            "Your branch is behind of 'origin/{}' by {} commits",
+            current_branch, status.is_ahead
+        );
+    } else {
+        println!("Your branch is up to date with 'origin/{}'", current_branch);
+    }
+
+    println!();
 
     if status.is_empty() {
-        println!("Nothing change!")
+        println!("Nothing to commit, working tree is clean.");
     } else {
-        show_status("New files:", &status.new);
-        show_status("Deleted files:", &status.deleted);
-        show_status("Modified files:", &status.modified);
-        show_status("Renamed files:", &status.renamed);
-        show_status("Typechanges files:", &status.typechanges);
+        println!("Changes:");
+
+        if verbose {
+            show_detail(&status);
+        } else {
+            show_summarize(&status);
+        }
     }
 
     println!();
@@ -52,11 +76,33 @@ fn status(dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn show_status(msg: &str, list: &[String]) {
+fn show_summarize(status: &git::GitStatus) {
+    show_number_of_changes("untracked files:", &status.new);
+    show_number_of_changes("deleted files:", &status.deleted);
+    show_number_of_changes("modified files:", &status.modified);
+    show_number_of_changes("renamed files:", &status.renamed);
+    show_number_of_changes("typechanges files:", &status.typechanges);
+}
+
+fn show_detail(status: &git::GitStatus) {
+    show_detail_changes("untracked files:", &status.new);
+    show_detail_changes("deleted files:", &status.deleted);
+    show_detail_changes("modified files:", &status.modified);
+    show_detail_changes("renamed files:", &status.renamed);
+    show_detail_changes("typechanges files:", &status.typechanges);
+}
+
+fn show_detail_changes(msg: &str, list: &[String]) {
     if !list.is_empty() {
-        println!("{}", msg);
+        println!("{} {}", list.len(), msg);
         for l in list {
-            println!("{}", l);
+            println!("    {}", l);
         }
+    }
+}
+
+fn show_number_of_changes(msg: &str, list: &[String]) {
+    if !list.is_empty() {
+        println!("{} {}", list.len(), msg);
     }
 }

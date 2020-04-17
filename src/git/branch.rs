@@ -20,6 +20,14 @@ pub fn create_branch<'a>(
     repo.branch(new_branch, &commit, false)
 }
 
+pub fn head_shorthand(repo: &Repository) -> Result<String> {
+    let head_ref = repo.head()?;
+    if let Some(name) = head_ref.shorthand() {
+        return Ok(name.to_string());
+    }
+    Err(anyhow!("Current branch name is not valid utf-8"))
+}
+
 pub fn checkout_local_branch(repo: &Repository, branch_name: &str) -> Result<()> {
     let obj = repo.revparse_single(&("refs/heads/".to_owned() + branch_name))?;
     repo.checkout_tree(&obj, None)?;

@@ -7,6 +7,8 @@ pub struct GitStatus {
     pub deleted: Vec<String>,
     pub renamed: Vec<String>,
     pub typechanges: Vec<String>,
+    pub is_ahead: usize,
+    pub is_behind: usize,
 }
 
 impl GitStatus {
@@ -65,12 +67,34 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
         };
     }
 
+    //      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
+    let mut is_ahead = 0;
+    let mut is_behind = 0;
+    if repo.revparse_single("HEAD").is_ok() {
+        let head_ref = repo.revparse_single("HEAD").expect("HEAD not found").id();
+        let (ahead, behind) = repo
+            .revparse_ext("@{u}")
+            .ok()
+            .and_then(|(upstream, _)| repo.graph_ahead_behind(head_ref, upstream.id()).ok())
+            .unwrap_or((0, 0));
+
+        if ahead > 0 {
+            is_ahead = ahead;
+        }
+
+        if behind > 0 {
+            is_behind = behind;
+        }
+    }
+
     let status = GitStatus {
         new: new_files,
         modified,
         deleted,
         renamed,
         typechanges,
+        is_ahead,
+        is_behind,
     };
 
     Ok(status)
