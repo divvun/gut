@@ -38,9 +38,7 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
     let mut typechanges = vec![];
     let mut conflicted = vec![];
 
-    for entry in git_statuses
-        .iter()
-    {
+    for entry in git_statuses.iter() {
         if let Some(path) = entry.path() {
             log::debug!("status path {}, {:?}", path, entry.status());
         }
