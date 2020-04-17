@@ -26,7 +26,7 @@ This command will try to simulate `git clean -f -d` command. It will clean all l
 
 ## Status
 
-`dadmin status -o <org> -r <regex>`
+`dadmin status -o <org> -r <regex> --verbose`
 
 ### Effect
 
