@@ -77,6 +77,7 @@ fn status(dir: &PathBuf, verbose: bool) -> Result<()> {
 }
 
 fn show_summarize(status: &git::GitStatus) {
+    show_number_of_changes("conflicted files:", &status.conflicted);
     show_number_of_changes("untracked files:", &status.new);
     show_number_of_changes("deleted files:", &status.deleted);
     show_number_of_changes("modified files:", &status.modified);
@@ -85,6 +86,7 @@ fn show_summarize(status: &git::GitStatus) {
 }
 
 fn show_detail(status: &git::GitStatus) {
+    show_detail_changes("conflicted files:", &status.conflicted);
     show_detail_changes("untracked files:", &status.new);
     show_detail_changes("deleted files:", &status.deleted);
     show_detail_changes("modified files:", &status.modified);

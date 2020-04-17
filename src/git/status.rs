@@ -7,6 +7,7 @@ pub struct GitStatus {
     pub deleted: Vec<String>,
     pub renamed: Vec<String>,
     pub typechanges: Vec<String>,
+    pub conflicted: Vec<String>,
     pub is_ahead: usize,
     pub is_behind: usize,
 }
@@ -18,6 +19,7 @@ impl GitStatus {
             && self.deleted.is_empty()
             && self.renamed.is_empty()
             && self.typechanges.is_empty()
+            && self.conflicted.is_empty()
     }
 }
 
@@ -34,11 +36,14 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
     let mut deleted = vec![];
     let mut renamed = vec![];
     let mut typechanges = vec![];
+    let mut conflicted = vec![];
 
     for entry in git_statuses
         .iter()
-        .filter(|e| e.status() != git2::Status::CURRENT)
     {
+        if let Some(path) = entry.path() {
+            log::debug!("status path {}, {:?}", path, entry.status());
+        }
         let status = &entry.status();
         if git2::Status::is_wt_new(status) {
             if let Some(path) = entry.path() {
@@ -63,6 +68,11 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
         if git2::Status::is_wt_modified(status) {
             if let Some(path) = entry.path() {
                 modified.push(path.to_string());
+            }
+        };
+        if git2::Status::is_conflicted(status) {
+            if let Some(path) = entry.path() {
+                conflicted.push(path.to_string());
             }
         };
     }
@@ -93,6 +103,7 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
         deleted,
         renamed,
         typechanges,
+        conflicted,
         is_ahead,
         is_behind,
     };
