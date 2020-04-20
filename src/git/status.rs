@@ -18,8 +18,22 @@ impl GitStatus {
             && self.modified.is_empty()
             && self.deleted.is_empty()
             && self.renamed.is_empty()
-            && self.typechanges.is_empty()
             && self.conflicted.is_empty()
+    }
+
+    pub fn can_commit(&self) -> bool {
+        self.conflicted.is_empty()
+    }
+
+    pub fn addable_list(&self) -> Vec<String> {
+        let mut list = vec![];
+        list.push(self.new.clone());
+        list.push(self.modified.clone());
+        list.into_iter().flat_map(|x| x).collect()
+    }
+
+    pub fn should_commit(&self) -> bool {
+        self.can_commit() && !self.is_empty()
     }
 }
 
@@ -27,7 +41,7 @@ pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
     let mut opts = StatusOptions::new();
     opts.include_ignored(true)
         .include_untracked(true)
-        .recurse_untracked_dirs(false)
+        .recurse_untracked_dirs(true)
         .exclude_submodules(false);
 
     let git_statuses = repo.statuses(Some(&mut opts))?;

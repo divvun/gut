@@ -1,10 +1,9 @@
 use super::common;
 use crate::filter::Filter;
 use crate::git;
-use crate::path;
 use crate::path::local_path_org;
 use anyhow::{Context, Result};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -32,7 +31,48 @@ impl CommitArgs {
     }
 }
 
-fn commit(dir: &PathBuf, msg: &str) -> Result<()> {
-    println!("{}", msg);
-    Ok(())
+fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
+    let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+
+    let status = git::status(&git_repo)?;
+    //let current_branch = git::head_shorthand(&git_repo)?;
+
+    if !status.can_commit() {
+        return Ok(CommitResult::Conflict);
+    }
+
+    if !status.should_commit() {
+        return Ok(CommitResult::NoChanges);
+    }
+
+    let mut index = git_repo.index()?;
+
+    let addable_list = status.addable_list();
+    for p in addable_list {
+        log::debug!("addable file: {}", p);
+        let path = Path::new(&p);
+        index.add_path(path)?;
+    }
+
+    for p in status.deleted {
+        log::debug!("removed file: {}", p);
+        let path = Path::new(&p);
+        index.remove_path(path)?;
+    }
+
+    let tree_id = index.write_tree()?;
+    let result_tree = git_repo.find_tree(tree_id)?;
+
+    let head_oid = git_repo.head()?.target().expect("Head needs oid");
+    let head_commit = git_repo.find_commit(head_oid)?;
+
+    git::commit(&git_repo, &result_tree, msg, &[&head_commit])?;
+
+    Ok(CommitResult::Success)
+}
+
+enum CommitResult {
+    Conflict,
+    NoChanges,
+    Success,
 }

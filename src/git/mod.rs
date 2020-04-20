@@ -1,5 +1,6 @@
 pub mod branch;
 pub mod clone;
+pub mod commit;
 pub mod common;
 pub mod fetch;
 pub mod merge;
@@ -10,6 +11,7 @@ pub mod status;
 
 pub use branch::*;
 pub use clone::{Clonable, CloneError};
+pub use commit::*;
 pub use fetch::*;
 pub use merge::*;
 pub use models::*;
