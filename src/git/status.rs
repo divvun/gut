@@ -58,9 +58,9 @@ pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Erro
 
     for entry in git_statuses.iter() {
         let status = &entry.status();
-        if let Some(path) = entry.path() {
-            log::debug!("entry {:?} {}", entry.status(), path);
-        }
+        //if let Some(path) = entry.path() {
+        //log::debug!("entry {:?} {}", entry.status(), path);
+        //}
 
         if Status::is_wt_new(status) {
             if let Some(path) = entry.path() {
