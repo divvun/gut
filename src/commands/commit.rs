@@ -34,7 +34,7 @@ impl CommitArgs {
 fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    let status = git::status(&git_repo)?;
+    let status = git::status(&git_repo, true)?;
     //let current_branch = git::head_shorthand(&git_repo)?;
 
     if !status.can_commit() {

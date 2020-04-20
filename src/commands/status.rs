@@ -75,7 +75,7 @@ fn status(dir: &PathBuf, verbose: bool) -> Result<(GitStatus, Vec<Row>)> {
 
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    let status = git::status(&git_repo)?;
+    let status = git::status(&git_repo, false)?;
     let current_branch = git::head_shorthand(&git_repo)?;
 
     let rows = if verbose {

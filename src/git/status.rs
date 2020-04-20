@@ -37,11 +37,11 @@ impl GitStatus {
     }
 }
 
-pub fn status(repo: &Repository) -> Result<GitStatus, Error> {
+pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Error> {
     let mut opts = StatusOptions::new();
     opts.include_ignored(true)
         .include_untracked(true)
-        .recurse_untracked_dirs(true)
+        .recurse_untracked_dirs(untracked_file)
         .exclude_submodules(false);
 
     let git_statuses = repo.statuses(Some(&mut opts))?;
