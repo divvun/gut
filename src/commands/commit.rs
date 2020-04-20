@@ -1,7 +1,7 @@
 use super::common;
 use crate::filter::Filter;
 use crate::git;
-use crate::path::local_path_org;
+use crate::path;
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -18,13 +18,22 @@ pub struct CommitArgs {
 
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
-        let target_dir = local_path_org(&self.organisation)?;
+        let target_dir = path::local_path_org(&self.organisation)?;
 
         let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
 
         for dir in sub_dirs {
-            if let Err(e) = commit(&dir, &self.message) {
-                println!("Failed to commit dir {:?} because {:?}", dir, e);
+            let dir_name = path::dir_name(&dir)?;
+            match commit(&dir, &self.message) {
+                Err(e) => println!("{}: Failed to commit because {:?}", dir_name, e),
+                Ok(result) => match result {
+                    CommitResult::Conflict => println!(
+                        "{}: There are conflicts. Fix conflicts and then commit the results.",
+                        dir_name
+                    ),
+                    CommitResult::NoChanges => println!("{}: There is no changes.", dir_name),
+                    CommitResult::Success => println!("{}: Commit success.", dir_name),
+                },
             }
         }
         Ok(())
@@ -49,13 +58,13 @@ fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
 
     let addable_list = status.addable_list();
     for p in addable_list {
-        log::debug!("addable file: {}", p);
+        //log::debug!("addable file: {}", p);
         let path = Path::new(&p);
         index.add_path(path)?;
     }
 
     for p in status.deleted {
-        log::debug!("removed file: {}", p);
+        //log::debug!("removed file: {}", p);
         let path = Path::new(&p);
         index.remove_path(path)?;
     }
