@@ -31,3 +31,14 @@ This command will try to simulate `git clean -f -d` command. It will clean all l
 ### Effect
 
 This command will try to show statuses of all local repositories that match a regex pattern.
+
+## Commit
+
+`dadmin commit -o <org> -r <regex> --message <message>`
+
+### Effect
+
+This command will add all changes and create a commit with the provided message for all local repositories that match a regex pattern.
+
+If there is any conflict, this will be aborted.
+If there is no changes, this also will be aborted.
