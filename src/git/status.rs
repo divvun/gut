@@ -1,7 +1,8 @@
-use git2::{Error, Repository, StatusOptions};
+use git2::{Error, Repository, Status, StatusOptions};
 
 #[derive(Debug)]
 pub struct GitStatus {
+    pub added: Vec<String>,
     pub new: Vec<String>,
     pub modified: Vec<String>,
     pub deleted: Vec<String>,
@@ -19,6 +20,7 @@ impl GitStatus {
             && self.deleted.is_empty()
             && self.renamed.is_empty()
             && self.conflicted.is_empty()
+            && self.added.is_empty()
     }
 
     pub fn can_commit(&self) -> bool {
@@ -29,7 +31,7 @@ impl GitStatus {
         let mut list = vec![];
         list.push(self.new.clone());
         list.push(self.modified.clone());
-        list.into_iter().flat_map(|x| x).collect()
+        list.into_iter().flatten().collect()
     }
 
     pub fn should_commit(&self) -> bool {
@@ -45,6 +47,8 @@ pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Erro
         .exclude_submodules(false);
 
     let git_statuses = repo.statuses(Some(&mut opts))?;
+
+    let mut added = vec![];
     let mut new_files = vec![];
     let mut modified = vec![];
     let mut deleted = vec![];
@@ -54,36 +58,44 @@ pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Erro
 
     for entry in git_statuses.iter() {
         let status = &entry.status();
-        if git2::Status::is_wt_new(status) {
+        if let Some(path) = entry.path() {
+            log::debug!("entry {:?} {}", entry.status(), path);
+        }
+
+        if Status::is_wt_new(status) {
             if let Some(path) = entry.path() {
                 new_files.push(path.to_string());
             }
-        };
-        if git2::Status::is_wt_deleted(status) {
+        } else if Status::is_wt_deleted(status) {
             if let Some(path) = entry.path() {
                 deleted.push(path.to_string());
             }
-        };
-        if git2::Status::is_wt_renamed(status) {
+        } else if Status::is_wt_renamed(status) {
             if let Some(path) = entry.path() {
                 renamed.push(path.to_string());
             }
-        };
-        if git2::Status::is_wt_typechange(status) {
+        } else if Status::is_wt_typechange(status) {
             if let Some(path) = entry.path() {
                 typechanges.push(path.to_string());
             }
-        };
-        if git2::Status::is_wt_modified(status) {
+        } else if Status::is_wt_modified(status) {
             if let Some(path) = entry.path() {
                 modified.push(path.to_string());
             }
-        };
-        if git2::Status::is_conflicted(status) {
+        } else if Status::is_conflicted(status) {
             if let Some(path) = entry.path() {
                 conflicted.push(path.to_string());
             }
-        };
+        } else if Status::is_index_new(status)
+            || Status::is_index_modified(status)
+            || Status::is_index_deleted(status)
+            || Status::is_index_renamed(status)
+            || Status::is_index_typechange(status)
+        {
+            if let Some(path) = entry.path() {
+                added.push(path.to_string());
+            }
+        }
     }
 
     //      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
@@ -107,6 +119,7 @@ pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Erro
     }
 
     let status = GitStatus {
+        added,
         new: new_files,
         modified,
         deleted,
