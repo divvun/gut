@@ -4,13 +4,11 @@ use crate::user::User;
 use std::path::PathBuf;
 
 use super::models::Directory;
-use crate::path::local_path_org;
+use crate::path;
 use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
-use crate::git::open;
-use crate::git::push;
-use crate::git::GitCredential;
+use crate::git::{open, push, Clonable, GitCredential, GitRepo};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -29,23 +27,26 @@ pub struct CreateRepoArgs {
     pub no_push: bool,
     #[structopt(long)]
     pub override_origin: bool,
+    #[structopt(long)]
+    pub clone: bool,
 }
 
 impl CreateRepoArgs {
-    pub fn create_repo(&self) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         log::debug!("Create Repo {:?}", self);
 
         let dir = match &self.dir {
             Some(d) => d.path.clone(),
-            None => local_path_org(&self.organisation)?,
+            None => path::local_path_org(&self.organisation)?,
         };
 
         let sub_dirs = common::read_dirs_with_filter(&dir, &self.regex)?;
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
+
         let user = common::user()?;
         for dir in sub_dirs {
-            match create_repo(
+            create_and_clone(
                 &self.organisation,
                 &dir,
                 self.public,
@@ -54,13 +55,64 @@ impl CreateRepoArgs {
                 self.use_https,
                 self.no_push,
                 self.override_origin,
-            ) {
-                Ok((name, url)) => println!("Created repo for {} successfully at: {}", name, url),
-                Err(e) => println!("Failed to create repo for dir: {:?} because {:?}", &dir, e),
-            }
+                self.clone,
+            );
         }
         Ok(())
     }
+}
+
+fn create_and_clone(
+    org: &str,
+    dir: &PathBuf,
+    public: bool,
+    user: &User,
+    remote_name: &str,
+    use_https: bool,
+    no_push: bool,
+    override_remote: bool,
+    clone: bool,
+) {
+    match create_repo(
+        org,
+        dir,
+        public,
+        user,
+        remote_name,
+        use_https,
+        no_push,
+        override_remote,
+    ) {
+        Ok(created_repo) => {
+            println!(
+                "Created repo for {} successfully at: {}",
+                created_repo.name, created_repo.html_url
+            );
+            if !clone {
+                return;
+            }
+
+            match clone_repo(&created_repo, user, org, use_https) {
+                Ok(gp) => {
+                    println!("And then cloned at {:?}", gp.local_path);
+                }
+                Err(ce) => {
+                    println!("Clone failed because of {}", ce);
+                }
+            }
+        }
+        Err(e) => {
+            println!("Failed to create repo for dir: {:?} because {:?}", &dir, e);
+        }
+    }
+}
+
+fn clone_repo(repo: &CreateRepo, user: &User, org: &str, use_https: bool) -> Result<GitRepo> {
+    let git_repo = repo.to_git_repo(org, user, use_https)?;
+
+    let (gp, _) = git_repo.gclone()?;
+
+    Ok(gp)
 }
 
 /// Check if {dir} is a git repository
@@ -78,7 +130,7 @@ fn create_repo(
     use_https: bool,
     no_push: bool,
     override_remote: bool,
-) -> Result<(String, String)> {
+) -> Result<CreateRepo> {
     let git_repo = open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
     if git_repo.find_remote(remote_name).is_ok() {
@@ -103,6 +155,7 @@ fn create_repo(
         return Err(anyhow!("This repository doesn't have any local branch"));
     }
 
+    // todo path::dir_name
     let repo_name = dir
         .file_name()
         .ok_or_else(|| anyhow!("{:?} does not have a vaild name"))?
@@ -125,5 +178,40 @@ fn create_repo(
         push::push(&git_repo, &mut remote, Some(cred))?;
     }
 
-    Ok((repo_name.to_string(), created_repo.html_url))
+    let create_repo = CreateRepo {
+        name: repo_name.to_string(),
+        html_url: created_repo.html_url,
+        ssh_url: created_repo.ssh_url,
+        https_url: created_repo.clone_url,
+    };
+
+    Ok(create_repo)
+}
+
+#[derive(Debug)]
+struct CreateRepo {
+    name: String,
+    html_url: String,
+    ssh_url: String,
+    https_url: String,
+}
+
+impl CreateRepo {
+    fn to_git_repo(&self, org: &str, user: &User, use_https: bool) -> Result<GitRepo> {
+        let local_path = path::local_path_repo(org, &self.name)
+            .ok_or_else(|| anyhow!("Cannot create local path for {}/{}", org, self.name))?;
+        let remote_url = if use_https {
+            self.https_url.to_string()
+        } else {
+            self.ssh_url.to_string()
+        };
+
+        let cred = GitCredential::from(user);
+
+        Ok(GitRepo {
+            remote_url,
+            local_path,
+            cred: Some(cred),
+        })
+    }
 }

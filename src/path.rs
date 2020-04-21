@@ -21,7 +21,7 @@ pub fn user_path() -> Option<PathBuf> {
     Some(config)
 }
 
-pub fn local_path(organisation: &str, name: &str) -> Option<PathBuf> {
+pub fn local_path_repo(organisation: &str, name: &str) -> Option<PathBuf> {
     let root = Config::root().ok()?;
     let root_dir = Path::new(&root);
     let local_path = root_dir.join(organisation).join(name);
