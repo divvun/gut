@@ -1,5 +1,20 @@
 # USAGE
 
+## Add
+
+```
+    -o, --organisation <organisation>     [default: divvun]
+    -r, --role <role>                     [default: member]
+    -t, --team-slug <team-slug>          
+    -u, --users <users>...               
+```
+
+Users must be a space separated list of GitHub user ID's, possibly also multiple `-u` options.
+
+### Effect
+
+Sends an invitation request to the specified user(s), to become a member of the specified organisation.
+
 ## Merge
 
 `dadmin merge -o <org> -r <regex> --branch <branch> --abort-if-conflict`

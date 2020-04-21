@@ -4,4 +4,6 @@
 
 This is a Git(Hub) multirepo maintenance tool, designed specific for divvun.
 
+There are some [usage instructions](USAGE.md) under development.
+
 More details to follow!
