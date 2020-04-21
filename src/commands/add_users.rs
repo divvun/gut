@@ -12,6 +12,8 @@ pub struct AddUsersArgs {
     #[structopt(long, short, default_value = "member")]
     pub role: String, // Fixme we can change this one to an enum Role = Owner | Member
     #[structopt(long, short)]
+    pub emails: Vec<String>,
+    #[structopt(long, short)]
     pub users: Vec<String>,
     #[structopt(long, short)]
     pub team_slug: Option<String>,
