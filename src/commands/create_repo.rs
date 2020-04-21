@@ -8,7 +8,7 @@ use crate::path;
 use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
-use crate::git::{open, push, Clonable, CloneError, GitCredential, GitRepo};
+use crate::git::{open, push, Clonable, GitCredential, GitRepo};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
