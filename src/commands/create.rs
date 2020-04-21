@@ -23,7 +23,7 @@ impl CreateArgs {
             CreateArgs::Discussion(args) => args.create_discusstion(),
             CreateArgs::Team(args) => args.create_team(),
             CreateArgs::Branch(args) => args.create_branch(),
-            CreateArgs::Repo(args) => args.create_repo(),
+            CreateArgs::Repo(args) => args.run(),
         }
     }
 }

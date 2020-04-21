@@ -41,11 +41,7 @@ impl CloneArgs {
 fn print_results(repos: &[Result<GitRepo, CloneError>]) {
     for x in repos {
         match x {
-            Ok(p) => println!(
-                "Cloned {} success at {}",
-                p.remote_url,
-                p.local_path.to_str().unwrap()
-            ),
+            Ok(p) => println!("Cloned {} success at {:?}", p.remote_url, p.local_path),
             Err(e) => println!("Clone {}, failed because of {}", e.remote_url, e.source),
         }
     }
