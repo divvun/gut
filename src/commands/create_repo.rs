@@ -215,7 +215,3 @@ impl CreateRepo {
         })
     }
 }
-
-// clone after create
-// this may need a clone common function
-// for both clone and create command
