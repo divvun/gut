@@ -1,4 +1,5 @@
 use super::config::Config;
+use anyhow::Context;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -51,4 +52,14 @@ pub fn remove_path(path: &PathBuf) -> std::io::Result<()> {
     } else {
         std::fs::remove_dir_all(path)
     }
+}
+
+pub fn dir_name(path: &PathBuf) -> anyhow::Result<String> {
+    let dir_name = path
+        .file_name()
+        .with_context(|| format!("{:?}, directory name must be in utf-8", path))?
+        .to_str()
+        .with_context(|| format!("{:?}, directory name must be in utf-8", path))?
+        .to_string();
+    Ok(dir_name)
 }

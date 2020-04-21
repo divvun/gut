@@ -1,3 +1,4 @@
+use super::commit;
 use git2::{Error, Index, Repository};
 
 pub enum MergeStatus {
@@ -89,19 +90,9 @@ fn normal_merge(
     let result_tree = repo.find_tree(idx.write_tree_to(repo)?)?;
     // now create the merge commit
     let msg = format!("Merge branch '{}'", branch);
-    let sig = repo.signature()?;
     let local_commit = repo.find_commit(local.id())?;
     let remote_commit = repo.find_commit(remote.id())?;
-    // Do our merge commit and set current branch head to that commit.
-    let _merge_commit = repo.commit(
-        Some("HEAD"),
-        &sig,
-        &sig,
-        &msg,
-        &result_tree,
-        &[&local_commit, &remote_commit],
-    )?;
-    repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
+    commit::commit(repo, &result_tree, &msg, &[&local_commit, &remote_commit])?;
     Ok(MergeStatus::NormalMerge)
 }
 

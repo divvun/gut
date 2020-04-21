@@ -2,7 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
-use crate::path::local_path_org;
+use crate::path::{dir_name, local_path_org};
 use anyhow::{Context, Result};
 use prettytable::{cell, format, row, Row, Table};
 use std::path::PathBuf;
@@ -67,15 +67,10 @@ impl StatusArgs {
 }
 
 fn status(dir: &PathBuf, verbose: bool) -> Result<(GitStatus, Vec<Row>)> {
-    let dir_name = dir
-        .file_name()
-        .with_context(|| format!("{:?}, repo name must be in utf-8", dir))?
-        .to_str()
-        .with_context(|| format!("{:?}, repo name must be in utf-8", dir))?;
-
+    let dir_name = dir_name(dir)?;
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    let status = git::status(&git_repo)?;
+    let status = git::status(&git_repo, false)?;
     let current_branch = git::head_shorthand(&git_repo)?;
 
     let rows = if verbose {

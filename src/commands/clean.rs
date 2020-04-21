@@ -33,7 +33,7 @@ impl CleanArgs {
 fn clean(dir: &PathBuf) -> Result<()> {
     println!("Cleaning {:?}", dir);
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
-    let status = git::status(&git_repo)?;
+    let status = git::status(&git_repo, false)?;
     //println!("git status {:?}", status);
 
     if status.new.is_empty() {
