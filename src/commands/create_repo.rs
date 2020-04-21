@@ -4,13 +4,11 @@ use crate::user::User;
 use std::path::PathBuf;
 
 use super::models::Directory;
-use crate::path::local_path_org;
+use crate::path;
 use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
-use crate::git::open;
-use crate::git::push;
-use crate::git::GitCredential;
+use crate::git::{GitCredential, open, push};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -29,6 +27,8 @@ pub struct CreateRepoArgs {
     pub no_push: bool,
     #[structopt(long)]
     pub override_origin: bool,
+    #[structopt(long)]
+    pub clone: bool,
 }
 
 impl CreateRepoArgs {
@@ -37,7 +37,7 @@ impl CreateRepoArgs {
 
         let dir = match &self.dir {
             Some(d) => d.path.clone(),
-            None => local_path_org(&self.organisation)?,
+            None => path::local_path_org(&self.organisation)?,
         };
 
         let sub_dirs = common::read_dirs_with_filter(&dir, &self.regex)?;
@@ -55,7 +55,7 @@ impl CreateRepoArgs {
                 self.no_push,
                 self.override_origin,
             ) {
-                Ok((name, url)) => println!("Created repo for {} successfully at: {}", name, url),
+                Ok(repo) => println!("Created repo for {} successfully at: {}", repo.name, repo.url),
                 Err(e) => println!("Failed to create repo for dir: {:?} because {:?}", &dir, e),
             }
         }
@@ -78,7 +78,7 @@ fn create_repo(
     use_https: bool,
     no_push: bool,
     override_remote: bool,
-) -> Result<(String, String)> {
+) -> Result<CreateRepo> {
     let git_repo = open::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
     if git_repo.find_remote(remote_name).is_ok() {
@@ -103,6 +103,7 @@ fn create_repo(
         return Err(anyhow!("This repository doesn't have any local branch"));
     }
 
+    // todo path::dir_name
     let repo_name = dir
         .file_name()
         .ok_or_else(|| anyhow!("{:?} does not have a vaild name"))?
@@ -125,5 +126,20 @@ fn create_repo(
         push::push(&git_repo, &mut remote, Some(cred))?;
     }
 
-    Ok((repo_name.to_string(), created_repo.html_url))
+    let create_repo = CreateRepo {
+        name: repo_name.to_string(),
+        url: created_repo.html_url,
+    };
+
+    Ok(create_repo)
 }
+
+#[derive(Debug)]
+struct CreateRepo {
+    name: String,
+    url: String,
+}
+
+// clone after create
+// this may need a clone common function
+// for both clone and create command
