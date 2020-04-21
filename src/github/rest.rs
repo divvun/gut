@@ -357,6 +357,7 @@ pub struct CreateRepoResponse {
     pub full_name: String,
     pub html_url: String,
     pub ssh_url: String,
+    pub clone_url: String,
 }
 
 pub fn delete_repo(owner: &str, repo: &str, token: &str) -> Result<()> {

@@ -11,7 +11,7 @@ pub trait Clonable {
 }
 
 #[derive(thiserror::Error, Debug)]
-#[error("Cannot clone repository with {remote_url} because of this error {source}")]
+#[error("Cannot clone repository with {remote_url} because of {source}")]
 pub struct CloneError {
     pub source: git2::Error,
     pub remote_url: String,
