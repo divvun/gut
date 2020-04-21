@@ -26,7 +26,7 @@ impl StatusArgs {
 
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-        table.set_titles(row!["Repo", "branch", "±origin", "U D M C"]);
+        table.set_titles(row!["Repo", "branch", "±origin", "U D M C A"]);
 
         println!("Status for repos in org {}\n", self.organisation);
 
@@ -93,11 +93,12 @@ fn change_summarize(dir_name: &str, branch: &str, status: &GitStatus) -> Vec<Row
 
     // U D M C
     let change = format!(
-        "{} {} {} {}",
+        "{} {} {} {} {}",
         &status.new.len(),
         &status.deleted.len(),
         &status.modified.len(),
-        &status.conflicted.len()
+        &status.conflicted.len(),
+        &status.added.len()
     );
 
     vec![row![dir_name, branch, ahead_behind, change]]
@@ -110,6 +111,7 @@ fn show_detail(dir_name: &str, branch: &str, status: &GitStatus) -> Vec<Row> {
     rows.push(show_detail_changes("U", &status.new));
     rows.push(show_detail_changes("D", &status.deleted));
     rows.push(show_detail_changes("M", &status.modified));
+    rows.push(show_detail_changes("A", &status.added));
     if !status.is_empty() {
         rows.push(vec![row!["----"]]);
     }
