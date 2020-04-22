@@ -1,12 +1,12 @@
 # USAGE
 
-## Add
+## Add Users
 
 ```
     -o, --organisation <organisation>     [default: divvun]
     -r, --role <role>                     [default: member]
-    -t, --team-slug <team-slug>          
-    -u, --users <users>...               
+    -t, --team-slug <team-slug>
+    -u, --users <users>...
 ```
 
 Users must be a space separated list of GitHub user ID's, possibly also multiple `-u` options.
@@ -14,6 +14,30 @@ Users must be a space separated list of GitHub user ID's, possibly also multiple
 ### Effect
 
 Sends an invitation request to the specified user(s), to become a member of the specified organisation.
+
+## Invite Users
+
+```
+dadmin-invite-users 0.1.0
+Invite users to an organisation by emails
+
+USAGE:
+    dadmin invite users [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -e, --emails <emails>...             list of user's emails
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --role <role>                    Role of users It should be one of ["member", "admin", "billing_manager"]
+                                         [default: member]
+```
+
+### Effect
+
+Invite users by emails.
 
 ## Merge
 
