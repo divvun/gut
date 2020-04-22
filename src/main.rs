@@ -33,6 +33,7 @@ fn main() -> Result<()> {
         Commands::Clean(args) => args.run(),
         Commands::Commit(args) => args.run(),
         Commands::Create(args) => args.run(),
+        Commands::Fetch(args) => args.run(),
         Commands::Init(args) => args.save_config(),
         Commands::Invite(args) => args.run(),
         Commands::Merge(args) => args.run(),

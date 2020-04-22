@@ -109,3 +109,22 @@ This command will add all changes and create a commit with the provided message 
 
 If there is any conflict, this will be aborted.
 If there is no changes, this also will be aborted.
+
+## Fetch
+
+```
+dadmin-fetch 0.1.0
+Fetch all local repositories that match a regex
+
+USAGE:
+    dadmin fetch [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+
+```
