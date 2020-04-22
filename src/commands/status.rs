@@ -44,7 +44,7 @@ impl StatusArgs {
                     if !status.is_empty() {
                         uncommited_repo_count += 1;
                     }
-                    if status.is_ahead > 0 {
+                    if status.is_ahead > 0 || status.is_behind > 0 {
                         unpushed_repo_count += 1;
                     }
                 }
