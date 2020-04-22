@@ -211,6 +211,7 @@ pub fn remove_user_from_team(org: &str, team: &str, user: &str, token: &str) -> 
     process_response(&response).map(|_| ())
 }
 
+// https://developer.github.com/v3/teams/members/#add-or-update-team-membership
 pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &str) -> Result<()> {
     let url = format!(
         "https://api.github.com/orgs/{}/teams/{}/memberships/{}",
@@ -224,6 +225,27 @@ pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &s
     let response = put(&url, &body, token)?;
 
     process_response(&response).map(|_| ())
+}
+
+pub fn invite_user_to_org(org: &str, role: &str, email: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/orgs/{}/invitations", org);
+
+    let body = InviteUserToOrgBody {
+        email: email.to_string(),
+        role: role.to_string(),
+        team_ids: vec![],
+    };
+
+    let response = post(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct InviteUserToOrgBody {
+    email: String,
+    role: String,
+    team_ids: Vec<String>,
 }
 
 pub fn add_user_to_org(org: &str, role: &str, user: &str, token: &str) -> Result<()> {
