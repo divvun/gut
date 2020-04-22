@@ -1,6 +1,6 @@
 use super::common;
 use super::models::GitCredential;
-use git2::{AutotagOption, Error, FetchOptions, RemoteCallbacks, Repository};
+use git2::{AutotagOption, Error, FetchOptions, Repository};
 use std::io::{self, Write};
 use std::str;
 
