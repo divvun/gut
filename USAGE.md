@@ -3,10 +3,38 @@
 ## Add Users
 
 ```
-    -o, --organisation <organisation>     [default: divvun]
-    -r, --role <role>                     [default: member]
+dadmin-add-users 0.1.0
+Invite users to an organisation by usernames.
+
+If you specify team_slug it'll try to invite users to the provided team
+
+USAGE:
+    dadmin add users [OPTIONS]
+
+FLAGS:
+    -h, --help
+            Prints help information
+
+    -V, --version
+            Prints version information
+
+
+OPTIONS:
+    -o, --organisation <organisation>
+            Target organisation name [default: divvun]
+
+    -r, --role <role>
+            Role of users
+
+            It should be one of ["member", "admin"].
+
+            If you specify a team role should be one of ["member", "maintainer"] [default: member]
     -t, --team-slug <team-slug>
+            optional team slug
+
     -u, --users <users>...
+            list of user's usernames
+
 ```
 
 Users must be a space separated list of GitHub user ID's, possibly also multiple `-u` options.
