@@ -9,10 +9,13 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Fetch all local repositories that match a regex
 pub struct FetchArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
 }
 
