@@ -6,15 +6,24 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Invite users to an organisation by usernames.
+///
+/// If you specify team_slug it'll try to invite users to the provided team
 pub struct AddUsersArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short, default_value = "member")]
-    pub role: String, // Fixme we can change this one to an enum Role = Owner | Member
+    /// Role of users
+    ///
+    /// It should be one of ["member", "admin"].
+    ///
+    /// If you specify a team role should be one of ["member", "maintainer"]
+    pub role: String,
     #[structopt(long, short)]
-    pub emails: Vec<String>,
-    #[structopt(long, short)]
+    /// list of user's usernames
     pub users: Vec<String>,
+    /// optional team slug
     #[structopt(long, short)]
     pub team_slug: Option<String>,
 }
