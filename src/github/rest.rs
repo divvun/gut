@@ -64,19 +64,33 @@ fn delete(url: &str, token: &str) -> Result<req::Response, reqwest::Error> {
 }
 
 #[derive(Serialize, Debug)]
-struct DefaultBranch {
+struct UpdateRepoBody {
     default_branch: Option<String>,
     private: Option<bool>,
     description: Option<String>,
 }
 
+impl UpdateRepoBody {
+    fn default_branch(branch: &str) -> UpdateRepoBody {
+        UpdateRepoBody {
+            default_branch: Some(branch.to_string()),
+            private: None,
+            description: None,
+        }
+    }
+
+    fn repo_visibility(is_private: bool) -> UpdateRepoBody {
+        UpdateRepoBody {
+            default_branch: None,
+            private: Some(is_private),
+            description: None,
+        }
+    }
+}
+
 pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Result<()> {
     let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
-    let body = DefaultBranch {
-        default_branch: Some(branch.to_string()),
-        private: None,
-        description: None,
-    };
+    let body = UpdateRepoBody::default_branch(branch);
     let response = patch(&url, &body, token)?;
 
     process_response(&response).map(|_| ())
@@ -84,11 +98,7 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
 
 pub fn set_repo_visibility(repo: &RemoteRepo, is_private: bool, token: &str) -> Result<()> {
     let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
-    let body = DefaultBranch {
-        default_branch: None,
-        private: Some(is_private),
-        description: None,
-    };
+    let body = UpdateRepoBody::repo_visibility(is_private);
     let response = patch(&url, &body, token)?;
 
     process_response(&response).map(|_| ())
