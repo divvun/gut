@@ -36,9 +36,9 @@ pub trait Filterable {
     fn filter<T: Filterable>(vec: Vec<T>, filter: &Filter) -> Vec<T> {
         vec.into_iter().filter(|f| f.is_match(filter)).collect()
     }
-    fn filter_with_option<T: Filterable>(vec: Vec<T>, option: &Option<Filter>) -> Vec<T> {
+    fn filter_with_option<T: Filterable>(vec: Vec<T>, option: Option<&Filter>) -> Vec<T> {
         match option {
-            Some(regex) => <T as Filterable>::filter(vec, &regex),
+            Some(regex) => <T as Filterable>::filter(vec, regex),
             None => vec,
         }
     }

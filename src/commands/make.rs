@@ -1,31 +1,33 @@
 use super::common;
-
+use anyhow::Result;
 use crate::filter::Filter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-pub struct ShowReposArgs {
+pub enum Visibility {
+    #[structopt(name = "public")]
+    Public,
+    #[structopt(name = "private")]
+    Private,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct MakeArgs {
+    #[structopt(flatten)]
+    pub visibility: Visibility,
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
 }
 
-impl ShowReposArgs {
-    pub fn show(&self) -> anyhow::Result<()> {
+impl MakeArgs {
+    pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
 
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user_token)?;
 
-        print_results(&filtered_repos);
-
         Ok(())
-    }
-}
-
-fn print_results<T: std::fmt::Debug>(repos: &[T]) {
-    for repo in repos {
-        println!("{:?}", repo);
     }
 }

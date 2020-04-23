@@ -37,6 +37,7 @@ fn main() -> Result<()> {
         Commands::Init(args) => args.save_config(),
         Commands::Invite(args) => args.run(),
         Commands::Merge(args) => args.run(),
+        Commands::Make(args) => args.run(),
         Commands::Push(args) => args.run(),
         Commands::Remove(args) => args.run(),
         Commands::Set(args) => args.run(),

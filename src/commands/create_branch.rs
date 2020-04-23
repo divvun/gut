@@ -29,7 +29,7 @@ impl CreateBranchArgs {
         let user = common::user()?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, &self.regex, &user.token)?;
+            common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user.token)?;
 
         for repo in filtered_repos {
             let result = create_branch(

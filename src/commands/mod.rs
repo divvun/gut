@@ -1,4 +1,5 @@
 pub mod add;
+pub mod make;
 pub mod add_users;
 pub mod apply;
 pub mod branch;
@@ -50,3 +51,4 @@ pub use remove_repos::*;
 pub use set::*;
 pub use show::*;
 pub use status::*;
+pub use make::*;
