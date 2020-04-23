@@ -20,7 +20,6 @@ pub struct DefaultBranchArgs {
 impl DefaultBranchArgs {
     pub fn set_default_branch(&self) -> Result<()> {
         let token = common::user_token()?;
-
         let repos = common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &token)?;
 
         for repo in repos {

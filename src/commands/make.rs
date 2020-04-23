@@ -1,6 +1,7 @@
 use super::common;
 use anyhow::Result;
 use crate::filter::Filter;
+use crate::github;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -28,6 +29,24 @@ impl MakeArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user_token)?;
 
+        let is_private = match self.visibility {
+            Visibility::Private => true,
+            Visibility::Public => false,
+        };
+
+        for repo in filtered_repos {
+            let result = github::set_repo_visibility(&repo, is_private, &user_token);
+            match result {
+                Ok(_) => println!(
+                    "Make repo {} to {:?} successfully",
+                    repo.name, self.visibility
+                ),
+                Err(e) => println!(
+                    "Failed to make repo {} to {:?} because {:?}",
+                    repo.name, self.visibility, e
+                ),
+            }
+        }
         Ok(())
     }
 }
