@@ -1,7 +1,6 @@
 use super::common;
 use super::models::Script;
 use crate::filter::Filter;
-use crate::path::local_path_org;
 use anyhow::{anyhow, Result};
 use std::path::PathBuf;
 use std::process::{Command, Output};
@@ -19,9 +18,8 @@ pub struct ApplyArgs {
 
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
-        let target_dir = local_path_org(&self.organisation)?;
-
-        let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         let script_path = self
             .script

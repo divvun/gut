@@ -1,5 +1,4 @@
-use super::config::Config;
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -21,17 +20,21 @@ pub fn user_path() -> Option<PathBuf> {
     Some(config)
 }
 
-pub fn local_path_repo(organisation: &str, name: &str) -> Option<PathBuf> {
-    let root = Config::root().ok()?;
+pub fn local_path_repo(organisation: &str, name: &str, root: &str) -> PathBuf {
     let root_dir = Path::new(&root);
-    let local_path = root_dir.join(organisation).join(name);
-    Some(local_path)
+    root_dir.join(organisation).join(name)
 }
 
-pub fn local_path_org(organisation: &str) -> anyhow::Result<PathBuf> {
-    let root = Config::root()?;
+pub fn local_path_org(organisation: &str, root: &str) -> anyhow::Result<PathBuf> {
     let root_dir = Path::new(&root);
     let local_path = root_dir.join(organisation);
+    if !local_path.is_dir() {
+        return Err(anyhow!(
+            "There is no \"{}\" directory in root directory \"{}\"",
+            organisation,
+            root
+        ));
+    }
     Ok(local_path)
 }
 

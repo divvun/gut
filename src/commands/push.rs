@@ -1,6 +1,5 @@
 use super::common;
 use crate::git::open;
-use crate::path::local_path_org;
 use crate::user::User;
 
 use anyhow::{Context, Result};
@@ -24,10 +23,8 @@ pub struct PushArgs {
 impl PushArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-
-        let target_dir = local_path_org(&self.organisation)?;
-
-        let sub_dirs = common::read_dirs_with_filter(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, Some(&self.regex))?;
 
         for dir in sub_dirs {
             match push_branch(&dir, &self.branch, &user, &"origin") {

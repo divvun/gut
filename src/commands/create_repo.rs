@@ -35,12 +35,18 @@ impl CreateRepoArgs {
     pub fn run(&self) -> Result<()> {
         log::debug!("Create Repo {:?}", self);
 
-        let dir = match &self.dir {
-            Some(d) => d.path.clone(),
-            None => path::local_path_org(&self.organisation)?,
-        };
+        let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_with_filter(&dir, &self.regex)?;
+        let sub_dirs = match &self.dir {
+            Some(d) => common::read_dirs_with_filter(&d.path, &self.regex).with_context(|| {
+                format!(
+                    "Cannot read sub directories for \"{}\" because {:?}",
+                    d.path.display(),
+                    self
+                )
+            })?,
+            None => common::read_dirs_for_org(&self.organisation, &root, Some(&self.regex))?,
+        };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
 
@@ -55,6 +61,7 @@ impl CreateRepoArgs {
                 self.use_https,
                 self.no_push,
                 self.override_origin,
+                &root,
                 self.clone,
             );
         }
@@ -71,6 +78,7 @@ fn create_and_clone(
     use_https: bool,
     no_push: bool,
     override_remote: bool,
+    root: &str,
     clone: bool,
 ) {
     match create_repo(
@@ -92,7 +100,7 @@ fn create_and_clone(
                 return;
             }
 
-            match clone_repo(&created_repo, user, org, use_https) {
+            match clone_repo(&created_repo, user, org, root, use_https) {
                 Ok(gp) => {
                     println!("And then cloned at {:?}", gp.local_path);
                 }
@@ -107,8 +115,14 @@ fn create_and_clone(
     }
 }
 
-fn clone_repo(repo: &CreateRepo, user: &User, org: &str, use_https: bool) -> Result<GitRepo> {
-    let git_repo = repo.to_git_repo(org, user, use_https)?;
+fn clone_repo(
+    repo: &CreateRepo,
+    user: &User,
+    org: &str,
+    root: &str,
+    use_https: bool,
+) -> Result<GitRepo> {
+    let git_repo = repo.to_git_repo(org, user, root, use_https)?;
 
     let (gp, _) = git_repo.gclone()?;
 
@@ -197,9 +211,8 @@ struct CreateRepo {
 }
 
 impl CreateRepo {
-    fn to_git_repo(&self, org: &str, user: &User, use_https: bool) -> Result<GitRepo> {
-        let local_path = path::local_path_repo(org, &self.name)
-            .ok_or_else(|| anyhow!("Cannot create local path for {}/{}", org, self.name))?;
+    fn to_git_repo(&self, org: &str, user: &User, root: &str, use_https: bool) -> Result<GitRepo> {
+        let local_path = path::local_path_repo(org, &self.name, root);
         let remote_url = if use_https {
             self.https_url.to_string()
         } else {

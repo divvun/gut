@@ -1,12 +1,16 @@
+use crate::config::Config;
 use crate::git::models::{GitCredential, GitRepo};
 use crate::github::RemoteRepo;
 use crate::path::local_path_repo;
 use crate::user::User;
-use std::io::{Error, ErrorKind};
+use anyhow::{Context, Result};
 
-pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<GitRepo, Error> {
-    let local_path = local_path_repo(&repo.owner, &repo.name)
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Cannot create local path"))?;
+pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<GitRepo> {
+    let root = Config::root().context(
+        "Cannot read the config file. Run dadmin init with valid token and root directory",
+    )?;
+
+    let local_path = local_path_repo(&repo.owner, &repo.name, &root);
 
     let remote_url = if use_https {
         format!("{}.git", repo.https_url)
@@ -23,7 +27,7 @@ pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<Gi
     })
 }
 
-pub fn try_from(vec: Vec<RemoteRepo>, user: &User, use_https: bool) -> Result<Vec<GitRepo>, Error> {
+pub fn try_from(vec: Vec<RemoteRepo>, user: &User, use_https: bool) -> Result<Vec<GitRepo>> {
     vec.into_iter()
         .map(|repo| try_from_one(repo, user, use_https))
         .collect()

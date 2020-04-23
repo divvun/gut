@@ -1,4 +1,6 @@
-use anyhow::{Context, Result};
+use crate::config::Config;
+use crate::path;
+use anyhow::{anyhow, Context, Result};
 use dialoguer::Input;
 use std::path::PathBuf;
 
@@ -23,6 +25,11 @@ pub fn user() -> Result<User> {
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
 }
 
+pub fn root() -> Result<String> {
+    Config::root()
+        .context("Cannot read the config file. Run dadmin init with valid token and root directory")
+}
+
 pub fn user_token() -> Result<String> {
     User::token()
         .context("Cannot get user token from the config file. Run dadmin init with a valid token")
@@ -43,11 +50,22 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
-/// Filter directory's name by regex
-pub fn read_dirs_with_option(path: &PathBuf, filter: &Option<Filter>) -> Result<Vec<PathBuf>> {
-    match filter {
-        Some(f) => read_dirs_with_filter(path, &f),
-        None => read_dirs(path),
+pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Result<Vec<PathBuf>> {
+    let target_dir = path::local_path_org(org, &root)?;
+
+    let result = match filter {
+        Some(f) => read_dirs_with_filter(&target_dir, &f),
+        None => read_dirs(&target_dir),
+    };
+
+    match result {
+        Ok(r) => Ok(r),
+        Err(e) => Err(anyhow!(
+            "Cannot read sub directories for organisation {} \"{}\" because {:?}",
+            target_dir.display(),
+            org,
+            e
+        )),
     }
 }
 
@@ -59,7 +77,7 @@ pub fn read_dirs_with_filter(path: &PathBuf, filter: &Filter) -> Result<Vec<Path
 
 /// Read all dirs inside a path
 /// Filter directories
-pub fn read_dirs(path: &PathBuf) -> Result<Vec<PathBuf>> {
+fn read_dirs(path: &PathBuf) -> Result<Vec<PathBuf>> {
     let entries = path.read_dir()?;
     let dirs = entries
         .filter_map(|x| x.ok())

@@ -22,8 +22,8 @@ pub struct FetchArgs {
 impl FetchArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let target_dir = path::local_path_org(&self.organisation)?;
-        let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         for dir in sub_dirs {
             fetch(&dir, &user)?;
