@@ -3,7 +3,7 @@ use regex::{Error as RegexError, Regex, RegexBuilder};
 use std::path::PathBuf;
 use std::{fmt, str::FromStr};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Filter {
     regex: Regex,
 }

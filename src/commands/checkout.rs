@@ -1,7 +1,6 @@
 use super::common;
 use crate::git;
 use crate::git::GitCredential;
-use crate::path::local_path_org;
 use crate::user::User;
 
 use anyhow::{anyhow, Context, Result};
@@ -25,12 +24,10 @@ pub struct CheckoutArgs {
 
 impl CheckoutArgs {
     pub fn run(&self) -> Result<()> {
-        log::debug!("checkout branch {:?}", self);
         let user = common::user()?;
-
-        let target_dir = local_path_org(&self.organisation)?;
-
-        let sub_dirs = common::read_dirs_with_filter(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs =
+            common::read_dirs_for_org(&self.organisation, &root, &Some(self.regex.clone()))?;
 
         for dir in sub_dirs {
             match checkout_branch(&dir, &self.branch, &user, &"origin", self.remote) {

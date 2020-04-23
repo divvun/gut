@@ -2,7 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
-use crate::path::{dir_name, local_path_org};
+use crate::path::dir_name;
 use anyhow::{Context, Result};
 use prettytable::{cell, format, row, Row, Table};
 use std::path::PathBuf;
@@ -20,9 +20,8 @@ pub struct StatusArgs {
 
 impl StatusArgs {
     pub fn run(&self) -> Result<()> {
-        let target_dir = local_path_org(&self.organisation)?;
-
-        let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex)?;
 
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_BORDERS_ONLY);

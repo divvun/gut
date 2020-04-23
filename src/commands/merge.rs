@@ -2,7 +2,6 @@ use super::common;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::MergeStatus;
-use crate::path::local_path_org;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -21,9 +20,8 @@ pub struct MergeArgs {
 
 impl MergeArgs {
     pub fn run(&self) -> Result<()> {
-        let target_dir = local_path_org(&self.organisation)?;
-
-        let sub_dirs = common::read_dirs_with_option(&target_dir, &self.regex)?;
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex)?;
 
         for dir in sub_dirs {
             match merge(&dir, &self.branch, self.abort_if_conflict) {
