@@ -22,8 +22,11 @@ impl CloneArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
 
-        let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user.token)?;
+        let filtered_repos = common::query_and_filter_repositories(
+            &self.organisation,
+            self.regex.as_ref(),
+            &user.token,
+        )?;
 
         let git_repos: Vec<GitRepo> = try_from(filtered_repos, &user, self.use_https)?;
 

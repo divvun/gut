@@ -1,7 +1,7 @@
 use crate::commands::{
     AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CleanArgs, CloneArgs, CommitArgs, CreateArgs,
-    FetchArgs, InitArgs, InviteArgs, MergeArgs, PushArgs, RemoveArgs, SetArgs, ShowArgs,
-    StatusArgs, MakeArgs,
+    FetchArgs, InitArgs, InviteArgs, MakeArgs, MergeArgs, PushArgs, RemoveArgs, SetArgs, ShowArgs,
+    StatusArgs,
 };
 use structopt::StructOpt;
 

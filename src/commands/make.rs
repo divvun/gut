@@ -1,7 +1,7 @@
 use super::common;
-use anyhow::Result;
 use crate::filter::Filter;
 use crate::github;
+use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -26,8 +26,11 @@ impl MakeArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
 
-        let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user_token)?;
+        let filtered_repos = common::query_and_filter_repositories(
+            &self.organisation,
+            self.regex.as_ref(),
+            &user_token,
+        )?;
 
         let is_private = match self.visibility {
             Visibility::Private => true,

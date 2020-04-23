@@ -18,8 +18,11 @@ impl RemoveReposArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
 
-        let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user_token)?;
+        let filtered_repos = common::query_and_filter_repositories(
+            &self.organisation,
+            self.regex.as_ref(),
+            &user_token,
+        )?;
 
         if filtered_repos.is_empty() {
             println!(

@@ -15,8 +15,11 @@ impl ShowReposArgs {
     pub fn show(&self) -> anyhow::Result<()> {
         let user_token = common::user_token()?;
 
-        let filtered_repos =
-            common::query_and_filter_repositories(&self.organisation, self.regex.as_ref(), &user_token)?;
+        let filtered_repos = common::query_and_filter_repositories(
+            &self.organisation,
+            self.regex.as_ref(),
+            &user_token,
+        )?;
 
         print_results(&filtered_repos);
 
