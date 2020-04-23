@@ -17,7 +17,7 @@ pub struct CleanArgs {
 impl CleanArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         for dir in sub_dirs {
             if let Err(e) = clean(&dir) {

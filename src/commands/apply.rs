@@ -19,7 +19,7 @@ pub struct ApplyArgs {
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         let script_path = self
             .script
