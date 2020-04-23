@@ -19,7 +19,7 @@ pub struct CommitArgs {
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex)?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex.as_ref())?;
 
         for dir in sub_dirs {
             let dir_name = path::dir_name(&dir)?;

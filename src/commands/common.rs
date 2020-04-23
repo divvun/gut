@@ -50,8 +50,9 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
-pub fn read_dirs_for_org(org: &str, root: &str, filter: &Option<Filter>) -> Result<Vec<PathBuf>> {
+pub fn read_dirs_for_org(org: &str, root: &str, filter: &Option<&Filter>) -> Result<Vec<PathBuf>> {
     let target_dir = path::local_path_org(org, &root)?;
+
     let result = match filter {
         Some(f) => read_dirs_with_filter(&target_dir, &f),
         None => read_dirs(&target_dir),

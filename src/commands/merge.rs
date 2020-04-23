@@ -21,7 +21,7 @@ pub struct MergeArgs {
 impl MergeArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex)?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex.as_ref())?;
 
         for dir in sub_dirs {
             match merge(&dir, &self.branch, self.abort_if_conflict) {

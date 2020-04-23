@@ -21,7 +21,7 @@ pub struct StatusArgs {
 impl StatusArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex)?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &self.regex.as_ref())?;
 
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_BORDERS_ONLY);

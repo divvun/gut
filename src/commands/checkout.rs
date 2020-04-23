@@ -26,8 +26,7 @@ impl CheckoutArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
-        let sub_dirs =
-            common::read_dirs_for_org(&self.organisation, &root, &Some(self.regex.clone()))?;
+        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, &Some(&self.regex))?;
 
         for dir in sub_dirs {
             match checkout_branch(&dir, &self.branch, &user, &"origin", self.remote) {
