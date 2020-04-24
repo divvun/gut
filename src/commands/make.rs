@@ -2,6 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
+use std::fmt;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -26,18 +27,24 @@ pub enum Visibility {
 }
 
 impl Visibility {
+    fn is_private(&self) -> bool {
+        match self {
+            Visibility::Private => true,
+            Visibility::Public => false,
+        }
+    }
+
     fn to_string(&self) -> String {
         match self {
             Visibility::Private => "private".to_string(),
             Visibility::Public => "public".to_string(),
         }
     }
+}
 
-    fn is_private(&self) -> bool {
-        match self {
-            Visibility::Private => true,
-            Visibility::Public => false,
-        }
+impl fmt::Display for Visibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
