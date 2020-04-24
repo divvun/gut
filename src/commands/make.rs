@@ -7,6 +7,10 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 /// Make repositories that match a regex become public/private
+///
+/// This will show all repositories that will affected by this command
+/// If you want to public repositories, it'll show a confirmation prompt
+/// and You have to enter 'YES' to confirm your action
 pub struct MakeArgs {
     #[structopt(flatten)]
     pub visibility: Visibility,

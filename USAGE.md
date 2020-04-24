@@ -137,6 +137,9 @@ Change visibilities of repositories
 dadmin-make 0.1.0
 Make repositories that match a regex become public/private
 
+This will show all repositories that will affected by this command If you want to public repositories, it'll show a
+confirmation prompt and You have to enter 'YES' to confirm your action
+
 USAGE:
     dadmin make [OPTIONS] --regex <regex> <SUBCOMMAND>
 
@@ -150,8 +153,8 @@ OPTIONS:
 
 SUBCOMMANDS:
     help       Prints this message or the help of the given subcommand(s)
-    private
-    public
+    private    
+    public     
 ```
 
 ## Set info
