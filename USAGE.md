@@ -236,7 +236,7 @@ OPTIONS:
     -t, --topics <topics>...             All topics will be set
 ```
 
-## Topic add
+## Topic Add
 
 ```
 dadmin-topic-add 0.1.0
