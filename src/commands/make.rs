@@ -5,6 +5,19 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Make repositories that match a regex become public/private
+pub struct MakeArgs {
+    #[structopt(flatten)]
+    pub visibility: Visibility,
+    #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
+    pub organisation: String,
+    #[structopt(long, short)]
+    /// Regex to filter repositories
+    pub regex: Filter,
+}
+
+#[derive(Debug, StructOpt)]
 pub enum Visibility {
     #[structopt(name = "public")]
     Public,
@@ -12,15 +25,6 @@ pub enum Visibility {
     Private,
 }
 
-#[derive(Debug, StructOpt)]
-pub struct MakeArgs {
-    #[structopt(flatten)]
-    pub visibility: Visibility,
-    #[structopt(long, short, default_value = "divvun")]
-    pub organisation: String,
-    #[structopt(long, short)]
-    pub regex: Option<Filter>,
-}
 
 impl MakeArgs {
     pub fn run(&self) -> Result<()> {
@@ -28,7 +32,7 @@ impl MakeArgs {
 
         let filtered_repos = common::query_and_filter_repositories(
             &self.organisation,
-            self.regex.as_ref(),
+            Some(&self.regex),
             &user_token,
         )?;
 
