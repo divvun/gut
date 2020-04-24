@@ -191,8 +191,8 @@ FLAGS:
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    add     
-    get     
+    add
+    get
     help    Prints this message or the help of the given subcommand(s)
     set     Set topics for all repositories that match a regex
 
