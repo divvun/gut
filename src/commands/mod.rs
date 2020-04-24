@@ -32,6 +32,10 @@ pub mod show;
 pub mod show_config;
 pub mod show_repos;
 pub mod status;
+pub mod topic;
+pub mod topic_add;
+pub mod topic_get;
+pub mod topic_set;
 
 pub use add::*;
 pub use apply::*;
@@ -53,3 +57,4 @@ pub use remove_repos::*;
 pub use set::*;
 pub use show::*;
 pub use status::*;
+pub use topic::*;
