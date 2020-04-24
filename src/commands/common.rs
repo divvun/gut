@@ -12,7 +12,7 @@ use crate::user::User;
 
 pub fn query_and_filter_repositories(
     org: &str,
-    regex: &Option<Filter>,
+    regex: Option<&Filter>,
     token: &str,
 ) -> Result<Vec<RemoteRepo>> {
     let remote_repos = remote_repos(token, org)?;
