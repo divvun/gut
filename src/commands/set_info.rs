@@ -16,8 +16,10 @@ pub struct InfoArgs {
     /// Optional regex to filter repositories
     pub regex: Filter,
     #[structopt(long, short)]
+    /// Description, this is required unless website is provided
     pub description: Option<String>,
     #[structopt(long, short)]
+    /// Hompage, this is required unless description is provided
     pub website: Option<String>,
 }
 

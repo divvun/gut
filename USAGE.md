@@ -153,3 +153,23 @@ SUBCOMMANDS:
     private
     public
 ```
+
+## Set info
+
+```
+dadmin-set-info 0.1.0
+Set description and/or website for all repositories that match regex
+
+USAGE:
+    dadmin set info [OPTIONS] --regex <regex>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -d, --description <description>      Description, this is required unless website is provided
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+    -w, --website <website>              Hompage, this is required unless description is provided
+```

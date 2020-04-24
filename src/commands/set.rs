@@ -6,10 +6,8 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 pub enum SetArgs {
     #[structopt(name = "info")]
-    /// Set repos info
     Info(InfoArgs),
     #[structopt(name = "permission")]
-    /// Set team permission
     Permission(SetTeamPermissionArgs),
 }
 
