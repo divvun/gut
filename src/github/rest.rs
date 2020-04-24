@@ -68,6 +68,7 @@ struct UpdateRepoBody {
     default_branch: Option<String>,
     private: Option<bool>,
     description: Option<String>,
+    homepage: Option<String>,
 }
 
 impl UpdateRepoBody {
@@ -76,6 +77,7 @@ impl UpdateRepoBody {
             default_branch: Some(branch.to_string()),
             private: None,
             description: None,
+            homepage: None,
         }
     }
 
@@ -84,6 +86,16 @@ impl UpdateRepoBody {
             default_branch: None,
             private: Some(is_private),
             description: None,
+            homepage: None,
+        }
+    }
+
+    fn metadata(des: Option<&str>, homepage: Option<&str>) -> UpdateRepoBody {
+        UpdateRepoBody {
+            default_branch: None,
+            private: None,
+            description: des.map(|s| s.to_string()),
+            homepage: homepage.map(|s| s.to_string()),
         }
     }
 }
@@ -99,6 +111,19 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
 pub fn set_repo_visibility(repo: &RemoteRepo, is_private: bool, token: &str) -> Result<()> {
     let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
     let body = UpdateRepoBody::repo_visibility(is_private);
+    let response = patch(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+pub fn set_repo_metadata(
+    repo: &RemoteRepo,
+    des: Option<&str>,
+    homepage: Option<&str>,
+    token: &str,
+) -> Result<()> {
+    let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
+    let body = UpdateRepoBody::metadata(des, homepage);
     let response = patch(&url, &body, token)?;
 
     process_response(&response).map(|_| ())

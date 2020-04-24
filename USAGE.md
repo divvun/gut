@@ -128,3 +128,28 @@ OPTIONS:
     -r, --regex <regex>                  Optional regex to filter repositories
 
 ```
+
+## Make
+
+Change visibilities of repositories
+
+```
+dadmin-make 0.1.0
+Make repositories that match a regex become public/private
+
+USAGE:
+    dadmin make [OPTIONS] --regex <regex> <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Regex to filter repositories
+
+SUBCOMMANDS:
+    help       Prints this message or the help of the given subcommand(s)
+    private
+    public
+```

@@ -36,7 +36,7 @@ pub fn user_token() -> Result<String> {
 }
 
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match github::list_org_repos(token, org).context("Fetching repositories") {
+    match github::list_org_repos(token, org).context("When fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if e.downcast_ref::<NoReposFound>().is_some() {
