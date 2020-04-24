@@ -38,7 +38,7 @@ impl Visibility {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn value(&self) -> String {
         match self {
             Visibility::Private => "private".to_string(),
             Visibility::Public => "public".to_string(),
@@ -48,7 +48,7 @@ impl Visibility {
 
 impl fmt::Display for Visibility {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.value())
     }
 }
 
