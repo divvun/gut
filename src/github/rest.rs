@@ -454,14 +454,14 @@ pub fn delete_repo(owner: &str, repo: &str, token: &str) -> Result<()> {
 }
 
 // https://developer.github.com/v3/repos/#replace-all-repository-topics
-pub fn set_topics(repo: &RemoteRepo, topics: &Vec<String>, token: &str) -> Result<Vec<String>> {
+pub fn set_topics(repo: &RemoteRepo, topics: &[String], token: &str) -> Result<Vec<String>> {
     let url = format!(
         "https://api.github.com/repos/{}/{}/topics",
         repo.owner, repo.name
     );
 
     let body = SetTopicsBody {
-        names: topics.clone(),
+        names: topics.to_owned(),
     };
 
     let response = put(
