@@ -25,7 +25,6 @@ pub enum Visibility {
     Private,
 }
 
-
 impl MakeArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
