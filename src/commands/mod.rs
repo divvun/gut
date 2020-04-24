@@ -33,6 +33,8 @@ pub mod show_config;
 pub mod show_repos;
 pub mod status;
 pub mod topic;
+pub mod topic_add;
+pub mod topic_get;
 pub mod topic_set;
 
 pub use add::*;

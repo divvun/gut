@@ -66,7 +66,7 @@ impl MakeArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There is no repositories in organisation {} matches pattern {:?}",
+                "There is no repositories in organisation {} that matches pattern {:?}",
                 self.organisation, self.regex
             );
             return Ok(());

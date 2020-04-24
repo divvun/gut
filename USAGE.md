@@ -153,8 +153,8 @@ OPTIONS:
 
 SUBCOMMANDS:
     help       Prints this message or the help of the given subcommand(s)
-    private    
-    public     
+    private
+    public
 ```
 
 ## Set info
@@ -175,4 +175,82 @@ OPTIONS:
     -o, --organisation <organisation>    Target organisation name [default: divvun]
     -r, --regex <regex>                  Optional regex to filter repositories
     -w, --website <website>              Hompage, this is required unless description is provided
+```
+
+## Topic
+
+```
+dadmin-topic 0.1.0
+Sub command for set/get/add topics
+
+USAGE:
+    dadmin topic <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+SUBCOMMANDS:
+    add     
+    get     
+    help    Prints this message or the help of the given subcommand(s)
+    set     Set topics for all repositories that match a regex
+
+```
+
+### Topic Get
+
+```
+dadmin-topic-get 0.1.0
+Get topics for all repositories that match a regex
+
+USAGE:
+    dadmin topic get [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+
+```
+
+### Topic Set
+
+```
+dadmin-topic-set 0.1.0
+Set topics for all repositories that match a regex
+
+USAGE:
+    dadmin topic set [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+    -t, --topics <topics>...             All topics will be set
+```
+
+## Topic add
+
+```
+dadmin-topic-add 0.1.0
+Add topics for all repositories that match a regex
+
+USAGE:
+    dadmin topic add [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+    -t, --topics <topics>...             All topics will be added
 ```

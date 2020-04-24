@@ -5,8 +5,8 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Set topics for all repositories that match a regex
-pub struct TopicSetArgs {
+/// Add topics for all repositories that match a regex
+pub struct TopicAddArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
     pub organisation: String,
@@ -14,11 +14,11 @@ pub struct TopicSetArgs {
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
-    /// All topics will be set
+    /// All topics will be added
     pub topics: Vec<String>,
 }
 
-impl TopicSetArgs {
+impl TopicAddArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
 
@@ -37,18 +37,29 @@ impl TopicSetArgs {
         }
 
         for repo in filtered_repos {
-            let result = github::set_topics(&repo, &self.topics, &user_token);
+            let result = add_topics(&repo, &self.topics, &user_token);
             match result {
                 Ok(topics) => {
-                    println!("Set topics for repo {} successfully", repo.name);
+                    println!("Add topics for repo {} successfully", repo.name);
                     println!("List of topics for {} is: {:?}", repo.name, topics);
                 }
                 Err(e) => println!(
-                    "Failed to set topics for repo {} because {:?}",
+                    "Failed to add topics for repo {} because {:?}",
                     repo.name, e
                 ),
             }
         }
         Ok(())
     }
+}
+
+fn add_topics(repo: &github::RemoteRepo, topics: &Vec<String>, token: &str) -> Result<Vec<String>> {
+    let current_topics = github::get_topics(repo, token)?;
+    let mut temp = vec![];
+    temp.push(current_topics);
+    temp.push(topics.clone());
+
+    let new_topics = temp.into_iter().flatten().collect();
+
+    github::set_topics(&repo, &new_topics, &token)
 }

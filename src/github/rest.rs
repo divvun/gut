@@ -20,18 +20,32 @@ fn patch<T: Serialize + ?Sized>(
         .send()
 }
 
+fn get(url: &str, token: &str, accept: Option<&str>) -> Result<req::Response, reqwest::Error> {
+    let client = req::Client::new();
+    let accept = accept.unwrap_or("application/vnd.github.v3+json");
+    log::debug!("PUT: {} with accept: {}", url, accept);
+    client
+        .get(url)
+        .bearer_auth(token)
+        .header("User-Agent", "dadmin")
+        .header("Accept", accept)
+        .send()
+}
+
 fn put<T: Serialize + ?Sized>(
     url: &str,
     body: &T,
     token: &str,
+    accept: Option<&str>,
 ) -> Result<req::Response, reqwest::Error> {
-    log::debug!("PUT: {}", url);
     let client = req::Client::new();
+    let accept = accept.unwrap_or("application/vnd.github.v3+json");
+    log::debug!("PUT: {} with accept: {}", url, accept);
     client
         .put(url)
         .bearer_auth(token)
         .header("User-Agent", "dadmin")
-        .header("Accept", "application/vnd.github.v3+json")
+        .header("Accept", accept)
         .json(body)
         .send()
 }
@@ -177,14 +191,12 @@ pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Res
 
     log::debug!("Body {:?}", body);
 
-    let client = req::Client::new();
-    let response = client
-        .put(&url)
-        .bearer_auth(token)
-        .header("User-Agent", "dadmin")
-        .header("Accept", "application/vnd.github.luke-cage-preview+json")
-        .json(&body)
-        .send()?;
+    let response = put(
+        &url,
+        &body,
+        token,
+        Some("application/vnd.github.luke-cage-preview+json"),
+    )?;
 
     log::debug!("Response: {:?}", response);
 
@@ -273,7 +285,7 @@ pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &s
         role: role.to_string(),
     };
 
-    let response = put(&url, &body, token)?;
+    let response = put(&url, &body, token, None)?;
 
     process_response(&response).map(|_| ())
 }
@@ -306,7 +318,7 @@ pub fn add_user_to_org(org: &str, role: &str, user: &str, token: &str) -> Result
         role: role.to_string(),
     };
 
-    let response = put(&url, &body, token)?;
+    let response = put(&url, &body, token, None)?;
 
     process_response(&response).map(|_| ())
 }
@@ -380,7 +392,7 @@ pub fn set_team_permission(
         permission: permission.to_string(),
     };
 
-    let response = put(&url, &body, token)?;
+    let response = put(&url, &body, token, None)?;
 
     process_response(&response).map(|_| ())
 }
@@ -439,6 +451,74 @@ pub fn delete_repo(owner: &str, repo: &str, token: &str) -> Result<()> {
     let response = delete(&url, token)?;
 
     process_response(&response).map(|_| ())
+}
+
+// https://developer.github.com/v3/repos/#replace-all-repository-topics
+pub fn set_topics(repo: &RemoteRepo, topics: &Vec<String>, token: &str) -> Result<Vec<String>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/topics",
+        repo.owner, repo.name
+    );
+
+    let body = SetTopicsBody {
+        names: topics.clone(),
+    };
+
+    let response = put(
+        &url,
+        &body,
+        token,
+        Some("application/vnd.github.mercy-preview+json"),
+    )?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: TopicsResponse = response.json()?;
+    Ok(response_body.names)
+}
+
+pub fn get_topics(repo: &RemoteRepo, token: &str) -> Result<Vec<String>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/topics",
+        repo.owner, repo.name
+    );
+
+    let response = get(
+        &url,
+        token,
+        Some("application/vnd.github.mercy-preview+json"),
+    )?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: TopicsResponse = response.json()?;
+    Ok(response_body.names)
+}
+
+#[derive(Serialize, Debug)]
+pub struct SetTopicsBody {
+    names: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TopicsResponse {
+    names: Vec<String>,
 }
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
