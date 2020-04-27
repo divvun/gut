@@ -1,0 +1,11 @@
+[template]
+template = "https://github.com/giellalt/some-template-repo"
+
+[replacements]
+UND = "sme" # this will replace all filename, and content components containing "UND" with "sme"
+
+# Current revision and their commit hash for authenticity
+[current_rev]
+rev_id = 1
+template_sha = "abcdef001" # sha of template repo
+rev_sha = "qwerrty" # sha when the current rev was applied

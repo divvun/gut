@@ -1,0 +1,24 @@
+[template]
+name = "English"
+patterns = [
+  "UND"
+]
+
+[current_rev]
+rev_id = 2
+# The commit hash is derived by the reader.
+# They walk back through the tree until they find the earliest rev_id.
+# start with 1
+
+[files]
+required = [
+  "a.txt"
+]
+
+optional = [
+  "b.txt"
+]
+
+ignored = [
+  "c.txt"
+]
