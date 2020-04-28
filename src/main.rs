@@ -43,6 +43,7 @@ fn main() -> Result<()> {
         Commands::Set(args) => args.run(),
         Commands::Show(args) => args.run(),
         Commands::Status(args) => args.run(),
+        Commands::Template(args) => args.run(),
         Commands::Topic(args) => args.run(),
     }
 }

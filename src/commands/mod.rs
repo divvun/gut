@@ -1,3 +1,4 @@
+pub mod template;
 pub mod add;
 pub mod add_users;
 pub mod apply;
@@ -58,3 +59,4 @@ pub use set::*;
 pub use show::*;
 pub use status::*;
 pub use topic::*;
+pub use template::*;
