@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Add all and then commit with the provided messages
 pub struct CommitArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,

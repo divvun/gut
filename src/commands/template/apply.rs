@@ -8,6 +8,10 @@ pub struct ApplyArgs {
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
+    #[structopt(long, short)]
+    pub template: String,
+    #[structopt(long, short)]
+    pub version: Option<usize>,
 }
 
 impl ApplyArgs {
