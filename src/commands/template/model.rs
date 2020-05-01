@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-struct TemplateDelta {
+#[derive(Debug)]
+pub struct TemplateDelta {
     pub name: String,
     pub patterns: Vec<String>,
     pub rev_id: usize,
@@ -9,7 +10,8 @@ struct TemplateDelta {
     pub ignored: Vec<String>,
 }
 
-struct TargetDelta {
+#[derive(Debug)]
+pub struct TargetDelta {
     pub template: String,
     pub replacements: HashMap<String, String>,
     pub rev_id: usize,
