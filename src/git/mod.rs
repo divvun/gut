@@ -8,6 +8,8 @@ pub mod models;
 pub mod open;
 pub mod push;
 pub mod status;
+pub mod diff;
+pub mod tree;
 
 pub use branch::*;
 pub use clone::{Clonable, CloneError};
@@ -18,3 +20,5 @@ pub use models::*;
 pub use open::*;
 pub use push::push_branch;
 pub use status::*;
+pub use diff::*;
+pub use tree::*;
