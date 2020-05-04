@@ -73,9 +73,24 @@ fn apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &Pa
     //println!("====================");
     //diff.print(DiffFormat::Patch, |d, h, l| print_diff_line(d, h, l));
 
-    let patch_files = diff_to_patch(&diff);
-    println!("Yes patch_files \n {:?}", patch_files);
+    let patch_files = diff_to_patch(&diff)?;
 
+    //for p in patch_files {
+        //println!("======================");
+        //println!("{:?}", p);
+    //}
+
+    //println!("Template patch file content");
+    //println!("{}", to_content(&patch_files));
+    //println!("==============================");
+    write("template.diff", to_content(&patch_files));
+    let target_patch_files: Vec<_> = patch_files.iter().map(|p| p.apply_patterns(&target_delta.replacements)).collect();
+    let target_patch_files: Result<Vec<_>> = target_patch_files.into_iter().collect();
+    //let target_patch_files: Vec<_> = target_patch_files?.into_iter().map(|p| p.to_content()).collect();
+    //let patch_content = to_content(&target_patch_files?);
+    //println!("Target patch file content");
+    //println!("{}", patch_content);
+    write("target.diff", to_content(&target_patch_files?));
     Ok(())
 }
 

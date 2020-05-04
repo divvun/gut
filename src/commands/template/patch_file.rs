@@ -10,21 +10,39 @@ pub fn diff_to_patch(diff: &Diff) -> Result<Vec<PatchFile>> {
 
     let mut file_map: HashMap<String, PatchFile> = HashMap::new();
 
-    diff.foreach(
-            &mut |_file, _progress| { true },
-            None,
-            Some(&mut |delta, hunk| {
-                log::info!("hunk_cb path: {:?}, hunk: {:?}", delta.new_file().path(), str::from_utf8(hunk.header()).unwrap());
-                true
-            }),
-            Some(&mut |delta, _hunk, line| {
+    //diff.foreach(
+            //&mut |_file, _progress| { true },
+            //None,
+            //Some(&mut |delta, hunk| {
+                //log::info!("hunk_cb path: {:?}, hunk: {:?}", delta.new_file().path(), str::from_utf8(hunk.header()).unwrap());
+                //true
+            //}),
+            //Some(&mut |delta, _hunk, line| {
+                //println!("line_cb path {:?}", delta.new_file().path());
+                //if let Some(new_file) = delta.new_file().path().and_then(|p| p.to_str()) {
+                    //let old_file = delta.old_file().path().and_then(|p| p.to_str()).unwrap();
+
+                    //file_map.entry(new_file.to_string()).or_insert_with(|| PatchFile::new(old_file, new_file));
+
+                        //if let Some(file) = file_map.get(new_file) {
+                            //if let Some(patch_line) = diff_line_to_patch_line(&line) {
+                                //let new_path_file = file.add_line(&patch_line);
+                                //file_map.insert(old_file.to_string(), new_path_file);
+                            //}
+                        //}
+                //}
+                //true
+            //})
+        //)?;
+
+        diff.print(DiffFormat::Patch, |delta, _hunk, line| {
                 println!("line_cb path {:?}", delta.new_file().path());
-                if let Some(old_file) = delta.old_file().path().and_then(|p| p.to_str()) {
+                if let Some(new_file) = delta.new_file().path().and_then(|p| p.to_str()) {
+                    let old_file = delta.old_file().path().and_then(|p| p.to_str()).unwrap();
 
-                    let new_file = delta.new_file().path().and_then(|p| p.to_str()).unwrap();
+                    file_map.entry(new_file.to_string()).or_insert_with(|| PatchFile::new(old_file, new_file));
 
-                    file_map.entry(old_file.to_string()).or_insert_with(|| PatchFile::new(old_file, new_file));
-                        if let Some(file) = file_map.get(old_file) {
+                        if let Some(file) = file_map.get(new_file) {
                             if let Some(patch_line) = diff_line_to_patch_line(&line) {
                                 let new_path_file = file.add_line(&patch_line);
                                 file_map.insert(old_file.to_string(), new_path_file);
@@ -32,8 +50,8 @@ pub fn diff_to_patch(diff: &Diff) -> Result<Vec<PatchFile>> {
                         }
                 }
                 true
-            })
-        )?;
+        })?;
+
 
     let mut v = vec![];
     for p in file_map.values() {
@@ -140,14 +158,14 @@ impl PatchFile {
 
     pub fn to_content(&self) -> String {
         let contents: Vec<String> = self.lines.iter().map(|f| f.to_content()).collect();
-        contents.join("\n")
+        contents.join("")
     }
 
 }
 
-pub fn to_content(files: &Vec<PatchFile>, reps: &HashMap<String, String>) -> String {
+pub fn to_content(files: &Vec<PatchFile>) -> String {
     let contents: Vec<String> = files.iter().map(|f| f.to_content()).collect();
-    contents.join("\n")
+    contents.join("")
 }
 
 #[cfg(test)]
