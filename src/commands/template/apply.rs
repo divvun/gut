@@ -5,11 +5,13 @@ use crate::filter::Filter;
 use crate::path;
 use std::path::{Path, PathBuf};
 use super::model::*;
+use super::patch_file::*;
 use super::common::*;
 use anyhow::{anyhow, Result};
 use structopt::StructOpt;
 use std::fs::{read_to_string, write, create_dir_all};
 use crate::git;
+use super::patch_file;
 
 #[derive(Debug, StructOpt)]
 pub struct ApplyArgs {
@@ -28,7 +30,7 @@ impl ApplyArgs {
         println!("Template apply args {:?}", self);
 
         let template_dir = Path::new("/Users/thanhle/dadmin/dadmin-test/lang-__UND__").to_path_buf();
-        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
+        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-en").to_path_buf()];
 
         let template_delta = temp_sample();
 
@@ -45,46 +47,18 @@ impl ApplyArgs {
 fn apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &PathBuf) -> Result<()> {
     let target_delta = target_delta_sample();
 
-    //println!("temp dir: {:?}", template_dir);
-    //println!("temp delta: {:?}", template_delta);
-    //println!("target dir: {:?}", target_dir);
-    //println!("target delta: {:?}", target_delta);
-
-    //for file in &template_delta.required {
-        //let file_path = template_dir.join(file);
-        //let content = read_to_string(&file_path)?;
-        //println!("Content of {:?}", file_path);
-        //println!("{}", content);
-    //}
-
-    // generate file paths
-    let generate_files = template_delta.generate_files(true);
-    let rx = generate_files.iter().map(AsRef::as_ref).collect();
-    let targetd_files = generate_file_paths(&target_delta.replacements, rx)?;
-    println!("Target files {:?}", targetd_files);
-
-    for (original, target) in targetd_files {
-        let original_path = template_dir.join(&original);
-        let target_path = target_dir.join(&target);
-        let original_content = read_to_string(&original_path)?;
-        let target_content = generate_string(&target_delta.replacements, original_content.as_str())?;
-        println!("generated content for {:?}",target_path);
-        println!("{}", target_content);
-        println!("");
-        write_content(&target_path, &target_content)?;
-    }
-
     let template_repo = git::open::open(template_dir)?;
-    //let target_repo = git::open::open(target_dir)?;
+    let target_repo = git::open::open(target_dir)?;
 
     let temp_current_sha = "440a996b2930deac0ea768c7de725aec4f08c1b4";
     let temp_last_sha = "ab4139e82667a373b7ca56f70bfa27c6fb116c85";
 
     let target_current_sha = "2c5236df24f20a347b7151535f380ac20e1d4c10";
 
-    //let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
+    let generate_files = template_delta.generate_files(true);
+    let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
 
-    ////target_repo.apply(&diff, git2::ApplyLocation::Both, None)?;
+    //target_repo.apply(&diff, git2::ApplyLocation::Both, None)?;
 
     //print_stats(&diff);
 
@@ -99,16 +73,11 @@ fn apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &Pa
     //println!("====================");
     //diff.print(DiffFormat::Patch, |d, h, l| print_diff_line(d, h, l));
 
+    let patch_files = diff_to_patch(&diff);
+    println!("Yes patch_files \n {:?}", patch_files);
+
     Ok(())
 }
-
-fn write_content(file_path: &PathBuf, content: &str) -> Result<()> {
-    let parrent = path::parrent(file_path)?;
-    create_dir_all(&parrent)?;
-    write(file_path, content)?;
-    Ok(())
-}
-
 
 fn print_stats(diff: &Diff) -> Result<()> {
     let stats = diff.stats()?;
@@ -143,6 +112,7 @@ fn print_diff_line(
         println!("hunk {:?}", str::from_utf8(hs.header()).unwrap());
     }
     println!("{:?} -> {:?}", line.old_lineno(), line.new_lineno());
+    println!("Origin {}", line.origin());
 
     match line.origin() {
         '+' | '-' | ' ' => print!("{}", line.origin()),
@@ -153,26 +123,3 @@ fn print_diff_line(
     true
 }
 
-#[derive(Debug)]
-enum DfLine {
-    Add {
-        line_no : u32,
-        content: String,
-    },
-    Move {
-        old_line_no: u32,
-        new_line_no: u32,
-        content: String,
-    },
-    Delete {
-        line_no: u32,
-        content: String,
-    }
-}
-
-#[derive(Debug)]
-struct DfFile {
-    old_file: String,
-    new_file: String,
-    df_lines: Vec<DfLine>,
-}
