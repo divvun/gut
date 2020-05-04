@@ -27,7 +27,7 @@ impl MergeArgs {
             match merge(&dir, &self.branch, self.abort_if_conflict) {
                 Ok(status) => match status {
                     MergeStatus::FastForward => println!("Merge fast forward"),
-                    MergeStatus::NormalMerge => println!("Merge made by the 'recusive' strategy"),
+                    MergeStatus::NormalMerge => println!("Merge made by the 'recursive' strategy"),
                     MergeStatus::MergeWithConflict => {
                         println!("Auto merge failed. Fix conflicts and then commit the results.")
                     }
