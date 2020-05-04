@@ -15,23 +15,16 @@ pub struct InfoArgs {
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[structopt(long, short)]
+    #[structopt(long, short, required_unless("website"))]
     /// Description, this is required unless website is provided
     pub description: Option<String>,
-    #[structopt(long, short)]
-    /// Hompage, this is required unless description is provided
+    #[structopt(long, short, required_unless("description"))]
+    /// Homepage, this is required unless description is provided
     pub website: Option<String>,
 }
 
 impl InfoArgs {
     pub fn run(&self) -> Result<()> {
-        if self.description.is_none() && self.website.is_none() {
-            println!(
-                "There is nothing to set, please input description or website to set repos info."
-            );
-            return Ok(());
-        }
-
         let user_token = common::user_token()?;
 
         let filtered_repos = common::query_and_filter_repositories(
