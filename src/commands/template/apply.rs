@@ -1,14 +1,14 @@
 use git2::{Error, Index, Repository, Diff, Oid, Tree, DiffOptions, DiffFile, DiffHunk, DiffLine, DiffDelta, DiffFormat};
 use git2;
 use std::str;
-use std::collections::HashMap;
-use regex::{Error as RegexError, Regex, RegexBuilder};
 use crate::filter::Filter;
+use crate::path;
 use std::path::{Path, PathBuf};
 use super::model::*;
+use super::common::*;
 use anyhow::{anyhow, Result};
 use structopt::StructOpt;
-use std::fs::{read_to_string, write};
+use std::fs::{read_to_string, write, create_dir_all};
 use crate::git;
 
 #[derive(Debug, StructOpt)]
@@ -28,7 +28,7 @@ impl ApplyArgs {
         println!("Template apply args {:?}", self);
 
         let template_dir = Path::new("/Users/thanhle/dadmin/dadmin-test/lang-__UND__").to_path_buf();
-        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-en").to_path_buf()];
+        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
 
         let template_delta = temp_sample();
 
@@ -58,54 +58,57 @@ fn apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &Pa
     //}
 
     // generate file paths
-    //let rx = template_delta.required.iter().map(AsRef::as_ref).collect();
-    //let targetd_files = generate_file_paths(&target_delta.replacements, rx);
+    let generate_files = template_delta.generate_files(true);
+    let rx = generate_files.iter().map(AsRef::as_ref).collect();
+    let targetd_files = generate_file_paths(&target_delta.replacements, rx)?;
+    println!("Target files {:?}", targetd_files);
+
+    for (original, target) in targetd_files {
+        let original_path = template_dir.join(&original);
+        let target_path = target_dir.join(&target);
+        let original_content = read_to_string(&original_path)?;
+        let target_content = generate_string(&target_delta.replacements, original_content.as_str())?;
+        println!("generated content for {:?}",target_path);
+        println!("{}", target_content);
+        println!("");
+        write_content(&target_path, &target_content)?;
+    }
 
     let template_repo = git::open::open(template_dir)?;
-    let target_repo = git::open::open(target_dir)?;
+    //let target_repo = git::open::open(target_dir)?;
 
     let temp_current_sha = "440a996b2930deac0ea768c7de725aec4f08c1b4";
     let temp_last_sha = "ab4139e82667a373b7ca56f70bfa27c6fb116c85";
 
     let target_current_sha = "2c5236df24f20a347b7151535f380ac20e1d4c10";
 
-    let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
+    //let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
 
-    //target_repo.apply(&diff, git2::ApplyLocation::Both, None)?;
+    ////target_repo.apply(&diff, git2::ApplyLocation::Both, None)?;
 
-    print_stats(&diff);
+    //print_stats(&diff);
 
-    let deltas = diff.deltas();
-    for delta in deltas {
-        println!("status {:?}", delta.status());
-        println!("number of files {:?}", delta.nfiles());
-        print_diff_file(&delta.old_file());
-        print_diff_file(&delta.new_file());
-    }
+    //let deltas = diff.deltas();
+    //for delta in deltas {
+        //println!("status {:?}", delta.status());
+        //println!("number of files {:?}", delta.nfiles());
+        //print_diff_file(&delta.old_file());
+        //print_diff_file(&delta.new_file());
+    //}
 
-    println!("====================");
-    diff.print(DiffFormat::Patch, |d, h, l| print_diff_line(d, h, l));
+    //println!("====================");
+    //diff.print(DiffFormat::Patch, |d, h, l| print_diff_line(d, h, l));
 
     Ok(())
 }
 
-fn generate_file_paths(replacements: &HashMap<String, String>, files: Vec<&str>) -> Result<Vec<String>> {
-    for file in files {
-        for (pattern, replace) in replacements {
-            let re = to_regex(&pattern)?;
-            let result = re.replace_all(file, &replace[..]);
-            println!("Replace result {:?}", result);
-        }
-    }
-
-    Ok(vec![])
+fn write_content(file_path: &PathBuf, content: &str) -> Result<()> {
+    let parrent = path::parrent(file_path)?;
+    create_dir_all(&parrent)?;
+    write(file_path, content)?;
+    Ok(())
 }
 
-fn to_regex(s: &str) -> Result<Regex, RegexError> {
-    RegexBuilder::new(s)
-        .case_insensitive(true)
-        .build()
-}
 
 fn print_stats(diff: &Diff) -> Result<()> {
     let stats = diff.stats()?;

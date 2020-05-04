@@ -3,7 +3,7 @@ use crate::github::create_org_repo;
 use crate::user::User;
 use std::path::PathBuf;
 
-use super::models::Directory;
+use super::models::ExistDirectory;
 use crate::path;
 use anyhow::{anyhow, Context, Result};
 
@@ -18,7 +18,7 @@ pub struct CreateRepoArgs {
     #[structopt(long, short)]
     pub regex: Filter,
     #[structopt(long, short)]
-    pub dir: Option<Directory>,
+    pub dir: Option<ExistDirectory>,
     #[structopt(long, short)]
     pub public: bool,
     #[structopt(long, short)]

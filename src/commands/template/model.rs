@@ -10,6 +10,16 @@ pub struct TemplateDelta {
     pub ignored: Vec<String>,
 }
 
+impl TemplateDelta {
+    pub fn generate_files(&self, include_optional: bool) -> Vec<String> {
+        let mut files = vec![self.required.clone()];
+        if include_optional {
+            files.push(self.optional.clone());
+        }
+        files.concat()
+    }
+}
+
 #[derive(Debug)]
 pub struct TargetDelta {
     pub template: String,

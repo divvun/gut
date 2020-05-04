@@ -2,11 +2,11 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 #[derive(Debug)]
-pub struct ExistDirectory1 {
+pub struct ExistDirectory {
     pub path: PathBuf,
 }
 
-impl FromStr for ExistDirectory1 {
+impl FromStr for ExistDirectory {
     type Err = DirError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -14,7 +14,7 @@ impl FromStr for ExistDirectory1 {
     }
 }
 #[derive(thiserror::Error, Debug)]
-pub enum DirError1 {
+pub enum DirError {
     #[error("{path} is not a dir")]
     NotADir { path: String },
     #[error("{path} is not exist")]
@@ -38,3 +38,4 @@ pub fn validate_dir(dir: &str) -> Result<PathBuf, DirError> {
         })
     }
 }
+

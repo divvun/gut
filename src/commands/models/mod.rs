@@ -1,7 +1,7 @@
-pub mod directory;
+pub mod exist_directory;
 pub mod root_directory;
 pub mod script;
 
-pub use directory::*;
+pub use exist_directory::*;
 pub use root_directory::*;
 pub use script::*;

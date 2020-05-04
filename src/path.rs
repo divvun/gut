@@ -38,7 +38,7 @@ pub fn local_path_org(organisation: &str, root: &str) -> anyhow::Result<PathBuf>
     Ok(local_path)
 }
 
-trait EnsureDirExists: Sized {
+pub trait EnsureDirExists: Sized {
     fn ensure_dir_exists(self) -> std::io::Result<Self>;
 }
 
@@ -65,4 +65,15 @@ pub fn dir_name(path: &PathBuf) -> anyhow::Result<String> {
         .with_context(|| format!("{:?}, directory name must be in utf-8", path))?
         .to_string();
     Ok(dir_name)
+}
+
+pub fn parrent(path: &PathBuf) -> anyhow::Result<String> {
+    let parrent = path
+        .parent()
+        .with_context(|| format!("{:?}, there is no parent for this path", path))?
+        .to_str()
+        .with_context(|| format!("{:?}, directory name must be in utf-8", path))?
+        .to_string();
+
+    Ok(parrent)
 }
