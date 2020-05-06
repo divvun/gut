@@ -116,7 +116,7 @@ fn continue_apply(target_dir: &PathBuf) -> Result<()> {
     // rewrite delta file
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let new_delta = TargetDelta::get(&template_apply_dir.join("temp_target_delta.toml"))?;
-    let delta_path = &target_dir.join(".gut/delta.toml").to_path_buf();
+    let delta_path = &target_dir.join(".gut/delta.toml");
     new_delta.save(&delta_path)?;
     let mut index = target_repo.index()?;
     index.add_path(Path::new(".gut/delta.toml"))?;
