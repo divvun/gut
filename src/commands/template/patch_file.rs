@@ -85,13 +85,19 @@ pub enum PatchLine {
 impl PatchLine {
     pub fn to_content(&self) -> String {
         match self {
-            PatchLine::Add { line_no: _, content } => format!("+{}", content),
+            PatchLine::Add {
+                line_no: _,
+                content,
+            } => format!("+{}", content),
             PatchLine::Move {
                 old_line_no: _,
                 new_line_no: _,
                 content,
             } => format!(" {}", content),
-            PatchLine::Delete { line_no: _, content } => format!("-{}", content),
+            PatchLine::Delete {
+                line_no: _,
+                content,
+            } => format!("-{}", content),
             PatchLine::Hunk { content } => format!("{}", content),
             PatchLine::Info { content } => format!("{}", content),
         }

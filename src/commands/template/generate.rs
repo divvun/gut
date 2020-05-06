@@ -51,7 +51,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
     let generate_files = template_delta.generate_files(optional);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
-    println!("Target files {:?}", target_files);
+    //println!("Target files {:?}", target_files);
 
     // wirte content
     for (original, target) in target_files {
@@ -59,9 +59,9 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
         let target_path = target_dir.join(&target);
         let original_content = read_to_string(&original_path)?;
         let target_content = generate_string(&target_info.reps, original_content.as_str())?;
-        println!("generated content for {:?}", target_path);
-        println!("{}", target_content);
-        println!("");
+        //println!("generated content for {:?}", target_path);
+        //println!("{}", target_content);
+        //println!("");
         write_content(&target_path, &target_content)?;
     }
 

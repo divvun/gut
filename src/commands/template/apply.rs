@@ -1,14 +1,16 @@
 use super::model::*;
-use crate::commands::common;
 use super::patch_file::*;
+use crate::commands::common;
 use crate::commands::models::ExistDirectory;
 use crate::filter::Filter;
 use crate::git;
 use crate::path;
 use anyhow::{anyhow, Result};
+use git2::Repository;
 use std::fs::{create_dir_all, write, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::str;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -30,14 +32,14 @@ pub struct ApplyArgs {
 
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
-
         if self.finish && self.abort {
             println!("You cannot provide both \"--continue\" and \"--abort\" at the same time");
             return Ok(());
         }
 
         let root = common::root()?;
-        let target_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+        let target_dirs =
+            common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         if self.finish {
             // finish apply process
@@ -177,10 +179,14 @@ fn start_apply(
     let template_repo = git::open::open(template_dir)?;
 
     let temp_current_sha = git::head_sha(&template_repo)?;
-    let temp_last_sha = &target_delta.template_sha;
+    let temp_last_sha = previous_template_sha(&template_repo, &target_delta)?;
 
     let generate_files = template_delta.generate_files(optional);
-    let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha.as_str())?;
+    let diff = git::diff::diff_trees(
+        &template_repo,
+        temp_last_sha.as_str(),
+        temp_current_sha.as_str(),
+    )?;
 
     let patch_files = diff_to_patch(&diff)?;
 
@@ -208,6 +214,38 @@ fn start_apply(
     update_target_delta.save(&template_apply_dir.join("temp_target_delta.toml"))?;
 
     Ok(())
+}
+
+fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta) -> Result<String> {
+    let sha_from_target = &target_delta.template_sha;
+    if let Ok(_) = git::get_commit(template_repo, sha_from_target) {
+        return Ok(sha_from_target.to_string());
+    }
+
+    //revwalk
+    let mut revwalk = template_repo.revwalk()?;
+    revwalk.push_head()?;
+    let mut sort = git2::Sort::TIME;
+    sort.insert(git2::Sort::REVERSE);
+    revwalk.set_sorting(sort)?;
+    for rev in revwalk {
+        let rev = rev?;
+        let commit = template_repo.find_commit(rev.clone())?;
+        let tree = commit.tree()?;
+        let entry = tree.get_path(Path::new(".gut/template.toml"));
+
+        if entry.is_ok() {
+            let object = entry.unwrap().to_object(&template_repo)?;
+            let blob = object.peel_to_blob()?;
+            let content = str::from_utf8(blob.content())?;
+            if let Ok(delta) = toml::from_str::<TemplateDelta>(content) {
+                if delta.rev_id == target_delta.rev_id {
+                    return Ok(rev.to_string());
+                }
+            }
+        }
+    }
+    Err(anyhow!("Cannot find the commit of previous rev_id"))
 }
 
 fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
