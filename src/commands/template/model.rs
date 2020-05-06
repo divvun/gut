@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use crate::toml::{read_file, write_to_file};
+use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
+use anyhow::Result;
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateDelta {
     pub name: String,
     pub patterns: Vec<String>,
@@ -18,14 +22,42 @@ impl TemplateDelta {
         }
         files.concat()
     }
+
+    pub fn save(&self, path: &PathBuf) -> Result<()> {
+        write_to_file(path, self)
+    }
+
+    pub fn get(path: &PathBuf) -> Result<TemplateDelta> {
+        read_file(path)
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TargetDelta {
     pub template: String,
-    pub replacements: HashMap<String, String>,
     pub rev_id: usize,
     pub template_sha: String,
+    #[serde(serialize_with = "toml::ser::tables_last")]
+    pub replacements: HashMap<String, String>,
+}
+
+impl TargetDelta {
+    pub fn save(&self, path: &PathBuf) -> Result<()> {
+        write_to_file(path, self)
+    }
+
+    pub fn get(path: &PathBuf) -> Result<TargetDelta> {
+        read_file(path)
+    }
+
+    pub fn update(&self, rev_id: usize, template_sha: &str) -> TargetDelta {
+        TargetDelta {
+            template: self.template.clone(),
+            rev_id,
+            template_sha: template_sha.to_string(),
+            replacements: self.replacements.clone(),
+        }
+    }
 }
 
 pub fn temp_sample() -> TemplateDelta {

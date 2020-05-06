@@ -1,9 +1,9 @@
 use super::common;
 use crate::filter::Filter;
-use crate::git;
 use crate::path;
-use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
+use anyhow::{Context, Result};
+use crate::git;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -40,7 +40,7 @@ impl CommitArgs {
     }
 }
 
-fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
+pub fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
     let status = git::status(&git_repo, true)?;
@@ -69,18 +69,12 @@ fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
         index.remove_path(path)?;
     }
 
-    let tree_id = index.write_tree()?;
-    let result_tree = git_repo.find_tree(tree_id)?;
-
-    let head_oid = git_repo.head()?.target().expect("Head needs oid");
-    let head_commit = git_repo.find_commit(head_oid)?;
-
-    git::commit(&git_repo, &result_tree, msg, &[&head_commit])?;
+    git::commit_index(&git_repo, &mut index, msg)?;
 
     Ok(CommitResult::Success)
 }
 
-enum CommitResult {
+pub enum CommitResult {
     Conflict,
     NoChanges,
     Success,

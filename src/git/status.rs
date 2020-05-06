@@ -35,15 +35,23 @@ impl GitStatus {
     }
 
     pub fn should_commit(&self) -> bool {
-        self.can_commit() && !self.is_empty()
+        self.can_commit() && self.is_empty()
+    }
+
+    pub fn is_not_dirty(&self) -> bool {
+        self.new.is_empty()
+            && self.modified.is_empty()
+            && self.deleted.is_empty()
+            && self.renamed.is_empty()
+            && self.conflicted.is_empty()
     }
 }
 
-pub fn status(repo: &Repository, untracked_file: bool) -> Result<GitStatus, Error> {
+pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStatus, Error> {
     let mut opts = StatusOptions::new();
-    opts.include_ignored(true)
+    opts.include_ignored(false)
         .include_untracked(true)
-        .recurse_untracked_dirs(untracked_file)
+        .recurse_untracked_dirs(recurse_untracked_dirs)
         .exclude_submodules(false);
 
     let git_statuses = repo.statuses(Some(&mut opts))?;

@@ -119,9 +119,9 @@ impl PatchLine {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PatchFile {
-    old_file: String,
-    new_file: String,
-    lines: Vec<PatchLine>,
+    pub old_file: String,
+    pub new_file: String,
+    pub lines: Vec<PatchLine>,
 }
 
 impl PatchFile {
