@@ -218,7 +218,7 @@ fn start_apply(
 
 fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta) -> Result<String> {
     let sha_from_target = &target_delta.template_sha;
-    if let Ok(_) = git::get_commit(template_repo, sha_from_target) {
+    if git::get_commit(template_repo, sha_from_target).is_ok() {
         return Ok(sha_from_target.to_string());
     }
 

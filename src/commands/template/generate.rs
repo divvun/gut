@@ -73,11 +73,11 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
         template: "".to_string(),
         rev_id: template_delta.rev_id,
         template_sha: current_sha,
-        replacements: target_info.reps.clone(),
+        replacements: target_info.reps,
     };
-    let gut_path = &target_dir.join(".gut/").to_path_buf();
+    let gut_path = &target_dir.join(".gut/");
     create_dir_all(&gut_path)?;
-    target_delta.save(&gut_path.join("delta.toml").to_path_buf())?;
+    target_delta.save(&gut_path.join("delta.toml"))?;
 
     // commit all data
     commit(&target_repo, "Generate project")?;

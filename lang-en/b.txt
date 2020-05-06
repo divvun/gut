@@ -1,5 +1,0 @@
-This is an optional file
-
-abc
-
-Yeah, optional abc

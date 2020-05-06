@@ -85,21 +85,11 @@ pub enum PatchLine {
 impl PatchLine {
     pub fn to_content(&self) -> String {
         match self {
-            PatchLine::Add {
-                line_no: _,
-                content,
-            } => format!("+{}", content),
-            PatchLine::Move {
-                old_line_no: _,
-                new_line_no: _,
-                content,
-            } => format!(" {}", content),
-            PatchLine::Delete {
-                line_no: _,
-                content,
-            } => format!("-{}", content),
-            PatchLine::Hunk { content } => format!("{}", content),
-            PatchLine::Info { content } => format!("{}", content),
+            PatchLine::Add { content, .. } => format!("+{}", content),
+            PatchLine::Move { content, .. } => format!(" {}", content),
+            PatchLine::Delete { content, .. } => format!("-{}", content),
+            PatchLine::Hunk { content } => content.to_string(),
+            PatchLine::Info { content } => content.to_string(),
         }
     }
 
@@ -180,7 +170,7 @@ impl PatchFile {
     }
 }
 
-pub fn to_content(files: &Vec<PatchFile>) -> String {
+pub fn to_content(files: &[PatchFile]) -> String {
     let contents: Vec<String> = files.iter().map(|f| f.to_content()).collect();
     contents.join("")
 }
