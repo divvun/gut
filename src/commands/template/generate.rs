@@ -92,12 +92,10 @@ fn write_content(file_path: &PathBuf, content: &str) -> Result<()> {
 }
 
 struct TargetInfo {
-    name: String,
     reps: HashMap<String, String>,
 }
 
 fn get_target_info(template_delta: &TemplateDelta) -> Result<TargetInfo> {
-    let name = common::ask_for("Project name")?;
     println!("Enter patterns:");
     let mut reps = HashMap::new();
     for pattern in &template_delta.patterns {
@@ -105,7 +103,7 @@ fn get_target_info(template_delta: &TemplateDelta) -> Result<TargetInfo> {
         reps.insert(pattern.to_string(), key);
     }
 
-    Ok(TargetInfo { name, reps })
+    Ok(TargetInfo { reps })
 }
 
 pub fn commit(git_repo: &Repository, msg: &str) -> Result<()> {

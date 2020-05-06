@@ -13,6 +13,7 @@ pub fn diff_trees<'a>(repo: &'a Repository, old: &str, new: &str) -> Result<Diff
     repo.diff_tree_to_tree(Some(&old_tree), Some(&new_tree), Some(&mut opts))
 }
 
+#[allow(dead_code)]
 fn print_stats(diff: &Diff) -> Result<()> {
     let stats = diff.stats()?;
 
@@ -24,11 +25,13 @@ fn print_stats(diff: &Diff) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn print_diff_file(diff_file: &DiffFile) {
     println!("path {:?}", diff_file.path());
     println!("mode {:?}", diff_file.mode());
 }
 
+#[allow(dead_code)]
 fn print_diff_line(_delta: DiffDelta, _hunk: Option<DiffHunk>, line: DiffLine) -> bool {
     println!(
         "{:?} => {:?}",

@@ -1,4 +1,5 @@
 use super::model::*;
+use crate::commands::common;
 use super::patch_file::*;
 use crate::commands::models::ExistDirectory;
 use crate::filter::Filter;
@@ -29,21 +30,19 @@ pub struct ApplyArgs {
 
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
-        println!("Template apply args {:?}", self);
 
         if self.finish && self.abort {
             println!("You cannot provide both \"--continue\" and \"--abort\" at the same time");
             return Ok(());
         }
 
-        // TODO use real target dirs
-        let target_dirs =
-            vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
+        let root = common::root()?;
+        let target_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
         if self.finish {
             // finish apply process
             for dir in target_dirs {
-                match continue_apply(&self.template.path, &dir) {
+                match continue_apply(&dir) {
                     Ok(_) => println!("Finish Apply success"),
                     Err(e) => println!("Finish Apply failed {:?}", e),
                 }
@@ -51,7 +50,7 @@ impl ApplyArgs {
         } else if self.abort {
             // finish apply process
             for dir in target_dirs {
-                match abort_apply(&self.template.path, &dir) {
+                match abort_apply(&dir) {
                     Ok(_) => println!("Abort Apply success"),
                     Err(e) => println!("Abort Apply failed {:?}", e),
                 }
@@ -77,7 +76,7 @@ impl ApplyArgs {
 
 /// do clean -f and reset --hard
 /// Remove temp directory
-fn abort_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
+fn abort_apply(target_dir: &PathBuf) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     path::remove_path(template_apply_dir)?;
     // git clean -f && git reset --hard
@@ -89,7 +88,7 @@ fn abort_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
 /// - Check if everthing is added
 /// - rewrite target delta file
 /// - will remove template_apply directory
-fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
+fn continue_apply(target_dir: &PathBuf) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
 
@@ -177,12 +176,11 @@ fn start_apply(
 
     let template_repo = git::open::open(template_dir)?;
 
-    // TODO need to figure out real commit_sha
-    let temp_current_sha = "cf64bdc4eebfcaba6393ca2a4b7f49bfacf32016";
+    let temp_current_sha = git::head_sha(&template_repo)?;
     let temp_last_sha = &target_delta.template_sha;
 
     let generate_files = template_delta.generate_files(optional);
-    let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
+    let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha.as_str())?;
 
     let patch_files = diff_to_patch(&diff)?;
 
@@ -206,7 +204,7 @@ fn start_apply(
     write(&diff_path, to_content(&target_patch_files?))?;
     execute_patch(diff_path.to_str().unwrap(), target_dir)?;
 
-    let update_target_delta = target_delta.update(template_delta.rev_id, temp_current_sha);
+    let update_target_delta = target_delta.update(template_delta.rev_id, temp_current_sha.as_str());
     update_target_delta.save(&template_apply_dir.join("temp_target_delta.toml"))?;
 
     Ok(())

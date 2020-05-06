@@ -23,6 +23,7 @@ impl TemplateDelta {
         files.concat()
     }
 
+    #[allow(dead_code)]
     pub fn save(&self, path: &PathBuf) -> Result<()> {
         write_to_file(path, self)
     }
@@ -57,31 +58,5 @@ impl TargetDelta {
             template_sha: template_sha.to_string(),
             replacements: self.replacements.clone(),
         }
-    }
-}
-
-pub fn temp_sample() -> TemplateDelta {
-    TemplateDelta {
-        name: "Language Template".to_string(),
-        patterns: vec!["__UND__".to_string()],
-        rev_id: 2,
-        required: vec![
-            "src/a.txt".to_string(),
-            "src/__UND__/__UND__.txt".to_string(),
-            "lang-__UND__.txt".to_string(),
-        ],
-        optional: vec!["b.txt".to_string()],
-        ignored: vec!["c.txt".to_string()],
-    }
-}
-
-pub fn target_delta_sample() -> TargetDelta {
-    let mut rep = HashMap::new();
-    rep.insert("__UND__".to_string(), "en".to_string());
-    TargetDelta {
-        template: "???".to_string(),
-        replacements: rep,
-        rev_id: 1,
-        template_sha: "ab4139e82667a373b7ca56f70bfa27c6fb116c85".to_string(),
     }
 }
