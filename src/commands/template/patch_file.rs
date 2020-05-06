@@ -196,45 +196,45 @@ mod tests {
                 content: "diff --git a/README.md b/README.md
 index 9939b16..68b2be5 100644
 --- a/README.md
-+++ b/README.md"
++++ b/README.md\n"
                     .to_string(),
             },
             PatchLine::Hunk {
-                content: "@@ -1,3 +1,7 @@".to_string(),
+                content: "@@ -1,3 +1,7 @@\n".to_string(),
             },
             PatchLine::Delete {
                 line_no: 1,
-                content: "# __UND__".to_string(),
+                content: "# __UND__\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 1,
-                content: "# Hello __UND__".to_string(),
+                content: "# Hello __UND__\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 2,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 3,
-                content: "rev 2".to_string(),
+                content: "rev 2\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 2,
                 new_line_no: 4,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 3,
                 new_line_no: 5,
-                content: "This is a repo for __UND__".to_string(),
+                content: "This is a repo for __UND__\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 6,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 7,
-                content: "And __UND__ is great".to_string(),
+                content: "And __UND__ is great\n".to_string(),
             },
         ]
     }
@@ -262,7 +262,8 @@ index 9939b16..68b2be5 100644
  
  This is a repo for __UND__
 +
-+And __UND__ is great"
++And __UND__ is great
+"
             .to_string();
 
         assert_eq!(content, expected);
@@ -285,45 +286,45 @@ index 9939b16..68b2be5 100644
                 content: "diff --git a/README.md b/README.md
 index 9939b16..68b2be5 100644
 --- a/README.md
-+++ b/README.md"
++++ b/README.md\n"
                     .to_string(),
             },
             PatchLine::Hunk {
-                content: "@@ -1,3 +1,7 @@".to_string(),
+                content: "@@ -1,3 +1,7 @@\n".to_string(),
             },
             PatchLine::Delete {
                 line_no: 1,
-                content: "# en".to_string(),
+                content: "# en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 1,
-                content: "# Hello en".to_string(),
+                content: "# Hello en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 2,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 3,
-                content: "rev 2".to_string(),
+                content: "rev 2\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 2,
                 new_line_no: 4,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 3,
                 new_line_no: 5,
-                content: "This is a repo for en".to_string(),
+                content: "This is a repo for en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 6,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 7,
-                content: "And en is great".to_string(),
+                content: "And en is great\n".to_string(),
             },
         ];
 
@@ -350,45 +351,45 @@ index 9939b16..68b2be5 100644
                 content: "diff --git a/README.md b/README.md
 index 9939b16..68b2be5 100644
 --- a/README.md
-+++ b/README.md"
++++ b/README.md\n"
                     .to_string(),
             },
             PatchLine::Hunk {
-                content: "@@ -1,3 +1,7 @@".to_string(),
+                content: "@@ -1,3 +1,7 @@\n".to_string(),
             },
             PatchLine::Delete {
                 line_no: 1,
-                content: "# en".to_string(),
+                content: "# en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 1,
-                content: "# Hello en".to_string(),
+                content: "# Hello en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 2,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 3,
-                content: "rev 2".to_string(),
+                content: "rev 2\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 2,
                 new_line_no: 4,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Move {
                 old_line_no: 3,
                 new_line_no: 5,
-                content: "This is a repo for en".to_string(),
+                content: "This is a repo for en\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 6,
-                content: "".to_string(),
+                content: "\n".to_string(),
             },
             PatchLine::Add {
                 line_no: 7,
-                content: "And en is great".to_string(),
+                content: "And en is great\n".to_string(),
             },
         ];
 
