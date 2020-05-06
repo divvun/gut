@@ -1,6 +1,5 @@
 use super::common::*;
 use anyhow::Result;
-use git2;
 use git2::{Diff, DiffFormat, DiffLine};
 use std::collections::HashMap;
 use std::str;
