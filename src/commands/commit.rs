@@ -1,9 +1,9 @@
 use super::common;
 use crate::filter::Filter;
-use crate::path;
-use std::path::{Path, PathBuf};
-use anyhow::{Context, Result};
 use crate::git;
+use crate::path;
+use anyhow::{Context, Result};
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]

@@ -38,4 +38,3 @@ pub fn validate_dir(dir: &str) -> Result<PathBuf, DirError> {
         })
     }
 }
-

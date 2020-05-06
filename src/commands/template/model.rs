@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use crate::toml::{read_file, write_to_file};
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateDelta {

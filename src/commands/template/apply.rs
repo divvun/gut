@@ -1,14 +1,14 @@
-use std::process::{Command, Output};
-use crate::filter::Filter;
-use crate::path;
-use std::path::{Path, PathBuf};
 use super::model::*;
 use super::patch_file::*;
-use anyhow::{anyhow, Result};
-use structopt::StructOpt;
-use std::fs::{write, create_dir_all, File};
-use crate::git;
 use crate::commands::models::ExistDirectory;
+use crate::filter::Filter;
+use crate::git;
+use crate::path;
+use anyhow::{anyhow, Result};
+use std::fs::{create_dir_all, write, File};
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct ApplyArgs {
@@ -19,7 +19,7 @@ pub struct ApplyArgs {
     pub organisation: String,
     #[structopt(long, short)]
     pub regex: Option<Filter>,
-    #[structopt(long="continue")]
+    #[structopt(long = "continue")]
     pub finish: bool,
     #[structopt(long)]
     pub abort: bool,
@@ -32,14 +32,13 @@ impl ApplyArgs {
         println!("Template apply args {:?}", self);
 
         if self.finish && self.abort {
-            println!(
-                "You cannot provide both \"--continue\" and \"--abort\" at the same time"
-            );
+            println!("You cannot provide both \"--continue\" and \"--abort\" at the same time");
             return Ok(());
         }
 
         // TODO use real target dirs
-        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
+        let target_dirs =
+            vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
 
         if self.finish {
             // finish apply process
@@ -59,7 +58,8 @@ impl ApplyArgs {
             }
         } else {
             // start apply process
-            let template_delta = TemplateDelta::get(&self.template.path.join(".gut/template.toml"))?;
+            let template_delta =
+                TemplateDelta::get(&self.template.path.join(".gut/template.toml"))?;
 
             println!("template delta {:?}", template_delta);
 
@@ -143,8 +143,12 @@ fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
 /// - apply patch command in target repo
 /// - Done.
 
-fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &PathBuf, optional: bool) -> Result<()> {
-
+fn start_apply(
+    template_dir: &PathBuf,
+    template_delta: &TemplateDelta,
+    target_dir: &PathBuf,
+    optional: bool,
+) -> Result<()> {
     println!("Start Applying for {:?}", target_dir);
 
     let target_delta = TargetDelta::get(&target_dir.join(".gut/delta.toml"))?;
@@ -183,13 +187,19 @@ fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_di
     let patch_files = diff_to_patch(&diff)?;
 
     //for p in &patch_files {
-        //println!("======================");
-        //println!("{:?}", p);
+    //println!("======================");
+    //println!("{:?}", p);
     //}
 
-    let patch_files: Vec<_> = patch_files.into_iter().filter(|p| generate_files.contains(&p.new_file)).collect();
+    let patch_files: Vec<_> = patch_files
+        .into_iter()
+        .filter(|p| generate_files.contains(&p.new_file))
+        .collect();
 
-    let target_patch_files: Vec<_> = patch_files.iter().map(|p| p.apply_patterns(&target_delta.replacements)).collect();
+    let target_patch_files: Vec<_> = patch_files
+        .iter()
+        .map(|p| p.apply_patterns(&target_delta.replacements))
+        .collect();
     let target_patch_files: Result<Vec<_>> = target_patch_files.into_iter().collect();
 
     let diff_path = &template_apply_dir.join("patch.diff");
@@ -204,12 +214,12 @@ fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_di
 
 fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
     let output = Command::new("patch")
-            .arg("-p1")
-            .arg("-i")
-            .arg(patch_file)
-            .current_dir(dir)
-            .output()
-            .expect("failed to execute process");
+        .arg("-p1")
+        .arg("-i")
+        .arg(patch_file)
+        .current_dir(dir)
+        .output()
+        .expect("failed to execute process");
 
     log::debug!("Patch result {:?} at {:?}: {:?}", patch_file, dir, output);
 
@@ -218,18 +228,18 @@ fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
 
 fn clean_git_dir(dir: &PathBuf) -> Result<()> {
     Command::new("git")
-            .arg("clean")
-            .arg("-f")
-            .current_dir(dir)
-            .output()
-            .expect("failed to execute process");
+        .arg("clean")
+        .arg("-f")
+        .current_dir(dir)
+        .output()
+        .expect("failed to execute process");
 
     Command::new("git")
-            .arg("reset")
-            .arg("--hard")
-            .current_dir(dir)
-            .output()
-            .expect("failed to execute process");
+        .arg("reset")
+        .arg("--hard")
+        .current_dir(dir)
+        .output()
+        .expect("failed to execute process");
 
     Ok(())
 }

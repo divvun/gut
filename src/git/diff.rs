@@ -1,6 +1,6 @@
-use git2::{Error, Repository, Diff, DiffOptions, DiffFile, DiffDelta, DiffLine, DiffHunk};
-use std::str;
 use anyhow::Result;
+use git2::{Diff, DiffDelta, DiffFile, DiffHunk, DiffLine, DiffOptions, Error, Repository};
+use std::str;
 
 pub fn diff_trees<'a>(repo: &'a Repository, old: &str, new: &str) -> Result<Diff<'a>, Error> {
     let old_tree = super::tree_from_commit_sha(repo, old)?;
@@ -29,13 +29,12 @@ fn print_diff_file(diff_file: &DiffFile) {
     println!("mode {:?}", diff_file.mode());
 }
 
-fn print_diff_line(
-    _delta: DiffDelta,
-    _hunk: Option<DiffHunk>,
-    line: DiffLine,
-) -> bool {
-
-    println!("{:?} => {:?}", _delta.old_file().path(), _delta.new_file().path());
+fn print_diff_line(_delta: DiffDelta, _hunk: Option<DiffHunk>, line: DiffLine) -> bool {
+    println!(
+        "{:?} => {:?}",
+        _delta.old_file().path(),
+        _delta.new_file().path()
+    );
 
     if let Some(hs) = _hunk {
         println!("hunk {:?}", str::from_utf8(hs.header()).unwrap());
@@ -51,4 +50,3 @@ fn print_diff_line(
     print!("{}", str::from_utf8(line.content()).unwrap());
     true
 }
-

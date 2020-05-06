@@ -1,16 +1,16 @@
-use std::collections::HashMap;
-use git2::Repository;
-use crate::git;
-use crate::commands::common;
-use std::str;
-use crate::path;
-use std::path::{Path, PathBuf};
-use super::model::*;
 use super::common::*;
-use anyhow::{Context, Result};
-use structopt::StructOpt;
-use std::fs::{read_to_string, write, create_dir_all};
+use super::model::*;
+use crate::commands::common;
 use crate::commands::models::ExistDirectory;
+use crate::git;
+use crate::path;
+use anyhow::{Context, Result};
+use git2::Repository;
+use std::collections::HashMap;
+use std::fs::{create_dir_all, read_to_string, write};
+use std::path::{Path, PathBuf};
+use std::str;
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct GenerateArgs {
@@ -24,7 +24,6 @@ pub struct GenerateArgs {
 
 impl GenerateArgs {
     pub fn run(&self) -> Result<()> {
-
         let template_dir = &self.template.path;
         let target_dir = Path::new(&self.dir).to_path_buf();
         create_dir_all(&target_dir).context("Cannot create target directory")?;
@@ -42,7 +41,6 @@ impl GenerateArgs {
 // create delta files
 // commit all
 fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Result<()> {
-
     let template_repo = git::open(template_dir)?;
     let current_sha = git::head_sha(&template_repo)?;
 
@@ -61,7 +59,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
         let target_path = target_dir.join(&target);
         let original_content = read_to_string(&original_path)?;
         let target_content = generate_string(&target_info.reps, original_content.as_str())?;
-        println!("generated content for {:?}",target_path);
+        println!("generated content for {:?}", target_path);
         println!("{}", target_content);
         println!("");
         write_content(&target_path, &target_content)?;
@@ -72,7 +70,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
 
     // write delta file
     let target_delta = TargetDelta {
-        template : "".to_string(),
+        template: "".to_string(),
         rev_id: template_delta.rev_id,
         template_sha: current_sha,
         replacements: target_info.reps.clone(),
@@ -107,14 +105,10 @@ fn get_target_info(template_delta: &TemplateDelta) -> Result<TargetInfo> {
         reps.insert(pattern.to_string(), key);
     }
 
-    Ok(TargetInfo {
-        name,
-        reps,
-    })
+    Ok(TargetInfo { name, reps })
 }
 
 pub fn commit(git_repo: &Repository, msg: &str) -> Result<()> {
-
     let status = git::status(&git_repo, true)?;
 
     let mut index = git_repo.index()?;
