@@ -21,3 +21,12 @@ pub fn commit_index(git_repo: &Repository, index: &mut Index, msg: &str) -> Resu
     Ok(())
 }
 
+pub fn commit_first(git_repo: &Repository, index: &mut Index, msg: &str) -> Result<(), Error> {
+    let tree_id = index.write_tree()?;
+    let result_tree = git_repo.find_tree(tree_id)?;
+
+    commit_tree(&git_repo, &result_tree, msg, &[])?;
+
+    Ok(())
+}
+

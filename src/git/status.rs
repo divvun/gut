@@ -35,7 +35,7 @@ impl GitStatus {
     }
 
     pub fn should_commit(&self) -> bool {
-        self.can_commit() && self.is_empty()
+        self.can_commit() && !self.is_empty()
     }
 
     pub fn is_not_dirty(&self) -> bool {

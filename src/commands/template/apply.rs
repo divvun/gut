@@ -1,5 +1,4 @@
 use std::process::{Command, Output};
-use std::str;
 use crate::filter::Filter;
 use crate::path;
 use std::path::{Path, PathBuf};
@@ -39,7 +38,8 @@ impl ApplyArgs {
             return Ok(());
         }
 
-        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-en").to_path_buf()];
+        // TODO use real target dirs
+        let target_dirs = vec![Path::new("/Users/thanhle/dadmin/dadmin-test/lang-fr").to_path_buf()];
 
         if self.finish {
             // finish apply process
@@ -75,7 +75,8 @@ impl ApplyArgs {
     }
 }
 
-/// will do clean and reset --hard
+/// do clean -f and reset --hard
+/// Remove temp directory
 fn abort_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     path::remove_path(template_apply_dir)?;
@@ -84,12 +85,10 @@ fn abort_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-/// - --continue
 /// - Check if there is no *.rej, *.orig
-/// - Check if everthing is commited
+/// - Check if everthing is added
 /// - rewrite target delta file
 /// - will remove template_apply directory
-///
 fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
@@ -108,6 +107,8 @@ fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     }
 
     if status.added.is_empty() {
+        // remove temp dir
+        path::remove_path(template_apply_dir)?;
         return Err(anyhow!("Nothing is added, so we abort this apply process"));
     }
 
@@ -120,6 +121,7 @@ fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     index.add_path(Path::new(".gut/delta.toml"))?;
     let message = format!("Apply changes {:?}", new_delta.rev_id);
 
+    // commit everything
     git::commit_index(&target_repo, &mut index, message.as_str())?;
 
     // remove temp dir
@@ -143,7 +145,9 @@ fn continue_apply(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
 
 fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_dir: &PathBuf, optional: bool) -> Result<()> {
 
-    println!("Start Appling for {:?}", target_dir);
+    println!("Start Applying for {:?}", target_dir);
+
+    let target_delta = TargetDelta::get(&target_dir.join(".gut/delta.toml"))?;
 
     // check if repo is clean
     // If repo is not clean stop
@@ -154,8 +158,6 @@ fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_di
         return Err(anyhow!("Target repo is not clean. Please clean or commit new changes before applying changes from template."));
     }
 
-    let target_delta = TargetDelta::get(&target_dir.join(".gut/delta.toml"))?;
-
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
 
@@ -163,9 +165,10 @@ fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_di
     if apply_status_path.exists() {
         return Err(anyhow!("We are in middle of an applying process. Please use \"--abort\" or \"--continue\" option"));
     }
+
     // create template_apply dir
     create_dir_all(template_apply_dir)?;
-    // create status file
+    // write status file to mark process as on going
     File::create(&apply_status_path)?;
 
     let template_repo = git::open::open(template_dir)?;
@@ -177,36 +180,17 @@ fn start_apply(template_dir: &PathBuf, template_delta: &TemplateDelta, target_di
     let generate_files = template_delta.generate_files(optional);
     let diff = git::diff::diff_trees(&template_repo, temp_last_sha, temp_current_sha)?;
 
-
-    //print_stats(&diff);
-    //let deltas = diff.deltas();
-    //for delta in deltas {
-        //println!("status {:?}", delta.status());
-        //println!("number of files {:?}", delta.nfiles());
-        //print_diff_file(&delta.old_file());
-        //print_diff_file(&delta.new_file());
-    //}
-    //println!("====================");
-    //diff.print(DiffFormat::Patch, |d, h, l| print_diff_line(d, h, l));
-
     let patch_files = diff_to_patch(&diff)?;
 
-    for p in &patch_files {
-        println!("======================");
-        println!("{:?}", p);
-    }
+    //for p in &patch_files {
+        //println!("======================");
+        //println!("{:?}", p);
+    //}
 
     let patch_files: Vec<_> = patch_files.into_iter().filter(|p| generate_files.contains(&p.new_file)).collect();
 
-    //println!("Template patch file content");
-    //println!("{}", to_content(&patch_files));
-    //println!("==============================");
-    //write("template.diff", to_content(&patch_files));
     let target_patch_files: Vec<_> = patch_files.iter().map(|p| p.apply_patterns(&target_delta.replacements)).collect();
     let target_patch_files: Result<Vec<_>> = target_patch_files.into_iter().collect();
-    //let patch_content = to_content(&target_patch_files?);
-    //println!("Target patch file content");
-    //println!("{}", patch_content);
 
     let diff_path = &template_apply_dir.join("patch.diff");
     write(&diff_path, to_content(&target_patch_files?))?;
