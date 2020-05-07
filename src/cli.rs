@@ -1,7 +1,7 @@
 use crate::commands::{
     AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CleanArgs, CloneArgs, CommitArgs, CreateArgs,
     FetchArgs, InitArgs, InviteArgs, MakeArgs, MergeArgs, PushArgs, RemoveArgs, SetArgs, ShowArgs,
-    StatusArgs, TemplateArgs, TopicArgs,
+    StatusArgs, TemplateArgs, TopicArgs, TransferArgs,
 };
 use structopt::StructOpt;
 
@@ -54,4 +54,6 @@ pub enum Commands {
     Template(TemplateArgs),
     #[structopt(name = "topic")]
     Topic(TopicArgs),
+    #[structopt(name = "transfer")]
+    Transfer(TransferArgs),
 }

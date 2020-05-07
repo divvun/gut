@@ -521,6 +521,23 @@ pub struct TopicsResponse {
     names: Vec<String>,
 }
 
+pub fn transfer_repo(repo: &RemoteRepo, new_owner: &str, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/transfer",
+        repo.owner, repo.name
+    );
+    let body = TransferBody {
+        new_owner: new_owner.to_string(),
+    };
+    let response = post(&url, &body, token)?;
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct TransferBody {
+    new_owner: String,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 

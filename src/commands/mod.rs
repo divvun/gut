@@ -37,6 +37,7 @@ pub mod topic;
 pub mod topic_add;
 pub mod topic_get;
 pub mod topic_set;
+pub mod transfer;
 
 pub use add::*;
 pub use apply::*;
@@ -60,3 +61,4 @@ pub use show::*;
 pub use status::*;
 pub use template::*;
 pub use topic::*;
+pub use transfer::*;

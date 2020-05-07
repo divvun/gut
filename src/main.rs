@@ -45,5 +45,6 @@ fn main() -> Result<()> {
         Commands::Status(args) => args.run(),
         Commands::Template(args) => args.run(),
         Commands::Topic(args) => args.run(),
+        Commands::Transfer(args) => args.run(),
     }
 }
