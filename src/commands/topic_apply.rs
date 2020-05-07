@@ -93,8 +93,8 @@ fn filter_repos(
     topic: Option<&String>,
     regex: Option<&Filter>,
 ) -> Vec<RemoteRepoWithTopics> {
-    if topic.is_some() {
-        filter_repos_with_topic(repos, topic.unwrap())
+    if let Some(t) = topic {
+        filter_repos_with_topic(repos, t)
     } else {
         filter_repos_with_regex(repos, regex.unwrap())
     }
