@@ -89,7 +89,7 @@ fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRe
 }
 
 fn filter_repos(
-    repos: &Vec<RemoteRepoWithTopics>,
+    repos: &[RemoteRepoWithTopics],
     topic: Option<&String>,
     regex: Option<&Filter>,
 ) -> Vec<RemoteRepoWithTopics> {
@@ -101,28 +101,28 @@ fn filter_repos(
 }
 
 fn filter_repos_with_topic(
-    repos: &Vec<RemoteRepoWithTopics>,
-    topic: &String,
+    repos: &[RemoteRepoWithTopics],
+    topic: &str,
 ) -> Vec<RemoteRepoWithTopics> {
     repos
-        .into_iter()
-        .filter(|r| r.topics.contains(topic))
-        .map(|x| x.clone())
+        .iter()
+        .filter(|r| r.topics.contains(&topic.to_string()))
+        .cloned()
         .collect()
 }
 
 fn filter_repos_with_regex(
-    repos: &Vec<RemoteRepoWithTopics>,
+    repos: &[RemoteRepoWithTopics],
     regex: &Filter,
 ) -> Vec<RemoteRepoWithTopics> {
     repos
-        .into_iter()
+        .iter()
         .filter(|r| has_pattern(r, regex))
-        .map(|x| x.clone())
+        .cloned()
         .collect()
 }
 
 fn has_pattern(repo: &RemoteRepoWithTopics, regex: &Filter) -> bool {
     let filtered_topics: Vec<_> = repo.topics.iter().filter(|t| regex.is_match(t)).collect();
-    filtered_topics.len() != 0
+    !filtered_topics.is_empty()
 }
