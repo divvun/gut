@@ -92,7 +92,7 @@ fn normal_merge(
     let msg = format!("Merge branch '{}'", branch);
     let local_commit = repo.find_commit(local.id())?;
     let remote_commit = repo.find_commit(remote.id())?;
-    commit::commit(repo, &result_tree, &msg, &[&local_commit, &remote_commit])?;
+    commit::commit_tree(repo, &result_tree, &msg, &[&local_commit, &remote_commit])?;
     Ok(MergeStatus::NormalMerge)
 }
 

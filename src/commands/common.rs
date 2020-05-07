@@ -94,3 +94,11 @@ pub fn confirm(prompt: &str, key: &str) -> Result<bool> {
         .interact()?;
     Ok(confirm == key)
 }
+
+pub fn ask_for(prompt: &str) -> Result<String> {
+    let confirm = Input::<String>::new()
+        .with_prompt(prompt)
+        .allow_empty(true)
+        .interact()?;
+    Ok(confirm)
+}
