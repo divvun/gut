@@ -14,10 +14,13 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct GenerateArgs {
+    /// Directory of template project
     #[structopt(long, short)]
     pub template: ExistDirectory,
+    /// Directory of the will be genrated project
     #[structopt(long, short)]
     pub dir: String,
+    /// Flag to include optional files
     #[structopt(long)]
     pub optional: bool,
 }
@@ -29,8 +32,8 @@ impl GenerateArgs {
         create_dir_all(&target_dir).context("Cannot create target directory")?;
 
         match generate(&template_dir, &target_dir, self.optional) {
-            Ok(_) => println!("Generate success"),
-            Err(e) => println!("Generate failed {:?}", e),
+            Ok(_) => println!("Generate success at {:?}", target_dir),
+            Err(e) => println!("Generate failed because {:?}", e),
         }
         Ok(())
     }

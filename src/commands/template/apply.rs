@@ -13,19 +13,25 @@ use std::process::{Command, Output};
 use std::str;
 use structopt::StructOpt;
 
+/// Apply changes from template to all prject that match the regex
 #[derive(Debug, StructOpt)]
 pub struct ApplyArgs {
     /// Directory of template project
     #[structopt(long, short)]
     pub template: ExistDirectory,
+    /// Target organisation name
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
+    /// Optional regex to filter repositories
     #[structopt(long, short)]
     pub regex: Option<Filter>,
+    /// Flag to finish apply changes process
     #[structopt(long = "continue")]
     pub finish: bool,
+    /// Flag to abort apply changes process
     #[structopt(long)]
     pub abort: bool,
+    /// Flag to include optional files
     #[structopt(long)]
     pub optional: bool,
 }
@@ -45,16 +51,16 @@ impl ApplyArgs {
             // finish apply process
             for dir in target_dirs {
                 match continue_apply(&dir) {
-                    Ok(_) => println!("Finish Apply success"),
-                    Err(e) => println!("Finish Apply failed {:?}", e),
+                    Ok(_) => println!("Apply changes finish successfully"),
+                    Err(e) => println!("Apply changes finish failed because {:?}", e),
                 }
             }
         } else if self.abort {
             // finish apply process
             for dir in target_dirs {
                 match abort_apply(&dir) {
-                    Ok(_) => println!("Abort Apply success"),
-                    Err(e) => println!("Abort Apply failed {:?}", e),
+                    Ok(_) => println!("Abort Apply process"),
+                    Err(e) => println!("Abort Apply failed because {:?}", e),
                 }
             }
         } else {
@@ -66,8 +72,8 @@ impl ApplyArgs {
 
             for dir in target_dirs {
                 match start_apply(&self.template.path, &template_delta, &dir, self.optional) {
-                    Ok(_) => println!("Applied success"),
-                    Err(e) => println!("Applied failed {:?}", e),
+                    Ok(_) => println!("Applied changes success. Please resolve conflict and use \"git add\" to add all changes before continue."),
+                    Err(e) => println!("Applied changes failed {:?}\n Please use \"--abort\" option to abort the process.", e),
                 }
             }
         }
