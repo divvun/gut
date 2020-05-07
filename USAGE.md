@@ -254,3 +254,25 @@ OPTIONS:
     -r, --regex <regex>                  Optional regex to filter repositories
     -t, --topics <topics>...             All topics will be added
 ```
+
+## Topic Apply
+
+```
+dadmin-topic-apply 0.1.0
+Apply a script to all repositories that has a topics that match a pattern Or to all repositories that has a specific
+topic
+
+USAGE:
+    dadmin topic apply [FLAGS] [OPTIONS] --regex <regex> --script <script> --topic <topic>
+
+FLAGS:
+    -h, --help         Prints help information
+    -u, --use-https    use https to clone repositories if needed
+    -V, --version      Prints version information
+
+OPTIONS:
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  regex pattern to filter topics. This is required unless topic is provided
+    -s, --script <script>                The script will be applied for all repositories that match
+    -t, --topic <topic>                  A topic to filter repositories. This is required unless regex is provided
+```
