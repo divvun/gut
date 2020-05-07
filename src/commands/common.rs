@@ -1,4 +1,5 @@
 use crate::config::Config;
+use std::process::{Command, Output};
 use crate::path;
 use anyhow::{anyhow, Context, Result};
 use dialoguer::Input;
@@ -101,4 +102,36 @@ pub fn ask_for(prompt: &str) -> Result<String> {
         .allow_empty(true)
         .interact()?;
     Ok(confirm)
+}
+
+pub fn apply_script(dir: &PathBuf, script: &str) -> Result<()> {
+    let output = execute_script(script, dir)?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        let err_message = String::from_utf8(output.stderr)
+            .unwrap_or_else(|_| format!("Cannot execute the script {}", script));
+        Err(anyhow!(err_message))
+    }
+}
+
+fn execute_script(script: &str, dir: &PathBuf) -> Result<Output> {
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(&["/C", script])
+            .current_dir(dir)
+            .output()
+            .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg(script)
+            .current_dir(dir)
+            .output()
+            .expect("failed to execute process")
+    };
+
+    log::debug!("Script result {:?}", output);
+
+    Ok(output)
 }

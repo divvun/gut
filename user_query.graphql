@@ -29,3 +29,28 @@ query RepositoryDefaultBranch($owner: String!, $name: String!) {
     }
   }
 }
+
+query OrganizationRepositoriesWithTopics($login: String!, $after: String) {
+  organization(login: $login) {
+    repositories(first: 100, after: $after) {
+      totalCount
+      nodes{
+        name,
+        nameWithOwner,
+        sshUrl,
+        url,
+        repositoryTopics(first: 100) {
+          nodes {
+            topic {
+              name
+            }
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}

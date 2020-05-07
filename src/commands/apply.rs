@@ -3,7 +3,6 @@ use super::models::Script;
 use crate::filter::Filter;
 use anyhow::{anyhow, Result};
 use std::path::PathBuf;
-use std::process::{Command, Output};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -28,7 +27,7 @@ impl ApplyArgs {
             .expect("dadmin only supports utf8 path now!");
 
         for dir in sub_dirs {
-            match apply(&dir, script_path) {
+            match common::apply_script(&dir, script_path) {
                 Ok(_) => println!(
                     "Applied script {} for dir {:?} successfully",
                     script_path, dir
@@ -44,34 +43,3 @@ impl ApplyArgs {
     }
 }
 
-fn apply(dir: &PathBuf, script: &str) -> Result<()> {
-    let output = execute_script(script, dir)?;
-    if output.status.success() {
-        Ok(())
-    } else {
-        let err_message = String::from_utf8(output.stderr)
-            .unwrap_or_else(|_| format!("Cannot execute the script {}", script));
-        Err(anyhow!(err_message))
-    }
-}
-
-fn execute_script(script: &str, dir: &PathBuf) -> Result<Output> {
-    let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(&["/C", script])
-            .current_dir(dir)
-            .output()
-            .expect("failed to execute process")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(script)
-            .current_dir(dir)
-            .output()
-            .expect("failed to execute process")
-    };
-
-    log::debug!("Script result {:?}", output);
-
-    Ok(output)
-}

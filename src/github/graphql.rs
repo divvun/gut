@@ -30,6 +30,14 @@ struct OrganizationRepositories;
 )]
 struct RepositoryDefaultBranch;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "github.graphql",
+    query_path = "user_query.graphql",
+    response_derives = "Debug"
+)]
+struct OrganizationRepositoriesWithTopics;
+
 fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, reqwest::Error> {
     let client = req::Client::new();
     client
@@ -121,6 +129,73 @@ fn list_org_repos_rec(
 
 pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {
     list_org_repos_rec(token, org, None)
+}
+
+fn list_org_repos_with_topics_rec(
+    token: &str,
+    org: &str,
+    after: Option<String>,
+) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
+    let q = OrganizationRepositoriesWithTopics::build_query(organization_repositories_with_topics::Variables {
+        login: org.to_string(),
+        after,
+    });
+
+    let res = query(token, &q)?;
+
+    let response_status = res.status();
+    if response_status == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(Unauthorized.into());
+    }
+
+    let response_body: Response<organization_repositories_with_topics::ResponseData> = res.json()?;
+
+    let org_data = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .organization
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?;
+
+    let repositories = org_data.repositories.nodes.as_ref();
+
+    let temp = vec![];
+    let mut list_repo: Vec<RemoteRepoWithTopics> = repositories
+        .ok_or(NoReposFound)?
+        .iter()
+        .filter_map(|repo| repo.as_ref())
+        .map(|x| RemoteRepoWithTopics {
+
+            repo: RemoteRepo {
+            name: x.name.to_string(),
+            ssh_url: x.ssh_url.to_string(),
+            owner: org.to_string(),
+            https_url: x.url.to_string(),
+        },
+        topics: x.repository_topics.nodes.as_ref()
+            .unwrap_or_else(|| &temp)
+            .iter()
+            .filter_map(|t| t.as_ref())
+            .map(|x| x.topic.name.to_string())
+            .collect(),
+        })
+        .collect();
+
+    let page_info = &org_data.repositories.page_info;
+
+    if page_info.has_next_page {
+        let after = page_info.end_cursor.as_ref().map(|x| x.to_string());
+        match list_org_repos_with_topics_rec(token, org, after) {
+            Ok(mut l) => list_repo.append(&mut l),
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(list_repo)
+}
+
+pub fn list_org_repos_with_topics(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
+    list_org_repos_with_topics_rec(token, org, None)
 }
 
 #[allow(dead_code)]
