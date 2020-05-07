@@ -1,8 +1,7 @@
 use super::common;
 use super::models::Script;
 use crate::filter::Filter;
-use anyhow::{anyhow, Result};
-use std::path::PathBuf;
+use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -42,4 +41,3 @@ impl ApplyArgs {
         Ok(())
     }
 }
-

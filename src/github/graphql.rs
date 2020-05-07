@@ -136,10 +136,12 @@ fn list_org_repos_with_topics_rec(
     org: &str,
     after: Option<String>,
 ) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
-    let q = OrganizationRepositoriesWithTopics::build_query(organization_repositories_with_topics::Variables {
-        login: org.to_string(),
-        after,
-    });
+    let q = OrganizationRepositoriesWithTopics::build_query(
+        organization_repositories_with_topics::Variables {
+            login: org.to_string(),
+            after,
+        },
+    );
 
     let res = query(token, &q)?;
 
@@ -148,7 +150,8 @@ fn list_org_repos_with_topics_rec(
         return Err(Unauthorized.into());
     }
 
-    let response_body: Response<organization_repositories_with_topics::ResponseData> = res.json()?;
+    let response_body: Response<organization_repositories_with_topics::ResponseData> =
+        res.json()?;
 
     let org_data = response_body
         .data
@@ -166,19 +169,21 @@ fn list_org_repos_with_topics_rec(
         .iter()
         .filter_map(|repo| repo.as_ref())
         .map(|x| RemoteRepoWithTopics {
-
             repo: RemoteRepo {
-            name: x.name.to_string(),
-            ssh_url: x.ssh_url.to_string(),
-            owner: org.to_string(),
-            https_url: x.url.to_string(),
-        },
-        topics: x.repository_topics.nodes.as_ref()
-            .unwrap_or_else(|| &temp)
-            .iter()
-            .filter_map(|t| t.as_ref())
-            .map(|x| x.topic.name.to_string())
-            .collect(),
+                name: x.name.to_string(),
+                ssh_url: x.ssh_url.to_string(),
+                owner: org.to_string(),
+                https_url: x.url.to_string(),
+            },
+            topics: x
+                .repository_topics
+                .nodes
+                .as_ref()
+                .unwrap_or_else(|| &temp)
+                .iter()
+                .filter_map(|t| t.as_ref())
+                .map(|x| x.topic.name.to_string())
+                .collect(),
         })
         .collect();
 
@@ -194,7 +199,10 @@ fn list_org_repos_with_topics_rec(
     Ok(list_repo)
 }
 
-pub fn list_org_repos_with_topics(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
+pub fn list_org_repos_with_topics(
+    token: &str,
+    org: &str,
+) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
     list_org_repos_with_topics_rec(token, org, None)
 }
 

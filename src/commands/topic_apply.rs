@@ -1,10 +1,10 @@
 use super::common;
-use crate::user::User;
-use crate::convert::try_from_one;
 use super::models::Script;
+use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::github;
-use crate::github::{NoReposFound,  Unauthorized, RemoteRepoWithTopics};
+use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
+use crate::user::User;
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
@@ -50,13 +50,18 @@ impl TopicApplyArgs {
                 Ok(_) => println!("Apply success"),
                 Err(e) => println!("Apply failed because {:?}", e),
             }
-        };
+        }
 
         Ok(())
     }
 }
 
-fn apply(repo: &RemoteRepoWithTopics, script_path: &str, user: &User, use_https: bool) -> Result<()> {
+fn apply(
+    repo: &RemoteRepoWithTopics,
+    script_path: &str,
+    user: &User,
+    use_https: bool,
+) -> Result<()> {
     let git_repo = try_from_one(repo.repo.clone(), user, use_https)?;
 
     let cloned_repo = git_repo.open_or_clone()?;
@@ -65,11 +70,10 @@ fn apply(repo: &RemoteRepoWithTopics, script_path: &str, user: &User, use_https:
     common::apply_script(&git_repo.local_path, script_path)
 }
 
-fn query_repositories_with_topics(
-    org: &str,
-    token: &str,
-) -> Result<Vec<RemoteRepoWithTopics>> {
-    let repos = match github::list_org_repos_with_topics(token, org).context("When fetching repositories") {
+fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
+    let repos = match github::list_org_repos_with_topics(token, org)
+        .context("When fetching repositories")
+    {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if e.downcast_ref::<NoReposFound>().is_some() {
@@ -84,7 +88,11 @@ fn query_repositories_with_topics(
     Ok(repos)
 }
 
-fn filter_repos(repos: &Vec<RemoteRepoWithTopics>, topic: Option<&String>, regex: Option<&Filter>) -> Vec<RemoteRepoWithTopics> {
+fn filter_repos(
+    repos: &Vec<RemoteRepoWithTopics>,
+    topic: Option<&String>,
+    regex: Option<&Filter>,
+) -> Vec<RemoteRepoWithTopics> {
     if topic.is_some() {
         filter_repos_with_topic(repos, topic.unwrap())
     } else {
@@ -92,12 +100,26 @@ fn filter_repos(repos: &Vec<RemoteRepoWithTopics>, topic: Option<&String>, regex
     }
 }
 
-fn filter_repos_with_topic(repos: &Vec<RemoteRepoWithTopics>, topic: &String) -> Vec<RemoteRepoWithTopics> {
-    repos.into_iter().filter(|r| r.topics.contains(topic)).map(|x| x.clone()).collect()
+fn filter_repos_with_topic(
+    repos: &Vec<RemoteRepoWithTopics>,
+    topic: &String,
+) -> Vec<RemoteRepoWithTopics> {
+    repos
+        .into_iter()
+        .filter(|r| r.topics.contains(topic))
+        .map(|x| x.clone())
+        .collect()
 }
 
-fn filter_repos_with_regex(repos: &Vec<RemoteRepoWithTopics>, regex: &Filter) -> Vec<RemoteRepoWithTopics> {
-    repos.into_iter().filter(|r| has_pattern(r, regex)).map(|x| x.clone()).collect()
+fn filter_repos_with_regex(
+    repos: &Vec<RemoteRepoWithTopics>,
+    regex: &Filter,
+) -> Vec<RemoteRepoWithTopics> {
+    repos
+        .into_iter()
+        .filter(|r| has_pattern(r, regex))
+        .map(|x| x.clone())
+        .collect()
 }
 
 fn has_pattern(repo: &RemoteRepoWithTopics, regex: &Filter) -> bool {

@@ -20,7 +20,6 @@ pub struct RemoteRepoWithTopics {
     pub topics: Vec<String>,
 }
 
-
 #[derive(thiserror::Error, Debug)]
 #[error("User unauthorized")]
 pub struct Unauthorized;

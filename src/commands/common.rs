@@ -1,9 +1,9 @@
 use crate::config::Config;
-use std::process::{Command, Output};
 use crate::path;
 use anyhow::{anyhow, Context, Result};
 use dialoguer::Input;
 use std::path::PathBuf;
+use std::process::{Command, Output};
 
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
