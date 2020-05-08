@@ -12,6 +12,19 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 /// Set description and/or website for all repositories that match regex
+/// Description can be provided by --description option or --des-script option
+/// --des-script will override --description if it is provided
+/// Similar to --web-script and --website
+/// The script can use two arguments
+/// repository name as argument number one
+/// organisation name as argument number two
+///
+/// Here is a sample of Description scrip
+/// ```
+/// name=$1
+/// org=$2
+/// printf "This is the best description ever for ${name} in ${org}"
+/// ```
 pub struct InfoArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
