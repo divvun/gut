@@ -544,11 +544,7 @@ pub fn get_public_key(repo: &RemoteRepo, token: &str) -> Result<PublicKey> {
         repo.owner, repo.name
     );
 
-    let response = get(
-        &url,
-        token,
-        None
-    )?;
+    let response = get(&url, token, None)?;
 
     let status = response.status();
 
@@ -570,7 +566,13 @@ pub struct PublicKey {
     pub key: String,
 }
 
-pub fn set_secret(repo: &RemoteRepo, name: &str, encrypted_value: &str, key_id: &str, token: &str) -> Result<()> {
+pub fn set_secret(
+    repo: &RemoteRepo,
+    name: &str,
+    encrypted_value: &str,
+    key_id: &str,
+    token: &str,
+) -> Result<()> {
     let url = format!(
         "https://api.github.com/repos/{}/{}/actions/secrets/{}",
         repo.owner, repo.name, name

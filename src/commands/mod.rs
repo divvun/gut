@@ -1,5 +1,4 @@
 pub mod add;
-pub mod set_secret;
 pub mod add_users;
 pub mod apply;
 pub mod branch;
@@ -28,6 +27,7 @@ pub mod remove_repos;
 pub mod remove_users;
 pub mod set;
 pub mod set_info;
+pub mod set_secret;
 pub mod set_team_permission;
 pub mod show;
 pub mod show_config;

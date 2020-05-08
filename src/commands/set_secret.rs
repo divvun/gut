@@ -1,10 +1,10 @@
 use super::common;
+use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::{Context, Result};
-use sodiumoxide::crypto::sealedbox;
 use sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PublicKey;
-use crate::filter::Filter;
+use sodiumoxide::crypto::sealedbox;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -35,15 +35,13 @@ impl SecretArgs {
         )?;
 
         for repo in filtered_repos {
-            let result = set_secret(
-                &repo,
-                &self.value,
-                &self.name,
-                &user_token,
-            );
+            let result = set_secret(&repo, &self.value, &self.name, &user_token);
             match result {
                 Ok(_) => println!("Set secret value for repo {} successfully", repo.name),
-                Err(e) => println!("Failed to set secret value for repo {} because {:?}", repo.name, e),
+                Err(e) => println!(
+                    "Failed to set secret value for repo {} because {:?}",
+                    repo.name, e
+                ),
             }
         }
         Ok(())
@@ -59,8 +57,7 @@ fn set_secret(repo: &RemoteRepo, value: &str, name: &str, token: &str) -> Result
 
 fn encrypt(value: &str, key: &str) -> Result<String> {
     let bytes = base64::decode(key)?;
-    let public_key = PublicKey::from_slice(&bytes)
-                .context("Invalid public key from github")?;
+    let public_key = PublicKey::from_slice(&bytes).context("Invalid public key from github")?;
     let encrypted = sealedbox::seal(value.as_bytes(), &public_key);
     let encrypted = base64::encode(encrypted);
     Ok(encrypted)

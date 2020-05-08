@@ -238,10 +238,9 @@ fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta)
         let rev = rev?;
         let commit = template_repo.find_commit(rev.clone())?;
         let tree = commit.tree()?;
-        let entry = tree.get_path(Path::new(".gut/template.toml"));
 
-        if entry.is_ok() {
-            let object = entry.unwrap().to_object(&template_repo)?;
+        if let Ok(entry) = tree.get_path(Path::new(".gut/template.toml")) {
+            let object = entry.to_object(&template_repo)?;
             let blob = object.peel_to_blob()?;
             let content = str::from_utf8(blob.content())?;
             if let Ok(delta) = toml::from_str::<TemplateDelta>(content) {
