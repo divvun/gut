@@ -163,6 +163,12 @@ SUBCOMMANDS:
 dadmin-set-info 0.1.0
 Set description and/or website for all repositories that match regex
 
+Description can be provided by --description option or --des-script option
+
+When it is provided --des-script will override --description
+
+Similar to --web-script and --website
+
 USAGE:
     dadmin set info [OPTIONS] --regex <regex>
 
@@ -171,10 +177,21 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
+        --des-script <des-script>        The script that will produce a description
     -d, --description <description>      Description, this is required unless website is provided
     -o, --organisation <organisation>    Target organisation name [default: divvun]
     -r, --regex <regex>                  Optional regex to filter repositories
-    -w, --website <website>              Hompage, this is required unless description is provided
+        --web-script <web-script>        The script that will produce a website
+    -w, --website <website>              Homepage, this is required unless description is provided
+```
+
+The script can use two arguments: repository name as argument number one organisation name as argument number two.
+
+Here is a sample of a description scrip
+```
+name=$1
+org=$2
+printf "This is the best description ever for ${name} in ${org}"
 ```
 
 ## Set secret
