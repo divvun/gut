@@ -181,7 +181,7 @@ OPTIONS:
 
 ```
 dadmin-set-secret 0.1.0
-Set description and/or website for all repositories that match regex
+Set a secret all repositories that match regex
 
 USAGE:
     dadmin set secret [OPTIONS] --name <name> --regex <regex> --value <value>

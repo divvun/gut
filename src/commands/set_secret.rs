@@ -8,7 +8,7 @@ use sodiumoxide::crypto::sealedbox;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Set description and/or website for all repositories that match regex
+/// Set a secret all repositories that match regex
 pub struct SecretArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
