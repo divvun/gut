@@ -7,7 +7,7 @@ use crate::filter::Filter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Set description and/or website for all repositories that match regex
+/// Set description and/or website for all local repositories that match regex
 pub struct InfoArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name

@@ -5,6 +5,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Apply a script to all local repositories that match a pattern
 pub struct ApplyArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
