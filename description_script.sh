@@ -1,2 +1,3 @@
 name=$1
-printf "This is the best description ever for ${name}"
+org=$2
+printf "This is the best description ever for ${name} in ${org}"
