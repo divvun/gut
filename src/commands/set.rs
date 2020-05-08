@@ -17,8 +17,8 @@ pub enum SetArgs {
 impl SetArgs {
     pub fn run(&self) -> Result<()> {
         match self {
-            SetArgs::Permission(args) => args.set_permission(),
             SetArgs::Info(args) => args.run(),
+            SetArgs::Permission(args) => args.set_permission(),
             SetArgs::Secret(args) => args.run(),
         }
     }
