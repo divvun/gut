@@ -79,9 +79,13 @@ fn delete(url: &str, token: &str) -> Result<req::Response, reqwest::Error> {
 
 #[derive(Serialize, Debug)]
 struct UpdateRepoBody {
+    #[serde(skip_serializing_if = "Option::is_none")]
     default_branch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     private: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     homepage: Option<String>,
 }
 
