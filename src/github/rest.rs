@@ -538,6 +538,59 @@ struct TransferBody {
     new_owner: String,
 }
 
+pub fn get_public_key(repo: &RemoteRepo, token: &str) -> Result<PublicKey> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/actions/secrets/public-key",
+        repo.owner, repo.name
+    );
+
+    let response = get(
+        &url,
+        token,
+        None
+    )?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: PublicKey = response.json()?;
+    Ok(response_body)
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PublicKey {
+    pub key_id: String,
+    pub key: String,
+}
+
+pub fn set_secret(repo: &RemoteRepo, name: &str, encrypted_value: &str, key_id: &str, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/actions/secrets/{}",
+        repo.owner, repo.name, name
+    );
+
+    let body = SetSecretBody {
+        encrypted_value: encrypted_value.to_string(),
+        key_id: key_id.to_string(),
+    };
+
+    let response = put(&url, &body, token, None)?;
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct SetSecretBody {
+    encrypted_value: String,
+    key_id: String,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 

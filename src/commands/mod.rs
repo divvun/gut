@@ -1,4 +1,5 @@
 pub mod add;
+pub mod set_secret;
 pub mod add_users;
 pub mod apply;
 pub mod branch;
