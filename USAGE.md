@@ -177,6 +177,26 @@ OPTIONS:
     -w, --website <website>              Hompage, this is required unless description is provided
 ```
 
+## Set secret
+
+```
+dadmin-set-secret 0.1.0
+Set a secret all repositories that match regex
+
+USAGE:
+    dadmin set secret [OPTIONS] --name <name> --regex <regex> --value <value>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -n, --name <name>                    The name of your secret
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+    -v, --value <value>                  The value for your secret
+```
+
 ## Topic
 
 ```
