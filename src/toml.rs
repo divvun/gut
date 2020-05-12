@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-fn from_string<'de, T>(content: &'de str) -> Result<T>
+pub fn from_string<'de, T>(content: &'de str) -> Result<T>
 where
     T: Deserialize<'de>,
 {
