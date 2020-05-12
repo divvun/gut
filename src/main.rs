@@ -29,6 +29,7 @@ fn main() -> Result<()> {
         Commands::Apply(args) => args.run(),
         Commands::Branch(args) => args.run(),
         Commands::Checkout(args) => args.run(),
+        Commands::Ci(args) => args.run(),
         Commands::Clone(args) => args.run(),
         Commands::Clean(args) => args.run(),
         Commands::Commit(args) => args.run(),

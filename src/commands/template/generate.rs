@@ -1,13 +1,13 @@
-use super::common::*;
-use super::model::*;
 use crate::commands::common;
+use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
+use crate::commands::patterns::*;
 use crate::git;
 use crate::path;
 use anyhow::{Context, Result};
 use git2::Repository;
 use std::collections::HashMap;
-use std::fs::{create_dir_all, read_to_string, write};
+use std::fs::{create_dir_all, read_to_string};
 use std::path::{Path, PathBuf};
 use std::str;
 use structopt::StructOpt;
@@ -65,7 +65,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
         //println!("generated content for {:?}", target_path);
         //println!("{}", target_content);
         //println!("");
-        write_content(&target_path, &target_content)?;
+        path::write_content(&target_path, &target_content)?;
     }
 
     // init repo
@@ -84,13 +84,6 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
 
     // commit all data
     commit(&target_repo, "Generate project")?;
-    Ok(())
-}
-
-fn write_content(file_path: &PathBuf, content: &str) -> Result<()> {
-    let parrent = path::parrent(file_path)?;
-    create_dir_all(&parrent)?;
-    write(file_path, content)?;
     Ok(())
 }
 

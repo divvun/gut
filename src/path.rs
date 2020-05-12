@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use std::fs;
+use std::fs::{create_dir_all, write};
 use std::path::{Path, PathBuf};
 
 fn config_dir() -> Option<PathBuf> {
@@ -76,4 +77,11 @@ pub fn parrent(path: &PathBuf) -> anyhow::Result<String> {
         .to_string();
 
     Ok(parrent)
+}
+
+pub fn write_content(file_path: &PathBuf, content: &str) -> anyhow::Result<()> {
+    let parrent = parrent(file_path)?;
+    create_dir_all(&parrent)?;
+    write(file_path, content)?;
+    Ok(())
 }

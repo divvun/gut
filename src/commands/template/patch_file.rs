@@ -1,4 +1,4 @@
-use super::common::*;
+use crate::commands::patterns::*;
 use anyhow::Result;
 use git2::{Diff, DiffFormat, DiffLine};
 use std::collections::HashMap;
