@@ -1,6 +1,6 @@
-use super::model::*;
 use super::patch_file::*;
 use crate::commands::common;
+use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
 use crate::filter::Filter;
 use crate::git;
