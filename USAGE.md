@@ -313,3 +313,24 @@ OPTIONS:
     -s, --script <script>                The script will be applied for all repositories that match
     -t, --topic <topic>                  A topic to filter repositories. This is required unless regex is provided
 ```
+
+## Hook Create
+
+```
+dadmin-hook-create 0.1.0
+
+USAGE:
+    dadmin hook create [OPTIONS] --method <method> --regex <regex> --script <script> --url <url>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -e, --events <events>...             Determines what events the hook is triggered for
+    -m, --method <method>                Content type, either json or form
+    -o, --organisation <organisation>    Target organisation name [default: divvun]
+    -r, --regex <regex>                  Optional regex to filter repositories
+    -s, --script <script>                The script that will produce an url
+    -u, --url <url>                      The url to which payloads will be delivered
+```

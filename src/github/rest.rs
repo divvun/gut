@@ -597,6 +597,65 @@ struct SetSecretBody {
     key_id: String,
 }
 
+pub fn create_hook(
+    repo: &RemoteRepo,
+    hook_url: &str,
+    content_type: &str,
+    events: &[String],
+    token: &str,
+) -> Result<CreateHookResponse> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/hooks",
+        repo.owner, repo.name
+    );
+
+    let config = CreateHookConfig {
+        url: hook_url.to_string(),
+        content_type: content_type.to_string(),
+    };
+
+    let body = CreateHookBody {
+        config,
+        events: events.to_owned(),
+    };
+
+    log::debug!("body {:?}", body);
+    let response = post(&url, &body, token)?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: CreateHookResponse = response.json()?;
+    Ok(response_body)
+}
+
+#[derive(Serialize, Debug)]
+struct CreateHookConfig {
+    url: String,
+    content_type: String,
+}
+
+#[derive(Serialize, Debug)]
+struct CreateHookBody {
+    config: CreateHookConfig,
+    events: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CreateHookResponse {
+    pub id: usize,
+    pub url: String,
+    pub test_url: String,
+    pub ping_url: String,
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 
