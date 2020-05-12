@@ -6,4 +6,4 @@ pub use graphql::*;
 pub use models::*;
 pub use rest::*;
 
-pub(crate) static USER_AGENT: &'static str = concat!("gut ", env!("CARGO_PKG_VERSION"));
+pub(crate) static USER_AGENT: &str = concat!("gut ", env!("CARGO_PKG_VERSION"));
