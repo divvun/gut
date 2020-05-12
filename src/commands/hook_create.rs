@@ -105,7 +105,7 @@ fn create(
     url: Option<&str>,
     script: Option<&Script>,
     method: &Method,
-    events: &Vec<String>,
+    events: &[String],
     token: &str,
 ) -> Result<CreateHookResponse> {
     let url = get_text(repo, url, script)?;
