@@ -1,4 +1,4 @@
-name: Dadmin Check
+name: Gut Check
 
 on:
   push:

@@ -1,7 +1,7 @@
 [package]
-name = "dadmin"
+name = "gut"
 version = "0.1.0"
-authors = ["Hampus Forsvall <hampusf@technocreatives.com>"]
+authors = ["Hampus Forsvall <hampusf@technocreatives.com>", "Thanh Le <thanh@technocreatives.com>"]
 edition = "2018"
 
 [dependencies]

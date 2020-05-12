@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 
 pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<GitRepo> {
     let root = Config::root().context(
-        "Cannot read the config file. Run dadmin init with valid token and root directory",
+        "Cannot read the config file. Run `gut init` with valid token and root directory",
     )?;
 
     let local_path = local_path_repo(&repo.owner, &repo.name, &root);

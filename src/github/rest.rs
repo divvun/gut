@@ -14,7 +14,7 @@ fn patch<T: Serialize + ?Sized>(
     client
         .patch(url)
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .header("Accept", "application/vnd.github.v3+json")
         .json(body)
         .send()
@@ -27,7 +27,7 @@ fn get(url: &str, token: &str, accept: Option<&str>) -> Result<req::Response, re
     client
         .get(url)
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .header("Accept", accept)
         .send()
 }
@@ -44,7 +44,7 @@ fn put<T: Serialize + ?Sized>(
     client
         .put(url)
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .header("Accept", accept)
         .json(body)
         .send()
@@ -60,7 +60,7 @@ fn post<T: Serialize + ?Sized>(
     client
         .post(url)
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .header("Accept", "application/vnd.github.v3+json")
         .json(body)
         .send()
@@ -72,7 +72,7 @@ fn delete(url: &str, token: &str) -> Result<req::Response, reqwest::Error> {
     client
         .delete(url)
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .header("Accept", "application/vnd.github.v3+json")
         .send()
 }

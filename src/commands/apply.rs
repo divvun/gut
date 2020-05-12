@@ -24,7 +24,7 @@ impl ApplyArgs {
             .script
             .path
             .to_str()
-            .expect("dadmin only supports utf8 path now!");
+            .expect("gut only supports UTF-8 paths now!");
 
         for dir in sub_dirs {
             match common::apply_script(&dir, script_path) {

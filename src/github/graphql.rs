@@ -43,7 +43,7 @@ fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, 
     client
         .post("https://api.github.com/graphql")
         .bearer_auth(token)
-        .header("User-Agent", "dadmin")
+        .header("User-Agent", super::USER_AGENT)
         .json(body)
         .send()
 }

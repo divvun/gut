@@ -352,33 +352,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dadmin"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.12.1",
- "color-backtrace",
- "dialoguer",
- "dirs 2.0.2",
- "git2",
- "git2_credentials",
- "graphql_client",
- "log",
- "pretty_env_logger",
- "prettytable-rs",
- "proptest",
- "regex",
- "reqwest",
- "serde",
- "sodiumoxide",
- "structopt",
- "tempfile",
- "thiserror",
- "toml",
- "uuid",
-]
-
-[[package]]
 name = "dialoguer"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -731,6 +704,33 @@ dependencies = [
  "graphql_client_codegen",
  "proc-macro2 0.4.30",
  "syn 0.15.44",
+]
+
+[[package]]
+name = "gut"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.12.1",
+ "color-backtrace",
+ "dialoguer",
+ "dirs 2.0.2",
+ "git2",
+ "git2_credentials",
+ "graphql_client",
+ "log",
+ "pretty_env_logger",
+ "prettytable-rs",
+ "proptest",
+ "regex",
+ "reqwest",
+ "serde",
+ "sodiumoxide",
+ "structopt",
+ "tempfile",
+ "thiserror",
+ "toml",
+ "uuid",
 ]
 
 [[package]]

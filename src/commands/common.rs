@@ -23,17 +23,17 @@ pub fn query_and_filter_repositories(
 
 pub fn user() -> Result<User> {
     User::user()
-        .context("Cannot get user token from the config file. Run dadmin init with a valid token")
+        .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
 pub fn root() -> Result<String> {
     Config::root()
-        .context("Cannot read the config file. Run dadmin init with valid token and root directory")
+        .context("Cannot read the config file. Run `gut init` with valid token and root directory")
 }
 
 pub fn user_token() -> Result<String> {
     User::token()
-        .context("Cannot get user token from the config file. Run dadmin init with a valid token")
+        .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
@@ -44,7 +44,7 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
                 anyhow::bail!("No repositories found");
             }
             if e.downcast_ref::<Unauthorized>().is_some() {
-                anyhow::bail!("User token invalid. Run dadmin init with a valid token");
+                anyhow::bail!("User token invalid. Run `gut init` with a valid token");
             }
             Err(e)
         }

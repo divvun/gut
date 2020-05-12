@@ -33,15 +33,15 @@ impl CreateDiscussionArgs {
             &token,
         ) {
             Ok(r) => println!(
-                "You created a team discussion for team {} at {}",
+                "You created a team discussion for team `{}` at {}",
                 self.team_slug, r.html_url
             ),
             Err(e) => {
                 if e.downcast_ref::<Unauthorized>().is_some() {
-                    anyhow::bail!("User token invalid. Run dadmin init with a valid token");
+                    anyhow::bail!("User token invalid. Run `gut init` with a valid token");
                 } else {
                     println!(
-                        "Failed to create a disscusion for team {} because of {}",
+                        "Failed to create a discussion for team `{}` because of {}",
                         self.team_slug, e
                     );
                 }

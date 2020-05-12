@@ -34,9 +34,9 @@ impl Default for RootDirectory {
         RootDirectory {
             path: dirs::home_dir()
                 .expect("Cannot have unknown home directory")
-                .join("dadmin")
+                .join("gut")
                 .to_str()
-                .expect("Non UTF8 path is not supported right now")
+                .expect("gut only supports UTF-8 paths now!")
                 .to_string(),
         }
     }

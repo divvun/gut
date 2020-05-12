@@ -81,7 +81,7 @@ impl Script {
         let script_path = self
             .path
             .to_str()
-            .expect("gut only supports utf8 path now!");
+            .expect("gut only supports UTF-8 paths now!");
         Ok(script_path.to_string())
     }
 }

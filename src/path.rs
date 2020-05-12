@@ -4,7 +4,7 @@ use std::fs::{create_dir_all, write};
 use std::path::{Path, PathBuf};
 
 fn config_dir() -> Option<PathBuf> {
-    let config_dir = dirs::config_dir().map(|p| p.join("dadmin"))?;
+    let config_dir = dirs::config_dir().map(|p| p.join("gut"))?;
     let config_dir = config_dir.ensure_dir_exists().ok()?;
     Some(config_dir)
 }
