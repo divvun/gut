@@ -85,7 +85,8 @@ impl Script {
     ) -> anyhow::Result<String> {
         let script_path = self.script_path()?;
         let output = execute_script_with_dir(&script_path, dir, name, org)?;
-        if output.status.success() {
+        let stdout = str::from_utf8(&output.stdout)?;
+        if !stdout.is_empty() {
             let stdout = str::from_utf8(&output.stdout)?;
             log::info!("Out put of the script: {}", stdout);
             Ok(stdout.to_string())

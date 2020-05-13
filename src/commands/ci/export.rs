@@ -24,6 +24,7 @@ pub struct ExportArgs {
     #[structopt(long)]
     pub output: String,
     /// The script that produces name, version and human_name
+    #[structopt(long, short)]
     pub script: Script,
     /// use https to clone repositories if needed
     #[structopt(long, short)]
@@ -69,10 +70,17 @@ fn get_repo_data(
 
     let p: Input = serde_json::from_str(&data)?;
 
+    let count = &p.version.split(".").count();
+    let version = if *count == 2 {
+        format!("{}.0", &p.version)
+    } else {
+        p.version.clone()
+    };
+
     let mut package: HashMap<String, String> = HashMap::new();
     package.insert("__NAME__".to_string(), p.name.clone());
     package.insert("__HUMAN_NAME__".to_string(), p.human_name.clone());
-    package.insert("__VERSION__".to_string(), p.version.clone());
+    package.insert("__VERSION__".to_string(), version);
     package.insert("__TAG__".to_string(), p.language_tag.clone());
 
     let repo_data = RepoData { package };
