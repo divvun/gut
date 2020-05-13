@@ -70,7 +70,7 @@ fn get_repo_data(
 
     let p: Input = serde_json::from_str(&data)?;
 
-    let count = &p.version.split(".").count();
+    let count = &p.version.split('.').count();
     let version = if *count == 2 {
         format!("{}.0", &p.version)
     } else {
@@ -81,7 +81,7 @@ fn get_repo_data(
     package.insert("__NAME__".to_string(), p.name.clone());
     package.insert("__HUMAN_NAME__".to_string(), p.human_name.clone());
     package.insert("__VERSION__".to_string(), version);
-    package.insert("__TAG__".to_string(), p.language_tag.clone());
+    package.insert("__TAG__".to_string(), p.language_tag);
 
     let repo_data = RepoData { package };
 
