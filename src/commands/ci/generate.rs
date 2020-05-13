@@ -15,7 +15,7 @@ use structopt::StructOpt;
 use uuid::Uuid;
 
 #[derive(Debug, StructOpt)]
-/// export data file for ci generate command
+/// generate ci for every repositories that matches
 pub struct GenerateArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
@@ -109,11 +109,7 @@ fn process_manifest(manifest_path: &PathBuf, data: &RepoData) -> Result<String> 
     let content = read_to_string(&manifest_path)?;
     let target_content = generate_string(&data.package, &content)?;
     let target_content = generate_uuids(&target_content);
-    let manifest = Manifest::get_from_content(&target_content)?;
-    let spellers = data.spellers.clone();
-    let manifest = manifest.set_spellers(&spellers);
-    let result = manifest.to_content()?;
-    Ok(result)
+    Ok(target_content)
 }
 
 pub fn generate_uuids(content: &str) -> String {
@@ -124,7 +120,8 @@ pub fn generate_uuids(content: &str) -> String {
     for (start, part) in content.match_indices(from) {
         result.push_str(unsafe { content.get_unchecked(last_end..start) });
         let uuid = Uuid::new_v4();
-        result.push_str(&uuid.to_string());
+        // TODO make them capitalized
+        result.push_str(&uuid.to_string().to_uppercase());
         last_end = start + part.len();
     }
     result.push_str(unsafe { content.get_unchecked(last_end..content.len()) });

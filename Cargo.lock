@@ -689,6 +689,7 @@ dependencies = [
  "regex",
  "reqwest",
  "serde",
+ "serde_json",
  "sodiumoxide",
  "structopt",
  "tempfile",

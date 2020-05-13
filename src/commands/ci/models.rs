@@ -15,7 +15,6 @@ pub fn get(path: &PathBuf) -> Result<HashMap<String, RepoData>> {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RepoData {
     pub package: HashMap<String, String>,
-    pub spellers: HashMap<String, Speller>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,6 +30,7 @@ impl Manifest {
         write_to_file(path, self)
     }
 
+    #[allow(dead_code)]
     pub fn to_content(&self) -> Result<String> {
         toml::to_string(self).context("Manifest serialize error")
     }
@@ -40,16 +40,9 @@ impl Manifest {
         read_file(path)
     }
 
+    #[allow(dead_code)]
     pub fn get_from_content(content: &str) -> Result<Manifest> {
         from_string(&content)
-    }
-
-    pub fn set_spellers(&self, spellers: &HashMap<String, Speller>) -> Manifest {
-        Manifest {
-            package: self.package.clone(),
-            spellers: spellers.clone(),
-            bundles: self.bundles.clone(),
-        }
     }
 }
 

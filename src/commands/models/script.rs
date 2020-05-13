@@ -77,6 +77,25 @@ impl Script {
         }
     }
 
+    pub fn execute_and_get_output_with_dir(
+        &self,
+        dir: &PathBuf,
+        name: &str,
+        org: &str,
+    ) -> anyhow::Result<String> {
+        let script_path = self.script_path()?;
+        let output = execute_script_with_dir(&script_path, dir, name, org)?;
+        if output.status.success() {
+            let stdout = str::from_utf8(&output.stdout)?;
+            log::info!("Out put of the script: {}", stdout);
+            Ok(stdout.to_string())
+        } else {
+            let err_message = String::from_utf8(output.stderr)
+                .unwrap_or_else(|_| format!("Cannot execute the script {}", script_path));
+            Err(anyhow::anyhow!(err_message))
+        }
+    }
+
     pub fn script_path(&self) -> anyhow::Result<String> {
         let script_path = self
             .path
@@ -99,6 +118,35 @@ fn execute_script(script: &str, name: &str, org: &str) -> anyhow::Result<Output>
             .arg(script)
             .arg(name)
             .arg(org)
+            .output()
+            .expect("failed to execute process")
+    };
+
+    log::debug!("Script result {:?}", output);
+
+    Ok(output)
+}
+
+fn execute_script_with_dir(
+    script: &str,
+    dir: &PathBuf,
+    name: &str,
+    org: &str,
+) -> anyhow::Result<Output> {
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(&["/C", script])
+            .arg(name)
+            .arg(org)
+            .current_dir(dir)
+            .output()
+            .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+            .arg(script)
+            .arg(name)
+            .arg(org)
+            .current_dir(dir)
             .output()
             .expect("failed to execute process")
     };
