@@ -37,7 +37,7 @@ impl TopicApplyArgs {
             .script
             .path
             .to_str()
-            .expect("dadmin only supports utf8 path now!");
+            .expect("gut only supports UTF-8 paths now!");
 
         let user = common::user()?;
         let repos = query_repositories_with_topics(&self.organisation, &user.token)?;
@@ -80,7 +80,7 @@ fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRe
                 anyhow::bail!("No repositories found");
             }
             if e.downcast_ref::<Unauthorized>().is_some() {
-                anyhow::bail!("User token invalid. Run dadmin init with a valid token");
+                anyhow::bail!("User token invalid. Run `gut init` with a valid token");
             }
             Err(e)
         }

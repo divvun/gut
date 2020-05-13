@@ -1,8 +1,9 @@
-# project-dadmin
+# gut
 
-![](https://github.com/divvun/project-dadmin/workflows/Dadmin%20Check/badge.svg)
+![](https://github.com/divvun/gut/workflows/Gut%20Check/badge.svg)
 
 This is a Git(Hub) multirepo maintenance tool, designed specific for divvun.
+We think it's pretty good.
 
 There are some [usage instructions](USAGE.md) under development.
 

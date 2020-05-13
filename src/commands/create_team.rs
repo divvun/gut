@@ -29,7 +29,12 @@ impl CreateTeamArgs {
             "You created a team named: {} successfully with id: {} and link : {}",
             self.team_name, r.id, r.html_url
         ),
-            Err(e) => println!("Failed to create team named: {} because of {}\n. Please notice that you need to add users to your organisation before adding them to a team.", self.team_name, e)
+            Err(e) => println!(
+                "Failed to create team named: {} because of {}\n. \
+                Please notice that you need to add users to your organisation before adding them to a team.",
+                self.team_name,
+                e
+            )
         }
 
         Ok(())
@@ -51,7 +56,7 @@ fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse>
         Ok(response) => Ok(response),
         Err(e) => {
             if e.downcast_ref::<Unauthorized>().is_some() {
-                anyhow::bail!("User token invalid. Run dadmin init with a valid token");
+                anyhow::bail!("User token invalid. Run `gut init` with a valid token");
             }
             Err(e)
         }

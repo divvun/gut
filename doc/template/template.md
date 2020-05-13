@@ -25,22 +25,22 @@ In order to apply changes from template. We need to read `delta` file from both 
 
 ### List of commands
 
-Let says `dadmin template` is our sub command for this task. Below are our list of commands:
+Let says `gut template` is our sub command for this task. Below are our list of commands:
 The bold one is nesscesary for our current task (apply changes).
 
 #### Template
 
-- `dadmin template init`: Init delta file for a template repo
-- `dadmin template bump-version`: Mark the current version of the template is the newest version of template
-- `dadmin template {add,remove} [--optional|--ignore]`: Adds or remove a file from the template list, with flags for adding to the optional or ignored list
-- `dadmin template pattern {list,add,remove}`: Manage file patterns (like UND -> some lang)
+- `gut template init`: Init delta file for a template repo
+- `gut template bump-version`: Mark the current version of the template is the newest version of template
+- `gut template {add,remove} [--optional|--ignore]`: Adds or remove a file from the template list, with flags for adding to the optional or ignored list
+- `gut template pattern {list,add,remove}`: Manage file patterns (like UND -> some lang)
 
 #### Repo
 
-- `dadmin generate-repo <template-url>`: Create a new repository from a template url
-- `dadmin template install <template-url>`: Init delta file for a repo
-- `dadmin template apply [--continue|--abort]`: Start apply changes from template - if conflict, running with --continue after starting will allow finishing it, and --abort will revert any patching changes.
-- `dadmin template replacement {set,remove}`: Add or remove replacements from the template file
+- `gut generate-repo <template-url>`: Create a new repository from a template url
+- `gut template install <template-url>`: Init delta file for a repo
+- `gut template apply [--continue|--abort]`: Start apply changes from template - if conflict, running with --continue after starting will allow finishing it, and --abort will revert any patching changes.
+- `gut template replacement {set,remove}`: Add or remove replacements from the template file
 
 ### Delta file structure
 
@@ -48,7 +48,7 @@ Please read samples of delta files (which have some comments).
 
 ### How do we do apply changes?
 
-1. Run `dadmin template apply`
+1. Run `gut template apply`
 2. Mark this process as in applying process
 3. Read delta files of both template and target repo.
 4. Determine the last changes (use rev_id)
@@ -58,4 +58,4 @@ Please read samples of delta files (which have some comments).
 8. Show status of this action (changes, conflicts, etc)
 9. Manually resolve conflict if needed
 10. Manually commit
-11. Run `dadmin template apply --continue` => Mark this process is done.
+11. Run `gut template apply --continue` => Mark this process is done.

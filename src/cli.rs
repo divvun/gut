@@ -6,7 +6,7 @@ use crate::commands::{
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "dadmin", about = "git multirepo maintenance tool")]
+#[structopt(name = "gut", about = "git multirepo maintenance tool")]
 pub struct Args {
     #[structopt(subcommand)]
     pub command: Commands,

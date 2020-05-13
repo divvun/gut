@@ -3,13 +3,13 @@
 ## Add Users
 
 ```
-dadmin-add-users 0.1.0
+gut-add-users 0.1.0
 Invite users to an organisation by usernames.
 
 If you specify team_slug it'll try to invite users to the provided team
 
 USAGE:
-    dadmin add users [OPTIONS]
+    gut add users [OPTIONS]
 
 FLAGS:
     -h, --help
@@ -46,11 +46,11 @@ Sends an invitation request to the specified user(s), to become a member of the 
 ## Invite Users
 
 ```
-dadmin-invite-users 0.1.0
+gut-invite-users 0.1.0
 Invite users to an organisation by emails
 
 USAGE:
-    dadmin invite users [OPTIONS]
+    gut invite users [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
@@ -69,23 +69,23 @@ Invite users by emails.
 
 ## Merge
 
-`dadmin merge -o <org> -r <regex> --branch <branch> --abort-if-conflict`
+`gut merge -o <org> -r <regex> --branch <branch> --abort-if-conflict`
 
 ### Effect
 
 This command will try to merge a branch into your head branch for all repositories that match a regex pattern.
 
-This works similar to `git merge` command. Dadmin will use `fast-forward` strategy whenever possible.
+This works similar to `git merge` command. gut will use `fast-forward` strategy whenever possible.
 
 If there is a conflict, that it cannot resolve automatically, you'll need to fix all conflicts and then commit it yourself. Or you can use `--abort-if-conflict` option to abort it.
 
-Dadmin also shows all merge conflict files as normal `git merge` command.
+gut also shows all merge conflict files as normal `git merge` command.
 
 If you want to merge a branch `A` into branch `B`, you can check out branch `B` first and then use this merge command.
 
 ## Clean
 
-`dadmin clean -o <org> -r <regex>`
+`gut clean -o <org> -r <regex>`
 
 ### Effect
 
@@ -93,7 +93,7 @@ This command will try to simulate `git clean -f -d` command. It will clean all l
 
 ## Status
 
-`dadmin status -o <org> -r <regex> --verbose`
+`gut status -o <org> -r <regex> --verbose`
 
 ### Effect
 
@@ -101,7 +101,7 @@ This command will try to show statuses of all local repositories that match a re
 
 ## Commit
 
-`dadmin commit -o <org> -r <regex> --message <message>`
+`gut commit -o <org> -r <regex> --message <message>`
 
 ### Effect
 
@@ -113,11 +113,11 @@ If there is no changes, this also will be aborted.
 ## Fetch
 
 ```
-dadmin-fetch 0.1.0
+gut-fetch 0.1.0
 Fetch all local repositories that match a regex
 
 USAGE:
-    dadmin fetch [OPTIONS]
+    gut fetch [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
@@ -134,14 +134,14 @@ OPTIONS:
 Change visibilities of repositories
 
 ```
-dadmin-make 0.1.0
+gut-make 0.1.0
 Make repositories that match a regex become public/private
 
 This will show all repositories that will affected by this command If you want to public repositories, it'll show a
 confirmation prompt and You have to enter 'YES' to confirm your action
 
 USAGE:
-    dadmin make [OPTIONS] --regex <regex> <SUBCOMMAND>
+    gut make [OPTIONS] --regex <regex> <SUBCOMMAND>
 
 FLAGS:
     -h, --help       Prints help information
@@ -160,7 +160,7 @@ SUBCOMMANDS:
 ## Set info
 
 ```
-dadmin-set-info 0.1.0
+gut-set-info 0.1.0
 Set description and/or website for all repositories that match regex
 
 Description can be provided by --description option or --des-script option
@@ -170,7 +170,7 @@ When it is provided --des-script will override --description
 Similar to --web-script and --website
 
 USAGE:
-    dadmin set info [OPTIONS] --regex <regex>
+    gut set info [OPTIONS] --regex <regex>
 
 FLAGS:
     -h, --help       Prints help information
@@ -197,11 +197,11 @@ printf "This is the best description ever for ${name} in ${org}"
 ## Set secret
 
 ```
-dadmin-set-secret 0.1.0
+gut-set-secret 0.1.0
 Set a secret all repositories that match regex
 
 USAGE:
-    dadmin set secret [OPTIONS] --name <name> --regex <regex> --value <value>
+    gut set secret [OPTIONS] --name <name> --regex <regex> --value <value>
 
 FLAGS:
     -h, --help       Prints help information
@@ -217,11 +217,11 @@ OPTIONS:
 ## Topic
 
 ```
-dadmin-topic 0.1.0
+gut-topic 0.1.0
 Sub command for set/get/add topics
 
 USAGE:
-    dadmin topic <SUBCOMMAND>
+    gut topic <SUBCOMMAND>
 
 FLAGS:
     -h, --help       Prints help information
@@ -238,11 +238,11 @@ SUBCOMMANDS:
 ### Topic Get
 
 ```
-dadmin-topic-get 0.1.0
+gut-topic-get 0.1.0
 Get topics for all repositories that match a regex
 
 USAGE:
-    dadmin topic get [OPTIONS]
+    gut topic get [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
@@ -257,11 +257,11 @@ OPTIONS:
 ### Topic Set
 
 ```
-dadmin-topic-set 0.1.0
+gut-topic-set 0.1.0
 Set topics for all repositories that match a regex
 
 USAGE:
-    dadmin topic set [OPTIONS]
+    gut topic set [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
@@ -276,11 +276,11 @@ OPTIONS:
 ## Topic Add
 
 ```
-dadmin-topic-add 0.1.0
+gut-topic-add 0.1.0
 Add topics for all repositories that match a regex
 
 USAGE:
-    dadmin topic add [OPTIONS]
+    gut topic add [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
@@ -295,12 +295,12 @@ OPTIONS:
 ## Topic Apply
 
 ```
-dadmin-topic-apply 0.1.0
+gut-topic-apply 0.1.0
 Apply a script to all repositories that has a topics that match a pattern Or to all repositories that has a specific
 topic
 
 USAGE:
-    dadmin topic apply [FLAGS] [OPTIONS] --regex <regex> --script <script> --topic <topic>
+    gut topic apply [FLAGS] [OPTIONS] --regex <regex> --script <script> --topic <topic>
 
 FLAGS:
     -h, --help         Prints help information
@@ -317,10 +317,10 @@ OPTIONS:
 ## Hook Create
 
 ```
-dadmin-hook-create 0.1.0
+gut-hook-create 0.1.0
 
 USAGE:
-    dadmin hook create [OPTIONS] --method <method> --regex <regex> --script <script> --url <url>
+    gut hook create [OPTIONS] --method <method> --regex <regex> --script <script> --url <url>
 
 FLAGS:
     -h, --help       Prints help information
