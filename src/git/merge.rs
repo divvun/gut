@@ -1,5 +1,5 @@
 use super::commit;
-use git2::{Error, Index, Repository};
+use git2::{AnnotatedCommit, Error, Index, Repository};
 
 pub enum MergeStatus {
     FastForward,
@@ -18,21 +18,30 @@ pub fn merge_local(
     let refname = format!("refs/heads/{}", target);
     let target_ref = repo.find_reference(&refname)?;
     let annotated_commit = repo.reference_to_annotated_commit(&target_ref)?;
+    let msg = format!("Merge branch '{}'", target);
+    merge_commit(repo, &annotated_commit, &msg, abort_if_conflict)
+}
 
+pub fn merge_commit(
+    repo: &Repository,
+    annotated_commit: &AnnotatedCommit,
+    msg: &str,
+    abort_if_conflict: bool,
+) -> Result<MergeStatus, Error> {
     let mut head_ref = repo.head()?;
 
     // 1. do a merge analysis
-    let analysis = repo.merge_analysis(&[&annotated_commit])?;
+    let analysis = repo.merge_analysis(&[annotated_commit])?;
 
     if analysis.0.is_fast_forward() {
-        return fast_forward(repo, &mut head_ref, &annotated_commit);
+        return fast_forward(repo, &mut head_ref, annotated_commit);
     } else if analysis.0.is_normal() {
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
         return normal_merge(
             &repo,
             &head_commit,
-            &annotated_commit,
-            target,
+            annotated_commit,
+            msg,
             abort_if_conflict,
         );
     }
@@ -66,7 +75,7 @@ fn normal_merge(
     repo: &Repository,
     local: &git2::AnnotatedCommit,
     remote: &git2::AnnotatedCommit,
-    branch: &str,
+    msg: &str,
     abort_if_conflict: bool,
 ) -> Result<MergeStatus, git2::Error> {
     let local_tree = repo.find_commit(local.id())?.tree()?;
@@ -89,7 +98,6 @@ fn normal_merge(
 
     let result_tree = repo.find_tree(idx.write_tree_to(repo)?)?;
     // now create the merge commit
-    let msg = format!("Merge branch '{}'", branch);
     let local_commit = repo.find_commit(local.id())?;
     let remote_commit = repo.find_commit(remote.id())?;
     commit::commit_tree(repo, &result_tree, &msg, &[&local_commit, &remote_commit])?;

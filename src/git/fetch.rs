@@ -1,16 +1,16 @@
 use super::common;
 use super::models::GitCredential;
-use git2::{AutotagOption, Error, FetchOptions, Repository};
+use git2::{AnnotatedCommit, AutotagOption, Error, FetchOptions, Repository};
 use std::io::{self, Write};
 use std::str;
 
 // https://github.com/rust-lang/git2-rs/blob/master/examples/fetch.rs
-pub fn fetch_branch(
-    repo: &Repository,
+pub fn fetch_branch<'a>(
+    repo: &'a Repository,
     branch: &str,
     remote_name: &str,
     cred: Option<GitCredential>,
-) -> Result<(), Error> {
+) -> Result<AnnotatedCommit<'a>, Error> {
     log::info!("Fetching {} for repo", branch);
     let mut remote = repo.find_remote(remote_name)?;
 
@@ -21,7 +21,8 @@ pub fn fetch_branch(
 
     remote.fetch(&[branch], Some(&mut fo), None)?;
 
-    Ok(())
+    let fetch_head = repo.find_reference("FETCH_HEAD")?;
+    Ok(repo.reference_to_annotated_commit(&fetch_head)?)
 }
 
 pub fn fetch(
