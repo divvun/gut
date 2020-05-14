@@ -1,9 +1,9 @@
 use anyhow::Result;
 use regex::{Error as RegexError, Regex, RegexBuilder};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub fn generate_file_paths(
-    replacements: &HashMap<String, String>,
+    replacements: &BTreeMap<String, String>,
     files: Vec<&str>,
 ) -> Result<Vec<(String, String)>> {
     let mut results = vec![];
@@ -14,7 +14,7 @@ pub fn generate_file_paths(
     Ok(results)
 }
 
-pub fn generate_string(replacements: &HashMap<String, String>, content: &str) -> Result<String> {
+pub fn generate_string(replacements: &BTreeMap<String, String>, content: &str) -> Result<String> {
     let mut result = content.to_string();
     for (pattern, replace) in replacements {
         let re = to_regex(&pattern)?;
@@ -29,13 +29,13 @@ fn to_regex(s: &str) -> Result<Regex, RegexError> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     #[test]
     fn test_generate_file_paths_single() {
         let files = vec!["src/a.txt", "src/__UND__/__UND__.txt", "lang-__UND__.txt"];
 
-        let mut rep = HashMap::new();
+        let mut rep = BTreeMap::new();
         rep.insert("__UND__".to_string(), "en".to_string());
 
         let results = super::generate_file_paths(&rep, files).unwrap();
@@ -62,7 +62,7 @@ mod tests {
             "lang-__UND____ABC__.txt",
         ];
 
-        let mut rep = HashMap::new();
+        let mut rep = BTreeMap::new();
         rep.insert("__UND__".to_string(), "en".to_string());
         rep.insert("__ABC__".to_string(), "abc".to_string());
 
