@@ -10,6 +10,8 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 /// Fetch all local repositories that match a regex
+///
+/// This command only works on those repositories that has been cloned in root directory
 pub struct FetchArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
