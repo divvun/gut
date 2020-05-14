@@ -17,8 +17,10 @@ use structopt::StructOpt;
 pub struct ExportArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
-    #[structopt(long, short)]
+    #[structopt(long, short, required_unless("topic"))]
     pub regex: Option<Filter>,
+    #[structopt(long, short, required_unless("regex"))]
+    pub topic: Option<String>,
     #[structopt(long, short)]
     pub template: ExistDirectory,
     #[structopt(long)]
