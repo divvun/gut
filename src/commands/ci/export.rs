@@ -8,7 +8,7 @@ use crate::github::RemoteRepo;
 use crate::user::User;
 use anyhow::Result;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::Path;
 use structopt::StructOpt;
 
@@ -41,7 +41,7 @@ impl ExportArgs {
             &user.token,
         )?;
 
-        let repos: Result<HashMap<String, RepoData>> = filtered_repos
+        let repos: Result<BTreeMap<String, RepoData>> = filtered_repos
             .iter()
             .map(|r| get_repo_data(&r, &self.script, &user, self.use_https))
             .collect();
@@ -77,7 +77,7 @@ fn get_repo_data(
         p.version.clone()
     };
 
-    let mut package: HashMap<String, String> = HashMap::new();
+    let mut package: BTreeMap<String, String> = BTreeMap::new();
     package.insert("__NAME__".to_string(), p.name.clone());
     package.insert("__HUMAN_NAME__".to_string(), p.human_name.clone());
     package.insert("__VERSION__".to_string(), version);

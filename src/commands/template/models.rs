@@ -1,7 +1,7 @@
 use crate::toml::{read_file, write_to_file};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,7 +39,7 @@ pub struct TargetDelta {
     pub rev_id: usize,
     pub template_sha: String,
     #[serde(serialize_with = "toml::ser::tables_last")]
-    pub replacements: HashMap<String, String>,
+    pub replacements: BTreeMap<String, String>,
 }
 
 impl TargetDelta {

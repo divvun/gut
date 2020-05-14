@@ -1,11 +1,11 @@
 use crate::commands::patterns::*;
 use anyhow::Result;
 use git2::{Diff, DiffFormat, DiffLine};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::str;
 
 pub fn diff_to_patch(diff: &Diff) -> Result<Vec<PatchFile>> {
-    let mut file_map: HashMap<String, PatchFile> = HashMap::new();
+    let mut file_map: BTreeMap<String, PatchFile> = BTreeMap::new();
 
     diff.print(DiffFormat::Patch, |delta, _hunk, line| {
         //println!("line_cb path {:?}", delta.new_file().path());
@@ -92,7 +92,7 @@ impl PatchLine {
         }
     }
 
-    pub fn apply_patterns(&self, reps: &HashMap<String, String>) -> Result<PatchLine> {
+    pub fn apply_patterns(&self, reps: &BTreeMap<String, String>) -> Result<PatchLine> {
         let pl = match self {
             PatchLine::Add { line_no, content } => PatchLine::Add {
                 line_no: *line_no,
@@ -149,7 +149,7 @@ impl PatchFile {
         }
     }
 
-    pub fn apply_patterns(&self, reps: &HashMap<String, String>) -> Result<PatchFile> {
+    pub fn apply_patterns(&self, reps: &BTreeMap<String, String>) -> Result<PatchFile> {
         let old_file = generate_string(reps, self.old_file.as_str())?;
         let new_file = generate_string(reps, self.new_file.as_str())?;
         let lines: Vec<Result<PatchLine>> =
@@ -177,7 +177,7 @@ pub fn to_content(files: &[PatchFile]) -> String {
 #[cfg(test)]
 mod tests {
     use super::{PatchFile, PatchLine};
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     fn lines_sample_1() -> Vec<PatchLine> {
         vec![
@@ -262,7 +262,7 @@ index 9939b16..68b2be5 100644
     fn test_patch_line_apply_patterns() {
         let lines = lines_sample_1();
 
-        let mut reps = HashMap::new();
+        let mut reps = BTreeMap::new();
         reps.insert("__UND__".to_string(), "en".to_string());
 
         let results: Vec<PatchLine> = lines
@@ -330,7 +330,7 @@ index 9939b16..68b2be5 100644
             lines,
         };
 
-        let mut reps = HashMap::new();
+        let mut reps = BTreeMap::new();
         reps.insert("__UND__".to_string(), "en".to_string());
 
         let result = file.apply_patterns(&reps).unwrap();

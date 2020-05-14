@@ -1,27 +1,27 @@
 use crate::toml::{from_string, read_file, write_to_file};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-pub fn save(map: &HashMap<String, RepoData>, path: &PathBuf) -> Result<()> {
+pub fn save(map: &BTreeMap<String, RepoData>, path: &PathBuf) -> Result<()> {
     write_to_file(path, map)
 }
 
-pub fn get(path: &PathBuf) -> Result<HashMap<String, RepoData>> {
+pub fn get(path: &PathBuf) -> Result<BTreeMap<String, RepoData>> {
     read_file(path)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RepoData {
-    pub package: HashMap<String, String>,
+    pub package: BTreeMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Manifest {
     package: Package,
-    spellers: HashMap<String, Speller>,
-    bundles: HashMap<String, Bundle>,
+    spellers: BTreeMap<String, Speller>,
+    bundles: BTreeMap<String, Bundle>,
 }
 
 impl Manifest {

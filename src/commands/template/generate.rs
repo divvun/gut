@@ -6,7 +6,7 @@ use crate::git;
 use crate::path;
 use anyhow::{Context, Result};
 use git2::Repository;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::{create_dir_all, read_to_string};
 use std::path::{Path, PathBuf};
 use std::str;
@@ -88,12 +88,12 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
 }
 
 struct TargetInfo {
-    reps: HashMap<String, String>,
+    reps: BTreeMap<String, String>,
 }
 
 fn get_target_info(template_delta: &TemplateDelta) -> Result<TargetInfo> {
     println!("Enter patterns:");
-    let mut reps = HashMap::new();
+    let mut reps = BTreeMap::new();
     for pattern in &template_delta.patterns {
         let key = common::ask_for(pattern)?;
         reps.insert(pattern.to_string(), key);
