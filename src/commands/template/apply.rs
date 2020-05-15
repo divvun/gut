@@ -59,7 +59,7 @@ impl ApplyArgs {
             // finish apply process
             for dir in target_dirs {
                 match abort_apply(&dir) {
-                    Ok(_) => println!("Abort Apply process"),
+                    Ok(_) => println!("Abort Apply process success"),
                     Err(e) => println!("Abort Apply failed because {:?}", e),
                 }
             }
@@ -85,10 +85,12 @@ impl ApplyArgs {
 /// do clean -f and reset --hard
 /// Remove temp directory
 fn abort_apply(target_dir: &PathBuf) -> Result<()> {
-    let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
-    path::remove_path(template_apply_dir)?;
     // git clean -f && git reset --hard
     clean_git_dir(target_dir)?;
+    let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
+    if template_apply_dir.exists() {
+        path::remove_path(template_apply_dir)?;
+    }
     Ok(())
 }
 
