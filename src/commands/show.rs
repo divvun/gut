@@ -1,5 +1,6 @@
 use super::show_config::*;
 use super::show_repos::*;
+use super::show_users::*;
 use anyhow::Result;
 use structopt::StructOpt;
 
@@ -9,6 +10,8 @@ pub enum ShowArgs {
     Config,
     #[structopt(name = "repositories", aliases = &["repos"])]
     Repos(ShowReposArgs),
+    #[structopt(name = "users")]
+    Users(ShowUsersArgs),
 }
 
 impl ShowArgs {
@@ -16,6 +19,7 @@ impl ShowArgs {
         match self {
             ShowArgs::Config => show_config(),
             ShowArgs::Repos(args) => args.show(),
+            ShowArgs::Users(args) => args.run(),
         }
     }
 }

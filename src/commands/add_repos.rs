@@ -2,7 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::github;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 use structopt::StructOpt;
 
@@ -15,7 +15,7 @@ pub struct AddRepoArgs {
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[structopt(long, short, default_value = "pull", parse(try_from_str = parse_permission))]
     ///The permission to grant the team on this repository.
     ///
     /// Can be one of:
@@ -67,4 +67,14 @@ impl AddRepoArgs {
 
         Ok(())
     }
+}
+
+fn parse_permission(src: &str) -> Result<String> {
+    let roles = ["pull", "push", "admin", "maintain", "triage"];
+    let src = src.to_lowercase();
+    if roles.contains(&src.as_str()) {
+        return Ok(src);
+    }
+
+    Err(anyhow!("permission must be one of {:?}", roles))
 }

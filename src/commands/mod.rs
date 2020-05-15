@@ -38,6 +38,7 @@ pub mod set_team_permission;
 pub mod show;
 pub mod show_config;
 pub mod show_repos;
+pub mod show_users;
 pub mod status;
 pub mod template;
 pub mod topic;
