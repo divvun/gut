@@ -1,19 +1,16 @@
 use super::common;
-use crate::git::open;
 use crate::user::User;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use crate::filter::Filter;
 use crate::git::push;
 use crate::git::GitCredential;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
-use crate::user::User;
 
 #[derive(Debug, StructOpt)]
 pub struct PushArgs {
