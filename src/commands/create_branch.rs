@@ -3,6 +3,7 @@ use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use crate::user::User;
 
+use crate::commands::topic_helper;
 use anyhow::Result;
 
 use crate::filter::Filter;
@@ -14,8 +15,11 @@ use structopt::StructOpt;
 pub struct CreateBranchArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
-    #[structopt(long, short)]
+    #[structopt(long, short, required_unless("topic"))]
     pub regex: Option<Filter>,
+    #[structopt(long, required_unless("regex"))]
+    /// topic to filter
+    pub topic: Option<String>,
     #[structopt(long, short)]
     pub new_branch: String,
     #[structopt(long, short, default_value = "master")]
@@ -28,11 +32,13 @@ impl CreateBranchArgs {
     pub fn create_branch(&self) -> Result<()> {
         let user = common::user()?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
-            self.regex.as_ref(),
-            &user.token,
-        )?;
+        let all_repos =
+            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos: Vec<_> =
+            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
+                .into_iter()
+                .map(|r| r.repo)
+                .collect();
 
         for repo in filtered_repos {
             let result = create_branch(

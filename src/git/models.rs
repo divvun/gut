@@ -26,6 +26,9 @@ impl GitRepo {
     pub fn open_or_clone(&self) -> Result<Repository, Error> {
         open::open_or_clone(&self.local_path, &self.remote_url, &self.cred)
     }
+    pub fn open(&self) -> Result<Repository, Error> {
+        open::open(&self.local_path)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
