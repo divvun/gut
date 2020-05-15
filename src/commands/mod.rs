@@ -1,5 +1,6 @@
 pub mod add;
 pub mod add_repos;
+pub mod topic_helper;
 pub mod add_users;
 pub mod apply;
 pub mod branch;

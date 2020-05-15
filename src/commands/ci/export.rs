@@ -1,4 +1,5 @@
 use super::models::*;
+use crate::commands::topic_helper;
 use crate::commands::common;
 use crate::commands::models::ExistDirectory;
 use crate::commands::models::Script;
@@ -19,7 +20,8 @@ pub struct ExportArgs {
     pub organisation: String,
     #[structopt(long, short, required_unless("topic"))]
     pub regex: Option<Filter>,
-    #[structopt(long, short, required_unless("regex"))]
+    #[structopt(long, required_unless("regex"))]
+    /// topic to filter
     pub topic: Option<String>,
     #[structopt(long, short)]
     pub template: ExistDirectory,
@@ -37,15 +39,12 @@ impl ExportArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
-            self.regex.as_ref(),
-            &user.token,
-        )?;
+        let all_repos = topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos = topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref());
 
         let repos: Result<BTreeMap<String, RepoData>> = filtered_repos
             .iter()
-            .map(|r| get_repo_data(&r, &self.script, &user, self.use_https))
+            .map(|r| get_repo_data(&r.repo, &self.script, &user, self.use_https))
             .collect();
 
         let repos = repos?;
@@ -96,4 +95,45 @@ struct Input {
     version: String,
     human_name: String,
     language_tag: String,
+}
+
+fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
+    let repos = match github::list_org_repos_with_topics(token, org)
+        .context("When fetching repositories")
+    {
+        Ok(repos) => Ok(repos),
+        Err(e) => {
+            if e.downcast_ref::<NoReposFound>().is_some() {
+                anyhow::bail!("No repositories found");
+            }
+            if e.downcast_ref::<Unauthorized>().is_some() {
+                anyhow::bail!("User token invalid. Run `gut init` with a valid token");
+            }
+            Err(e)
+        }
+    }?;
+    Ok(repos)
+}
+
+fn filter_repos(
+    repos: &[RemoteRepoWithTopics],
+    topic: Option<&String>,
+    regex: Option<&Filter>,
+) -> Vec<RemoteRepoWithTopics> {
+    if let Some(t) = topic {
+        filter_repos_with_topic(repos, t)
+    } else {
+        filter_repos_with_regex(repos, regex.unwrap())
+    }
+}
+
+fn filter_repos_with_topic(
+    repos: &[RemoteRepoWithTopics],
+    topic: &str,
+) -> Vec<RemoteRepoWithTopics> {
+    repos
+        .iter()
+        .filter(|r| r.topics.contains(&topic.to_string()))
+        .cloned()
+        .collect()
 }
