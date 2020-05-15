@@ -32,8 +32,13 @@ impl CreateBranchArgs {
     pub fn create_branch(&self) -> Result<()> {
         let user = common::user()?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
-        let filtered_repos: Vec<_> = topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref()).iter().map(|r| r.repo).collect();
+        let all_repos =
+            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos: Vec<_> =
+            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
+                .into_iter()
+                .map(|r| r.repo)
+                .collect();
 
         for repo in filtered_repos {
             let result = create_branch(

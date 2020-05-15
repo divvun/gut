@@ -1,9 +1,9 @@
 use super::models::*;
-use crate::commands::topic_helper;
 use crate::commands::common;
 use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
 use crate::commands::patterns::*;
+use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::github::RemoteRepo;
@@ -38,8 +38,13 @@ impl GenerateArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
-        let filtered_repos: Vec<_> = topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref()).iter().map(|r| r.repo).collect();
+        let all_repos =
+            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos: Vec<_> =
+            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
+                .into_iter()
+                .map(|r| r.repo)
+                .collect();
 
         let data = get(&Path::new(&self.data).to_path_buf())?;
 

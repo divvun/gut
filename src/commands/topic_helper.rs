@@ -1,6 +1,6 @@
-use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
-use crate::github;
 use crate::filter::Filter;
+use crate::github;
+use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
 use anyhow::{Context, Result};
 
 pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
@@ -54,7 +54,6 @@ fn filter_repos_with_regex(
         .cloned()
         .collect()
 }
-
 
 fn has_pattern(repo: &RemoteRepoWithTopics, regex: &Filter) -> bool {
     let filtered_topics: Vec<_> = repo.topics.iter().filter(|t| regex.is_match(t)).collect();

@@ -1,6 +1,6 @@
 use super::common;
-use super::topic_helper;
 use super::models::Script;
+use super::topic_helper;
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::github::RemoteRepoWithTopics;
