@@ -23,7 +23,7 @@ fn patch<T: Serialize + ?Sized>(
 fn get(url: &str, token: &str, accept: Option<&str>) -> Result<req::Response, reqwest::Error> {
     let client = req::Client::new();
     let accept = accept.unwrap_or("application/vnd.github.v3+json");
-    log::debug!("PUT: {} with accept: {}", url, accept);
+    log::debug!("get: {} with accept: {}", url, accept);
     client
         .get(url)
         .bearer_auth(token)
@@ -202,8 +202,6 @@ pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Res
         Some("application/vnd.github.luke-cage-preview+json"),
     )?;
 
-    log::debug!("Response: {:?}", response);
-
     process_response(&response).map(|_| ())
 }
 
@@ -227,7 +225,6 @@ pub fn create_team(
         maintainers,
         privacy,
     };
-    log::debug!("Body {:?}", body);
 
     let response = post(&url, &body, token)?;
 
@@ -619,7 +616,6 @@ pub fn create_hook(
         events: events.to_owned(),
     };
 
-    log::debug!("body {:?}", body);
     let response = post(&url, &body, token)?;
 
     let status = response.status();
@@ -654,6 +650,30 @@ pub struct CreateHookResponse {
     pub url: String,
     pub test_url: String,
     pub ping_url: String,
+}
+
+pub fn add_repo_to_team(
+    repo: &RemoteRepo,
+    team: &str,
+    permission: &str,
+    token: &str,
+) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/repos/{}/{}",
+        repo.owner, team, repo.owner, repo.name
+    );
+    let body = SetRepoToTeamBody {
+        permission: permission.to_string(),
+    };
+
+    let response = put(&url, &body, token, None)?;
+
+    process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct SetRepoToTeamBody {
+    permission: String,
 }
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
