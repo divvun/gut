@@ -1,42 +1,63 @@
 use super::common;
 use crate::git;
-use crate::git::GitCredential;
 use crate::user::User;
 
-use anyhow::{anyhow, Context, Result};
+use crate::git::GitCredential;
+use anyhow::{anyhow, Result};
 
 use crate::filter::Filter;
 use git2::BranchType;
-use std::path::PathBuf;
 use structopt::StructOpt;
+
+use crate::commands::topic_helper;
+use crate::convert::try_from_one;
+use crate::github::RemoteRepo;
 
 #[derive(Debug, StructOpt)]
 pub struct CheckoutArgs {
     #[structopt(long, short)]
     pub organisation: String,
-    #[structopt(long, short)]
-    pub regex: Filter,
+    #[structopt(long, short, required_unless("topic"))]
+    pub regex: Option<Filter>,
+    #[structopt(long, required_unless("regex"))]
+    /// topic to filter
+    pub topic: Option<String>,
     #[structopt(long, short)]
     pub branch: String,
     #[structopt(long)]
     pub remote: bool,
+    #[structopt(long, short)]
+    pub use_https: bool,
 }
 
 impl CheckoutArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, Some(&self.regex))?;
 
-        for dir in sub_dirs {
-            match checkout_branch(&dir, &self.branch, &user, &"origin", self.remote) {
+        let all_repos =
+            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos: Vec<_> =
+            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
+                .into_iter()
+                .map(|r| r.repo)
+                .collect();
+
+        for repo in filtered_repos {
+            match checkout_branch(
+                &repo,
+                &self.branch,
+                &user,
+                &"origin",
+                self.remote,
+                self.use_https,
+            ) {
                 Ok(_) => println!(
                     "Checkout branch {} of repo {:?} successfully",
-                    &self.branch, dir
+                    &self.branch, repo.name
                 ),
                 Err(e) => println!(
                     "Failed to checkout branch {} of repo {:?} because {:?}",
-                    &self.branch, dir, e
+                    &self.branch, repo.name, e
                 ),
             }
         }
@@ -46,13 +67,15 @@ impl CheckoutArgs {
 }
 
 fn checkout_branch(
-    dir: &PathBuf,
+    repo: &RemoteRepo,
     branch: &str,
     user: &User,
     remote_name: &str,
     remote: bool,
+    use_https: bool,
 ) -> Result<()> {
-    let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+    let git_repo = try_from_one(repo.clone(), user, use_https)?;
+    let git_repo = git_repo.open()?;
 
     if git_repo.find_branch(branch, BranchType::Local).is_ok() {
         git::checkout_local_branch(&git_repo, branch)?;

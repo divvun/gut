@@ -1,30 +1,46 @@
 use super::common;
 use crate::filter::Filter;
 use crate::git;
-use crate::path;
-use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
+use anyhow::Result;
+use std::path::Path;
 use structopt::StructOpt;
+
+use crate::commands::topic_helper;
+use crate::convert::try_from_one;
+use crate::github::RemoteRepo;
+use crate::user::User;
 
 #[derive(Debug, StructOpt)]
 /// Add all and then commit with the provided messages
 pub struct CommitArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
-    #[structopt(long, short)]
+    #[structopt(long, short, required_unless("topic"))]
     pub regex: Option<Filter>,
+    #[structopt(long, required_unless("regex"))]
+    /// topic to filter
+    pub topic: Option<String>,
     #[structopt(long, short)]
     pub message: String,
+    #[structopt(long, short)]
+    pub use_https: bool,
 }
 
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
-        let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+        let user = common::user()?;
 
-        for dir in sub_dirs {
-            let dir_name = path::dir_name(&dir)?;
-            match commit(&dir, &self.message) {
+        let all_repos =
+            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let filtered_repos: Vec<_> =
+            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
+                .into_iter()
+                .map(|r| r.repo)
+                .collect();
+
+        for repo in filtered_repos {
+            let dir_name = &repo.name;
+            match commit(&repo, &self.message, &user, self.use_https) {
                 Err(e) => println!("{}: Failed to commit because {:?}", dir_name, e),
                 Ok(result) => match result {
                     CommitResult::Conflict => println!(
@@ -40,8 +56,9 @@ impl CommitArgs {
     }
 }
 
-pub fn commit(dir: &PathBuf, msg: &str) -> Result<CommitResult> {
-    let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+pub fn commit(repo: &RemoteRepo, msg: &str, user: &User, use_https: bool) -> Result<CommitResult> {
+    let git_repo = try_from_one(repo.clone(), user, use_https)?;
+    let git_repo = git_repo.open()?;
 
     let status = git::status(&git_repo, true)?;
     //let current_branch = git::head_shorthand(&git_repo)?;
