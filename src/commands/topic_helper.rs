@@ -1,4 +1,4 @@
-use crate::filter::Filter;
+use crate::filter::{Filter, Filterable};
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
 use anyhow::{Context, Result};
@@ -22,6 +22,18 @@ pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<Remo
 }
 
 pub fn filter_repos(
+    repos: &[RemoteRepoWithTopics],
+    topic: Option<&String>,
+    regex: Option<&Filter>,
+) -> Vec<RemoteRepoWithTopics> {
+    if let Some(t) = topic {
+        filter_repos_with_topic(repos, t)
+    } else {
+        RemoteRepoWithTopics::filter_with_option(repos.to_owned(), regex)
+    }
+}
+
+pub fn filter_repos_by_topics(
     repos: &[RemoteRepoWithTopics],
     topic: Option<&String>,
     regex: Option<&Filter>,

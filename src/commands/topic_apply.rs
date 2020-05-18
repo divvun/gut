@@ -41,7 +41,8 @@ impl TopicApplyArgs {
 
         let user = common::user()?;
         let repos = topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
-        let repos = topic_helper::filter_repos(&repos, self.topic.as_ref(), self.regex.as_ref());
+        let repos =
+            topic_helper::filter_repos_by_topics(&repos, self.topic.as_ref(), self.regex.as_ref());
 
         println!("repos {:?}", repos);
 
