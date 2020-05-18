@@ -38,6 +38,14 @@ struct RepositoryDefaultBranch;
 )]
 struct OrganizationRepositoriesWithTopics;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "github.graphql",
+    query_path = "user_query.graphql",
+    response_derives = "Debug"
+)]
+struct OrganizationMembers;
+
 fn query<T: Serialize + ?Sized>(token: &str, body: &T) -> Result<req::Response, reqwest::Error> {
     let client = req::Client::new();
     client
@@ -72,6 +80,74 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<String> {
         .login
         .as_ref();
     Ok(username.to_string())
+}
+
+#[derive(Debug)]
+pub struct OrgMember {
+    pub login: String,
+    pub url: String,
+    //pub role: String,
+}
+
+//#[derive(Debug)]
+//pub enum OrgRole {
+//Member,
+//Admin
+//}
+
+pub fn get_org_members(org: &str, token: &str) -> anyhow::Result<Vec<OrgMember>> {
+    get_org_members_rec(org, token, None)
+}
+
+fn get_org_members_rec(
+    org: &str,
+    token: &str,
+    after: Option<String>,
+) -> anyhow::Result<Vec<OrgMember>> {
+    let q = OrganizationMembers::build_query(organization_members::Variables {
+        login: org.to_string(),
+        after,
+    });
+
+    let res = query(token, &q)?;
+
+    let response_status = res.status();
+    if response_status == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(Unauthorized.into());
+    }
+
+    let response_body: Response<organization_members::ResponseData> = res.json()?;
+
+    let org_data = response_body
+        .data
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?
+        .organization
+        .as_ref()
+        .ok_or(InvalidRepoResponse)?;
+
+    let members = org_data.members_with_role.nodes.as_ref();
+
+    let mut list_member: Vec<OrgMember> = members
+        .ok_or(NoMembersFound)?
+        .iter()
+        .filter_map(|user| user.as_ref())
+        .map(|x| OrgMember {
+            login: x.login.to_string(),
+            url: x.url.to_string(),
+        })
+        .collect();
+
+    let page_info = &org_data.members_with_role.page_info;
+
+    if page_info.has_next_page {
+        let after = page_info.end_cursor.as_ref().map(|x| x.to_string());
+        match get_org_members_rec(org, token, after) {
+            Ok(mut l) => list_member.append(&mut l),
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(list_member)
 }
 
 fn list_org_repos_rec(

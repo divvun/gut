@@ -677,30 +677,30 @@ struct SetRepoToTeamBody {
 }
 
 // https://developer.github.com/v3/orgs/members/#members-list
-pub fn get_org_members(org: &str, role: &str, token: &str) -> Result<Vec<OrgMember>> {
-    let url = format!("https://api.github.com/orgs/{}/members?role={}", org, role);
+//pub fn get_org_members(org: &str, role: &str, token: &str) -> Result<Vec<OrgMember>> {
+//let url = format!("https://api.github.com/orgs/{}/members?role={}", org, role);
 
-    let response = get(&url, token, None)?;
+//let response = get(&url, token, None)?;
 
-    let status = response.status();
+//let status = response.status();
 
-    if status == StatusCode::UNAUTHORIZED {
-        return Err(models::Unauthorized.into());
-    }
+//if status == StatusCode::UNAUTHORIZED {
+//return Err(models::Unauthorized.into());
+//}
 
-    if !status.is_success() {
-        return Err(models::Unsuccessful(status).into());
-    }
+//if !status.is_success() {
+//return Err(models::Unsuccessful(status).into());
+//}
 
-    let response_body: Vec<OrgMember> = response.json()?;
-    Ok(response_body)
-}
+//let response_body: Vec<OrgMember> = response.json()?;
+//Ok(response_body)
+//}
 
-#[derive(Deserialize, Debug)]
-pub struct OrgMember {
-    pub login: String,
-    pub url: String,
-}
+//#[derive(Deserialize, Debug)]
+//pub struct OrgMember {
+//pub login: String,
+//pub url: String,
+//}
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();

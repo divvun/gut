@@ -37,5 +37,9 @@ pub struct InvalidRepoResponse;
 pub struct NoReposFound;
 
 #[derive(thiserror::Error, Debug)]
+#[error("no members found")]
+pub struct NoMembersFound;
+
+#[derive(thiserror::Error, Debug)]
 #[error("No default branch")]
 pub struct NoDefaultBranch;
