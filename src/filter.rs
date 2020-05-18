@@ -1,4 +1,5 @@
 use crate::github::RemoteRepo;
+use crate::path;
 use regex::{Error as RegexError, Regex, RegexBuilder};
 use std::path::PathBuf;
 use std::{fmt, str::FromStr};
@@ -52,9 +53,23 @@ impl Filterable for RemoteRepo {
 
 impl Filterable for PathBuf {
     fn is_match(&self, filter: &Filter) -> bool {
-        match self.to_str() {
-            Some(v) => filter.is_match(v),
-            None => false,
+        match path::dir_name(self) {
+            Ok(v) => filter.is_match(v.as_str()),
+            Err(_) => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_caret() {
+        let sample = "^lang-";
+        let filter = Filter::from_str(sample).unwrap();
+        assert!(filter.is_match("lang-sma"));
+        assert_eq!(false, filter.is_match("template-lang-sma"));
+        assert_eq!(false, filter.is_match("langCI-sma-old"))
     }
 }
