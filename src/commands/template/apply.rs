@@ -112,13 +112,9 @@ fn continue_apply(target_dir: &PathBuf) -> Result<()> {
     let target_repo = git::open::open(target_dir)?;
     let status = git::status(&target_repo, false)?;
     if !status.is_not_dirty() {
-        return Err(anyhow!("Target repo is not clean. Please clean or use \"git add\" to add all changes before continue."));
-    }
-
-    if status.added.is_empty() {
-        // remove temp dir
-        path::remove_path(template_apply_dir)?;
-        return Err(anyhow!("Nothing is added, so we abort this apply process"));
+        return Err(anyhow!(
+            "Target repo is not clean. Please use \"git add\" to add all changes before continue."
+        ));
     }
 
     // rewrite delta file
