@@ -1,4 +1,4 @@
-use crate::github::RemoteRepo;
+use crate::github::{RemoteRepo, RemoteRepoWithTopics};
 use crate::path;
 use regex::{Error as RegexError, Regex, RegexBuilder};
 use std::path::PathBuf;
@@ -48,6 +48,12 @@ pub trait Filterable {
 impl Filterable for RemoteRepo {
     fn is_match(&self, filter: &Filter) -> bool {
         filter.is_match(&self.name)
+    }
+}
+
+impl Filterable for RemoteRepoWithTopics {
+    fn is_match(&self, filter: &Filter) -> bool {
+        self.repo.is_match(filter)
     }
 }
 
