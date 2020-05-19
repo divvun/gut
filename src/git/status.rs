@@ -45,6 +45,16 @@ impl GitStatus {
             && self.renamed.is_empty()
             && self.conflicted.is_empty()
     }
+
+    pub fn ahead_behind(&self) -> String {
+        if self.is_ahead > 0 {
+            format!("{}", self.is_ahead)
+        } else if self.is_behind > 0 {
+            format!("-{}", self.is_behind)
+        } else {
+            format!("{}", 0)
+        }
+    }
 }
 
 pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStatus, Error> {
