@@ -23,34 +23,21 @@ impl StatusArgs1 {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
+        println!("Start {:?}", sub_dirs);
+        let s: Vec<_> = sub_dirs.iter()
+            .map(|d| status(&d))
+            .collect();
+        println!("Start {:?}", s);
+        let s: Result<Vec<_>> = s.into_iter().collect();
+        println!("Start {:?}", s);
+        let s: Vec<_> = s?.iter()
+            .map(|s| to_repo_summarize(&s))
+            .collect();
+
+        println!("Summarize {:?}", s);
         Ok(())
     }
 }
-
-struct RepoStatus {
-    name: String,
-    branch: String,
-    status: GitStatus,
-}
-
-enum StatusRow {
-    Summarize {
-        name: String,
-        branch: String,
-        ahead_behind: String,
-        un_added: String,
-        deleted: String,
-        modified: String,
-        conflicted: String,
-        added: String,
-    },
-    FileDetail {
-        status: String,
-        path: String,
-    },
-}
-
-static StatusTitle: &Vec<&str> = vec!["Repo", "branch", "±origin", "U D M C A"];
 
 fn status(dir: &PathBuf) -> Result<RepoStatus> {
     let name = dir_name(dir)?;
@@ -63,5 +50,59 @@ fn status(dir: &PathBuf) -> Result<RepoStatus> {
         branch,
         status,
     };
-    Ok()
+    Ok(repo_status)
 }
+
+fn process(statuses: &[RepoStatus]) -> Vec<StatusRow> {
+    statuses.iter().map(|s| to_repo_summarize(&s)).collect()
+}
+
+fn to_repo_summarize(status: &RepoStatus) -> StatusRow {
+    StatusRow::RepoSummarize {
+        name: status.name.to_string(),
+        branch: status.name.to_string(),
+        ahead_behind: status.status.ahead_behind(),
+        unadded: status.status.new.len().to_string(),
+        deleted: status.status.deleted.len().to_string(),
+        modified: status.status.modified.len().to_string(),
+        conflicted: status.status.conflicted.len().to_string(),
+        added: status.status.added.len().to_string(),
+    }
+}
+
+#[derive(Debug)]
+struct RepoStatus {
+    name: String,
+    branch: String,
+    status: GitStatus,
+}
+
+#[derive(Debug)]
+enum StatusRow {
+    RepoSummarize {
+        name: String,
+        branch: String,
+        ahead_behind: String,
+        unadded: String,
+        deleted: String,
+        modified: String,
+        conflicted: String,
+        added: String,
+    },
+    FileDetail {
+        status: String,
+        path: String,
+    },
+    SummarizeAll {
+        total: String,
+        unpushed_repo_count: String,
+        uncommited_repo_count: String,
+        total_unadded: String,
+        total_deleteed: String,
+        total_modified: String,
+        total_conflicted: String,
+        total_added: String
+    }
+}
+
+//static StatusTitle: Vec<&str> = vec!["Repo", "branch", "±origin", "U D M C A"];

@@ -82,13 +82,7 @@ fn status(dir: &PathBuf, verbose: bool) -> Result<(GitStatus, Vec<Row>)> {
 }
 
 fn change_summarize(dir_name: &str, branch: &str, status: &GitStatus) -> Vec<Row> {
-    let ahead_behind = if status.is_ahead > 0 {
-        format!("{}", status.is_ahead)
-    } else if status.is_behind > 0 {
-        format!("-{}", status.is_behind)
-    } else {
-        format!("{}", 0)
-    };
+    let ahead_behind = status.ahead_behind();
 
     // U D M C
     let change = format!(
