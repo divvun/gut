@@ -17,8 +17,9 @@ pub fn query_and_filter_repositories(
     token: &str,
 ) -> Result<Vec<RemoteRepo>> {
     let remote_repos = remote_repos(token, org)?;
-
-    Ok(RemoteRepo::filter_with_option(remote_repos, regex))
+    let mut result = RemoteRepo::filter_with_option(remote_repos, regex);
+    result.sort();
+    Ok(result)
 }
 
 pub fn user() -> Result<User> {
@@ -60,7 +61,10 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
     };
 
     match result {
-        Ok(r) => Ok(r),
+        Ok(mut vec) => {
+            vec.sort();
+            Ok(vec)
+        }
         Err(e) => Err(anyhow!(
             "Cannot read sub directories for organisation {} \"{}\" because {:?}",
             target_dir.display(),
