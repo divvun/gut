@@ -139,7 +139,7 @@ impl RepoStatus {
     fn to_repo_summarize(&self) -> StatusRow {
         StatusRow::RepoSummarize {
             name: self.name.to_string(),
-            branch: self.name.to_string(),
+            branch: self.branch.to_string(),
             ahead_behind: self.status.ahead_behind(),
             unadded: self.status.new.len().to_string(),
             deleted: self.status.deleted.len().to_string(),
