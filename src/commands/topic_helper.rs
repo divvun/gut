@@ -4,9 +4,9 @@ use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
 use anyhow::{Context, Result};
 
 pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
-    let repos = match github::list_org_repos_with_topics(token, org)
-        .context("When fetching repositories")
-    {
+    let result =
+        github::list_org_repos_with_topics(token, org).context("When fetching repositories");
+    let mut repos = match result {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if e.downcast_ref::<NoReposFound>().is_some() {
@@ -18,6 +18,7 @@ pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<Remo
             Err(e)
         }
     }?;
+    repos.sort();
     Ok(repos)
 }
 
