@@ -52,7 +52,9 @@ fn status(dir: &PathBuf) -> Result<RepoStatus> {
 fn to_table(rows: &[StatusRow]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repo", "branch", "±origin", "U", "D", "M", "C", "A"]);
+    table.set_titles(
+        row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+    );
     for row in rows {
         table.add_row(row.to_row());
     }
