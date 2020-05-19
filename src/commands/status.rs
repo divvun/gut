@@ -23,9 +23,7 @@ impl StatusArgs {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
-        let statuses: Vec<_> = sub_dirs.iter()
-            .map(|d| status(&d))
-            .collect();
+        let statuses: Vec<_> = sub_dirs.iter().map(|d| status(&d)).collect();
         let statuses: Result<Vec<_>> = statuses.into_iter().collect();
         let statuses: Vec<_> = statuses?;
 
@@ -62,7 +60,11 @@ fn to_table(rows: &[StatusRow]) -> Table {
 }
 
 fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
-    let mut rows: Vec<_> = statuses.iter().map(|s| s.to_rows(verbose)).flatten().collect();
+    let mut rows: Vec<_> = statuses
+        .iter()
+        .map(|s| s.to_rows(verbose))
+        .flatten()
+        .collect();
     rows.append(&mut to_total_summarize(statuses));
     rows
 }
@@ -114,7 +116,6 @@ struct RepoStatus {
 }
 
 impl RepoStatus {
-
     fn to_rows(&self, verbose: bool) -> Vec<StatusRow> {
         if verbose {
             self.to_repo_detail()
@@ -187,7 +188,7 @@ enum StatusRow {
         total_deleted: String,
         total_modified: String,
         total_conflicted: String,
-        total_added: String
+        total_added: String,
     },
     RepoSeperation,
     TitleSeperation,
@@ -197,24 +198,34 @@ enum StatusRow {
 impl StatusRow {
     fn to_row(&self) -> Row {
         match self {
-            StatusRow::RepoSeperation => {
-                row!["--------------"]
-            },
-            StatusRow::TitleSeperation => {
-                row!["================"]
-            },
-            StatusRow::FileDetail {status, path} => {
-                row![r => status, path]
-            },
-            StatusRow::SummarizeAll {total, unpushed_repo_count, uncommited_repo_count, total_unadded, total_deleted, total_modified, total_conflicted, total_added} => {
+            StatusRow::RepoSeperation => row!["--------------"],
+            StatusRow::TitleSeperation => row!["================"],
+            StatusRow::FileDetail { status, path } => row![r => status, path],
+            StatusRow::SummarizeAll {
+                total,
+                unpushed_repo_count,
+                uncommited_repo_count,
+                total_unadded,
+                total_deleted,
+                total_modified,
+                total_conflicted,
+                total_added,
+            } => {
                 row![total, uncommited_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
-            },
-            StatusRow::RepoSummarize {name, branch, ahead_behind, unadded, deleted, modified, conflicted, added} => {
+            }
+            StatusRow::RepoSummarize {
+                name,
+                branch,
+                ahead_behind,
+                unadded,
+                deleted,
+                modified,
+                conflicted,
+                added,
+            } => {
                 row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added]
-            },
-            StatusRow::SummarizeTitle =>
-                row!["Repo Count", "Dirty", "fetch/push"]
-            ,
+            }
+            StatusRow::SummarizeTitle => row!["Repo Count", "Dirty", "fetch/push"],
         }
     }
 }
