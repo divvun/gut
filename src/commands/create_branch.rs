@@ -133,14 +133,22 @@ fn create_branch(
     }
 }
 
-fn summarize(statuses: &[Status]) {
+fn summarize(statuses: &[Status], branch: &str) {
     let table = to_table(statuses);
     table.printstd();
 
     let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+    let success_create: Vec<_> = statuses.iter().filter(|s| s.result.is_ok()).collect();
+
+    if !success_create.is_empty() {
+        let msg = format!("Created new branch {} for {} repos!", branch, success_create.len());
+        println!("{}", msg.green());
+    }
 
     if errors.is_empty() {
-        println!("")
+        println!("There is no error!");
+    } else {
+        println!("There {} errors", errors.len());
     }
 }
 
@@ -164,7 +172,11 @@ struct Status {
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(&self.repo.name), self.result_to_cell(), self.push.to_cell()])
+        Row::new(vec![cell!(b -> &self.repo.name), self.result_to_cell(), self.push.to_cell()])
+    }
+
+    fn to_error_row(&self) -> Row {
+
     }
 
     fn result_to_cell(&self) -> Cell {
