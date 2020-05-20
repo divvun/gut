@@ -9,6 +9,7 @@ use crate::filter::Filter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Delete all web hooks for all repository that match regex
 pub struct DeleteArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
