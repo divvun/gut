@@ -594,6 +594,45 @@ struct SetSecretBody {
     key_id: String,
 }
 
+pub fn get_hooks(repo: &RemoteRepo, token: &str) -> Result<Vec<usize>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/hooks",
+        repo.owner, repo.name
+    );
+
+    let response = get(&url, token, None)?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: Vec<HookResponse> = response.json()?;
+    let hooks: Vec<_> = response_body.iter().map(|r| r.id).collect();
+    Ok(hooks)
+}
+
+#[derive(Deserialize, Debug)]
+struct HookResponse {
+    id: usize,
+}
+
+pub fn delete_hook(repo: &RemoteRepo, id: usize, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/hooks/{}",
+        repo.owner, repo.name, id,
+    );
+
+    let response = delete(&url, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
 pub fn create_hook(
     repo: &RemoteRepo,
     hook_url: &str,

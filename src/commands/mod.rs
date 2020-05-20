@@ -18,6 +18,7 @@ pub mod default_branch;
 pub mod fetch;
 pub mod hook;
 pub mod hook_create;
+pub mod hook_delete;
 pub mod init_config;
 pub mod invite;
 pub mod invite_users;
