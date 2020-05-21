@@ -227,7 +227,9 @@ impl StatusRow {
             } => {
                 row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added]
             }
-            StatusRow::SummarizeTitle => row!["Repo Count", "Dirty", "fetch/push"],
+            StatusRow::SummarizeTitle => {
+                row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
+            }
         }
     }
 }
