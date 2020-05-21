@@ -49,6 +49,8 @@ pub mod topic_get;
 pub mod topic_helper;
 pub mod topic_set;
 pub mod transfer;
+pub mod workflow;
+pub mod workflow_run;
 
 pub use add::*;
 pub use apply::*;
@@ -76,3 +78,4 @@ pub use status::*;
 pub use template::*;
 pub use topic::*;
 pub use transfer::*;
+pub use workflow::*;
