@@ -1,11 +1,6 @@
 name: Gut Check
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  repository_dispatch:
+on: repository_dispatch
 
 jobs:
   check:

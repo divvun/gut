@@ -802,16 +802,18 @@ pub fn send_a_dspatch(repo: &RemoteRepo, token: &str) -> Result<()> {
 
     println!("url {}", url);
 
-    let client = req::Client::new();
-    let response = client
-        .post(&url)
-        .bearer_auth(token)
-        .header("User-Agent", super::USER_AGENT)
-        .header("Accept", "application/vnd.github.everest-preview+json")
-        .send()?;
+    let body = DispatchBody {
+        event_type: "repository_dispatch".to_string(),
+    };
 
+    let response = post(&url, &body, token)?;
     println!("reruns {:?}", response);
     process_response(&response).map(|_| ())
+}
+
+#[derive(Serialize, Debug)]
+struct DispatchBody {
+    event_type: String,
 }
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
