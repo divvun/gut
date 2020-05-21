@@ -49,5 +49,6 @@ fn main() -> Result<()> {
         Commands::Template(args) => args.run(),
         Commands::Topic(args) => args.run(),
         Commands::Transfer(args) => args.run(),
+        Commands::Workflow(args) => args.run(),
     }
 }

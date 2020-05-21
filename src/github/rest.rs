@@ -715,31 +715,84 @@ struct SetRepoToTeamBody {
     permission: String,
 }
 
-// https://developer.github.com/v3/orgs/members/#members-list
-//pub fn get_org_members(org: &str, role: &str, token: &str) -> Result<Vec<OrgMember>> {
-//let url = format!("https://api.github.com/orgs/{}/members?role={}", org, role);
+pub fn get_repo_workflow_runs(repo: &RemoteRepo, token: &str) -> Result<Vec<Workflow>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/actions/runs",
+        repo.owner, repo.name
+    );
 
-//let response = get(&url, token, None)?;
+    let response = get(&url, token, None)?;
 
-//let status = response.status();
+    let status = response.status();
 
-//if status == StatusCode::UNAUTHORIZED {
-//return Err(models::Unauthorized.into());
-//}
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
 
-//if !status.is_success() {
-//return Err(models::Unsuccessful(status).into());
-//}
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
 
-//let response_body: Vec<OrgMember> = response.json()?;
-//Ok(response_body)
-//}
+    let response_body: WorkflowResponse = response.json()?;
+    //println!("repo runs {:?}", response_body);
+    Ok(response_body.workflow_runs)
+}
 
-//#[derive(Deserialize, Debug)]
-//pub struct OrgMember {
-//pub login: String,
-//pub url: String,
-//}
+pub fn get_workflow_runs(repo: &RemoteRepo, workflow: &str, token: &str) -> Result<Vec<Workflow>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/actions/workflows/{}/runs",
+        repo.owner, repo.name, workflow
+    );
+
+    let response = get(&url, token, None)?;
+
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: WorkflowResponse = response.json()?;
+    println!("runs {:?}", response_body);
+    Ok(response_body.workflow_runs)
+}
+
+#[derive(Deserialize, Debug)]
+struct WorkflowResponse {
+    total_count: usize,
+    workflow_runs: Vec<Workflow>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Workflow {
+    pub id: usize,
+    pub html_url: String,
+    pub status: String,
+}
+
+pub fn rerun_a_workflow(repo: &RemoteRepo, id: usize, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/actions/runs/{}/rerun",
+        repo.owner, repo.name, id
+    );
+
+    println!("url {}", url);
+
+    let client = req::Client::new();
+    let response = client
+        .post(&url)
+        .bearer_auth(token)
+        .header("User-Agent", super::USER_AGENT)
+        .header("Accept", "application/vnd.github.v3+json")
+        .send()?;
+
+    println!("reruns {:?}", response);
+    process_response(&response).map(|_| ())
+}
 
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
