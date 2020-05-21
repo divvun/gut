@@ -774,10 +774,30 @@ pub struct Workflow {
     pub status: String,
 }
 
-pub fn rerun_a_workflow(repo: &RemoteRepo, id: usize, token: &str) -> Result<()> {
+//pub fn rerun_a_workflow(repo: &RemoteRepo, id: usize, token: &str) -> Result<()> {
+//let url = format!(
+//"https://api.github.com/repos/{}/{}/actions/runs/{}/rerun",
+//repo.owner, repo.name, id
+//);
+
+//println!("url {}", url);
+
+//let client = req::Client::new();
+//let response = client
+//.post(&url)
+//.bearer_auth(token)
+//.header("User-Agent", super::USER_AGENT)
+//.header("Accept", "application/vnd.github.v3+json")
+//.send()?;
+
+//println!("reruns {:?}", response);
+//process_response(&response).map(|_| ())
+//}
+
+pub fn send_a_dspatch(repo: &RemoteRepo, token: &str) -> Result<()> {
     let url = format!(
-        "https://api.github.com/repos/{}/{}/actions/runs/{}/rerun",
-        repo.owner, repo.name, id
+        "https://api.github.com/repos/{}/{}/dispatches",
+        repo.owner, repo.name
     );
 
     println!("url {}", url);
@@ -787,7 +807,7 @@ pub fn rerun_a_workflow(repo: &RemoteRepo, id: usize, token: &str) -> Result<()>
         .post(&url)
         .bearer_auth(token)
         .header("User-Agent", super::USER_AGENT)
-        .header("Accept", "application/vnd.github.v3+json")
+        .header("Accept", "application/vnd.github.everest-preview+json")
         .send()?;
 
     println!("reruns {:?}", response);

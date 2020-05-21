@@ -69,10 +69,10 @@ fn rerun_workflow(repo: &RemoteRepo, token: &str, workflow: Option<&str>) -> Res
         return Ok(Status::NoWorkflowRunFound);
     }
 
-    let first_workflow = &workflow_runs[0];
+    //let first_workflow = &workflow_runs[0];
 
-    println!("First workflow {:?}", first_workflow);
-    github::rerun_a_workflow(repo, first_workflow.id, token)?;
+    //println!("First workflow {:?}", first_workflow);
+    github::send_a_dspatch(repo, token)?;
 
     Ok(Status::Success)
 }
