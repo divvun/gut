@@ -63,7 +63,7 @@ impl CreateBranchArgs {
             )
             ).collect();
 
-        summarize(&statuses);
+        summarize(&statuses, &self.new_branch);
         Ok(())
     }
 }
@@ -141,15 +141,26 @@ fn summarize(statuses: &[Status], branch: &str) {
     let success_create: Vec<_> = statuses.iter().filter(|s| s.result.is_ok()).collect();
 
     if !success_create.is_empty() {
-        let msg = format!("Created new branch {} for {} repos!", branch, success_create.len());
+        let msg = format!("\nCreated new branch {} for {} repos!", branch, success_create.len());
         println!("{}", msg.green());
     }
 
     if errors.is_empty() {
-        println!("There is no error!");
+        println!("\nThere is no error!");
     } else {
-        println!("There {} errors", errors.len());
+        let msg = format!("There {} errors when process command:", errors.len());
+        println!("\n{}\n", msg.red());
     }
+
+    let mut error_table = Table::new();
+    error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    error_table.set_titles(
+        row!["Repo", "Error"],
+    );
+    for error in errors {
+        error_table.add_row(error.to_error_row());
+    }
+    error_table.printstd();
 }
 
 fn to_table(statuses: &[Status]) -> Table {
@@ -176,7 +187,17 @@ impl Status {
     }
 
     fn to_error_row(&self) -> Row {
-
+        let e = if let Err(e1) = &self.result {
+            e1
+        } else if let PushStatus::Failed(e2) = &self.push {
+            e2
+        } else {
+            panic!("This should have an error here");
+        };
+        let msg = format!("{:?}", e);
+        let lines = common::sub_strings(msg.as_str(), 80);
+        let lines = lines.join("\n");
+        row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
     }
 
     fn result_to_cell(&self) -> Cell {
