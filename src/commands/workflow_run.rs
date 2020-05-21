@@ -7,7 +7,13 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Rerun the most recent workflow
+/// Rerun the most recent workflow or send a repository_dispatch event to trigger workflows
+///
+/// Without "dispatch" flag this will try to re-run the most recent workflow. But This only works when the most recent workflow failed.
+///
+/// With "dispatch" flag, this will send a repository_dispatch event to trigger supported workflows.
+/// In order to use this option. The workflow files need to use repository_dispatch event.
+/// And this event will only trigger a workflow run if the workflow file is on the master or default branch.
 pub struct WorkflowRunArgs {
     #[structopt(long, short, default_value = "divvun")]
     pub organisation: String,
@@ -16,6 +22,9 @@ pub struct WorkflowRunArgs {
     #[structopt(long, short)]
     /// Optional workflow_file_name
     pub workflow: Option<String>,
+    #[structopt(long, short)]
+    /// Send repository_dispatch to trigger workflow rerun
+    pub dispatch: bool,
 }
 
 impl WorkflowRunArgs {
@@ -36,10 +45,15 @@ impl WorkflowRunArgs {
         }
 
         for repo in filtered_repos {
-            let status = rerun_workflow(&repo, &user_token, self.workflow.as_deref());
+            let status =
+                rerun_workflow(&repo, &user_token, self.workflow.as_deref(), self.dispatch);
 
             match status {
                 Ok(s) => match s {
+                    Status::SuccessByDispatch => println!(
+                        "Successful to send a repository_dispatch trigger to rerun workflows for repo {}",
+                        repo.name
+                    ),
                     Status::Success => println!(
                         "Successful rerun the most recent workflow run for repo {}",
                         repo.name
@@ -59,7 +73,17 @@ impl WorkflowRunArgs {
     }
 }
 
-fn rerun_workflow(repo: &RemoteRepo, token: &str, workflow: Option<&str>) -> Result<Status> {
+fn rerun_workflow(
+    repo: &RemoteRepo,
+    token: &str,
+    workflow: Option<&str>,
+    dispatch: bool,
+) -> Result<Status> {
+    if dispatch {
+        github::send_a_dispatch(repo, token)?;
+        return Ok(Status::SuccessByDispatch);
+    }
+
     let workflow_runs = match workflow {
         Some(wf) => github::get_workflow_runs(repo, wf, token)?,
         None => github::get_repo_workflow_runs(repo, token)?,
@@ -72,7 +96,6 @@ fn rerun_workflow(repo: &RemoteRepo, token: &str, workflow: Option<&str>) -> Res
     //let first_workflow = &workflow_runs[0];
 
     //println!("First workflow {:?}", first_workflow);
-    github::send_a_dspatch(repo, token)?;
 
     Ok(Status::Success)
 }
@@ -80,4 +103,5 @@ fn rerun_workflow(repo: &RemoteRepo, token: &str, workflow: Option<&str>) -> Res
 enum Status {
     NoWorkflowRunFound,
     Success,
+    SuccessByDispatch,
 }
