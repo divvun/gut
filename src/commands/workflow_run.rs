@@ -93,9 +93,8 @@ fn rerun_workflow(
         return Ok(Status::NoWorkflowRunFound);
     }
 
-    //let first_workflow = &workflow_runs[0];
-
-    //println!("First workflow {:?}", first_workflow);
+    let first_workflow = &workflow_runs[0];
+    github::rerun_a_workflow(repo, first_workflow.id, token)?;
 
     Ok(Status::Success)
 }
