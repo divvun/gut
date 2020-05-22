@@ -52,6 +52,15 @@ impl CreateBranchArgs {
                 .into_iter()
                 .map(|r| r.repo)
                 .collect();
+
+        if filtered_repos.is_empty() {
+            println!(
+                "There is no repositories in organisation {} matches pattern {:?}",
+                self.organisation, self.regex
+            );
+            return Ok(());
+        }
+
         let statuses: Vec<_> = filtered_repos.iter().map(|r|
                 create_branch(
                 &r,

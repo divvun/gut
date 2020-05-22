@@ -1,7 +1,7 @@
 use super::common;
 use crate::user::User;
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 
 use crate::filter::Filter;
 use crate::git::push;
@@ -33,11 +33,20 @@ impl PushArgs {
 
         let all_repos =
             topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
                 .into_iter()
                 .map(|r| r.repo)
                 .collect();
+
+        if filtered_repos.is_empty() {
+            println!(
+                "There is no repositories in organisation {} matches pattern {:?}",
+                self.organisation, self.regex
+            );
+            return Ok(());
+        }
 
         for repo in filtered_repos {
             match push_branch(&repo, &self.branch, &user, &"origin", self.use_https) {
@@ -68,4 +77,10 @@ fn push_branch(
     let cred = GitCredential::from(user);
     push::push_branch(&git_repo, branch, remote_name, Some(cred))?;
     Ok(())
+}
+
+enum Status {
+    NoPush,
+    Success(usize),
+    Failed(Error),
 }
