@@ -7,7 +7,7 @@ use crate::path;
 use anyhow::{Context, Result};
 use git2::Repository;
 use std::collections::BTreeMap;
-use std::fs::{create_dir_all, read_to_string};
+use std::fs::{copy, create_dir_all, read_to_string};
 use std::path::{Path, PathBuf};
 use std::str;
 use structopt::StructOpt;
@@ -20,9 +20,9 @@ pub struct GenerateArgs {
     /// Directory of the will be genrated project
     #[structopt(long, short)]
     pub dir: String,
-    /// Flag to include optional files
-    #[structopt(long)]
-    pub optional: bool,
+    /// Option to skip git init for new project
+    #[structopt(long, short)]
+    pub no_init: bool,
 }
 
 impl GenerateArgs {
@@ -31,7 +31,7 @@ impl GenerateArgs {
         let target_dir = Path::new(&self.dir).to_path_buf();
         create_dir_all(&target_dir).context("Cannot create target directory")?;
 
-        match generate(&template_dir, &target_dir, self.optional) {
+        match generate(&template_dir, &target_dir, self.no_init) {
             Ok(_) => println!("Generate success at {:?}", target_dir),
             Err(e) => println!("Generate failed because {:?}", e),
         }
@@ -43,7 +43,7 @@ impl GenerateArgs {
 // init git repo
 // create delta files
 // commit all
-fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Result<()> {
+fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Result<()> {
     let template_repo = git::open(template_dir)?;
     let current_sha = git::head_sha(&template_repo)?;
 
@@ -51,25 +51,23 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
     let target_info = get_target_info(&template_delta)?;
 
     // generate file paths
-    let generate_files = template_delta.generate_files(optional);
+    let generate_files = path::all_files(template_dir);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
-    //println!("Target files {:?}", target_files);
 
     // wirte content
     for (original, target) in target_files {
         let original_path = template_dir.join(&original);
         let target_path = target_dir.join(&target);
-        let original_content = read_to_string(&original_path)?;
-        let target_content = generate_string(&target_info.reps, original_content.as_str())?;
-        //println!("generated content for {:?}", target_path);
-        //println!("{}", target_content);
-        //println!("");
-        path::write_content(&target_path, &target_content)?;
+        if let Ok(original_content) = read_to_string(&original_path) {
+            let target_content = generate_string(&target_info.reps, original_content.as_str())?;
+            path::write_content(&target_path, &target_content)?;
+        } else {
+            let parrent = path::parrent(&target_path)?;
+            create_dir_all(&parrent)?;
+            copy(original_path, target_path)?;
+        }
     }
-
-    // init repo
-    let target_repo = Repository::init(target_dir)?;
 
     // write delta file
     let target_delta = TargetDelta {
@@ -82,8 +80,12 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
     create_dir_all(&gut_path)?;
     target_delta.save(&gut_path.join("delta.toml"))?;
 
-    // commit all data
-    commit(&target_repo, "Generate project")?;
+    if !no_init {
+        // init repo
+        let target_repo = Repository::init(target_dir)?;
+        // commit all data
+        commit(&target_repo, "Generate project")?;
+    }
     Ok(())
 }
 

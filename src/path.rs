@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context};
 use std::fs;
 use std::fs::{create_dir_all, write};
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 fn config_dir() -> Option<PathBuf> {
     let config_dir = dirs::config_dir().map(|p| p.join("gut"))?;
@@ -84,4 +85,31 @@ pub fn write_content(file_path: &PathBuf, content: &str) -> anyhow::Result<()> {
     create_dir_all(&parrent)?;
     write(file_path, content)?;
     Ok(())
+}
+
+pub fn all_files(dir: &PathBuf) -> Vec<String> {
+    let len = if let Some(dir_str) = dir.to_str() {
+        dir_str.len() + 1
+    } else {
+        return vec![];
+    };
+
+    let walk_dirs = WalkDir::new(dir);
+    let mut files = vec![];
+    for entry in walk_dirs
+        .into_iter()
+        //.filter_entry(|de| de.file_type().is_file())
+        .filter_map(|e| e.ok())
+    {
+        if entry.file_type().is_file() {
+            if let Some(str) = entry.into_path().to_str() {
+                let (_a, b) = str.split_at(len);
+                if !b.starts_with(".git/") {
+                    //println!("File: {}", b);
+                    files.push(b.to_string());
+                }
+            }
+        }
+    }
+    files
 }
