@@ -52,10 +52,10 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
 
     // generate file paths
     let generate_files = path::all_files(template_dir);
-    log::debug!("All files {:?}", generate_files);
+    //log::debug!("All files {:?}", generate_files);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
-    println!("Target files {:?}", target_files);
+    //println!("Target files {:?}", target_files);
 
     // wirte content
     for (original, target) in target_files {
