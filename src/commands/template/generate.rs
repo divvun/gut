@@ -61,12 +61,15 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     for (original, target) in target_files {
         let original_path = template_dir.join(&original);
         let target_path = target_dir.join(&target);
-        let original_content = read_to_string(&original_path)?;
-        let target_content = generate_string(&target_info.reps, original_content.as_str())?;
-        //println!("generated content for {:?}", target_path);
-        //println!("{}", target_content);
-        //println!("");
-        path::write_content(&target_path, &target_content)?;
+        if let Ok(original_content) = read_to_string(&original_path) {
+            let target_content = generate_string(&target_info.reps, original_content.as_str())?;
+            path::write_content(&target_path, &target_content)?;
+
+            //println!("generated content for {:?}", target_path);
+            //println!("{}", target_content);
+            //println!("");
+        }
+
     }
 
     // init repo
