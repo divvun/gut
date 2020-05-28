@@ -88,18 +88,28 @@ pub fn write_content(file_path: &PathBuf, content: &str) -> anyhow::Result<()> {
 }
 
 pub fn all_files(dir: &PathBuf) -> Vec<String> {
+    let len = if let Some(dir_str) = dir.to_str() {
+        dir_str.len() + 1
+    } else {
+        return vec![];
+    };
+
     let walk_dirs = WalkDir::new(dir);
     let mut files = vec![];
     for entry in walk_dirs
         .into_iter()
-            //.filter_entry(|de| de.file_type().is_file())
-            .filter_map(|e| e.ok()) {
-                println!("entry {:?}", entry);
-                if entry.file_type().is_file() {
-                    if let Some(str) = entry.into_path().to_str() {
-                        files.push(str.to_string());
-                    }
+        //.filter_entry(|de| de.file_type().is_file())
+        .filter_map(|e| e.ok())
+    {
+        if entry.file_type().is_file() {
+            if let Some(str) = entry.into_path().to_str() {
+                let (_a, b) = str.split_at(len);
+                if !b.starts_with(".git/") {
+                    println!("File: {}", b);
+                    files.push(b.to_string());
                 }
+            }
+        }
     }
     files
 }
