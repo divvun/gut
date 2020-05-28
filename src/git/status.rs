@@ -57,7 +57,7 @@ impl GitStatus {
     }
 
     pub fn should_push(&self) -> bool {
-        self.is_behind > 0
+        self.is_ahead > 0
     }
 }
 
