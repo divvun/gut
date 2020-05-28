@@ -20,6 +20,9 @@ pub struct GenerateArgs {
     /// Directory of the will be genrated project
     #[structopt(long, short)]
     pub dir: String,
+    /// Option to skip git init for new project
+    #[structopt(long, short)]
+    pub no_init: bool,
 }
 
 impl GenerateArgs {
@@ -48,7 +51,8 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     let target_info = get_target_info(&template_delta)?;
 
     // generate file paths
-    let generate_files = template_delta.generate_files(true);
+    let generate_files = path::all_files(template_dir);
+    log::debug!("All files {:?}", generate_files);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
     //println!("Target files {:?}", target_files);
