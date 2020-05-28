@@ -15,8 +15,7 @@ pub fn push_branch(
     let mut po = git2::PushOptions::new();
     po.remote_callbacks(remote_callbacks);
 
-    let result = origin.push(&[&common::ref_by_branch(branch)], Some(&mut po));
-    log::debug!("Push result {:?}", result);
+    origin.push(&[&common::ref_by_branch(branch)], Some(&mut po))?;
 
     Ok(())
 }

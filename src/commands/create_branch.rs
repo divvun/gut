@@ -1,11 +1,11 @@
 use super::common;
-use prettytable::{cell, Cell, format, row, Row, Table};
+use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use crate::user::User;
+use anyhow::{anyhow, Error, Result};
 use colored::*;
-use crate::commands::topic_helper;
-use anyhow::{anyhow, Result, Error};
+use prettytable::{cell, format, row, Cell, Row, Table};
 
 use crate::filter::Filter;
 use crate::git::branch;
@@ -21,8 +21,10 @@ use structopt::StructOpt;
 /// If a matched repository is not present in root dir yet, it will be cloned.
 pub struct CreateBranchArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short, required_unless("topic"))]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, required_unless("regex"))]
     /// topic to filter
@@ -38,7 +40,7 @@ pub struct CreateBranchArgs {
     pub use_https: bool,
     #[structopt(long, short)]
     /// Option to push a new branch to remote after creating the new branch
-    pub push: bool
+    pub push: bool,
 }
 
 impl CreateBranchArgs {
@@ -61,16 +63,19 @@ impl CreateBranchArgs {
             return Ok(());
         }
 
-        let statuses: Vec<_> = filtered_repos.iter().map(|r|
+        let statuses: Vec<_> = filtered_repos
+            .iter()
+            .map(|r| {
                 create_branch(
-                &r,
-                &self.new_branch,
-                &self.base_branch,
-                &user,
-                self.use_https,
-                self.push,
-            )
-            ).collect();
+                    &r,
+                    &self.new_branch,
+                    &self.base_branch,
+                    &user,
+                    self.use_https,
+                    self.push,
+                )
+            })
+            .collect();
 
         summarize(&statuses, &self.new_branch);
         Ok(())
@@ -101,14 +106,17 @@ fn create_branch(
     let mut push_status = PushStatus::No;
 
     let mut create_branch = || -> Result<()> {
-
         let git_repo = try_from_one(remote_repo.clone(), user, use_https)?;
 
         let cloned_repo = git_repo.open_or_clone();
         let cloned_repo = match cloned_repo {
             Ok(repo) => repo,
             Err(e) => {
-                return Err(anyhow!("Failed when open {} because {:?}", git_repo.remote_url, e));
+                return Err(anyhow!(
+                    "Failed when open {} because {:?}",
+                    git_repo.remote_url,
+                    e
+                ));
             }
         };
 
@@ -117,7 +125,9 @@ fn create_branch(
         push_status = if push {
             match push::push_branch(&cloned_repo, new_branch, "origin", git_repo.cred) {
                 Ok(_) => PushStatus::Success,
-                Err(e) => PushStatus::Failed(anyhow!("Failed when push {} because {:?}", new_branch, e))
+                Err(e) => {
+                    PushStatus::Failed(anyhow!("Failed when push {} because {:?}", new_branch, e))
+                }
             }
         } else {
             PushStatus::No
@@ -128,7 +138,6 @@ fn create_branch(
             new_branch,
             cloned_repo.path()
         );
-
 
         Ok(())
     };
@@ -150,7 +159,11 @@ fn summarize(statuses: &[Status], branch: &str) {
     let success_create: Vec<_> = statuses.iter().filter(|s| s.result.is_ok()).collect();
 
     if !success_create.is_empty() {
-        let msg = format!("\nCreated new branch {} for {} repos!", branch, success_create.len());
+        let msg = format!(
+            "\nCreated new branch {} for {} repos!",
+            branch,
+            success_create.len()
+        );
         println!("{}", msg.green());
     }
 
@@ -163,9 +176,7 @@ fn summarize(statuses: &[Status], branch: &str) {
 
     let mut error_table = Table::new();
     error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    error_table.set_titles(
-        row!["Repo", "Error"],
-    );
+    error_table.set_titles(row!["Repo", "Error"]);
     for error in errors {
         error_table.add_row(error.to_error_row());
     }
@@ -175,9 +186,7 @@ fn summarize(statuses: &[Status], branch: &str) {
 fn to_table(statuses: &[Status]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(
-        row!["Repo", "Status", "Push"],
-    );
+    table.set_titles(row!["Repo", "Status", "Push"]);
     for status in statuses {
         table.add_row(status.to_row());
     }
@@ -192,7 +201,11 @@ struct Status {
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(b -> &self.repo.name), self.result_to_cell(), self.push.to_cell()])
+        Row::new(vec![
+            cell!(b -> &self.repo.name),
+            self.result_to_cell(),
+            self.push.to_cell(),
+        ])
     }
 
     fn to_error_row(&self) -> Row {
@@ -219,7 +232,6 @@ impl Status {
     fn has_error(&self) -> bool {
         self.result.is_err() || self.push.is_err()
     }
-
 }
 
 enum PushStatus {

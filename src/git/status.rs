@@ -55,6 +55,10 @@ impl GitStatus {
             format!("{}", 0)
         }
     }
+
+    pub fn should_push(&self) -> bool {
+        self.is_behind > 0
+    }
 }
 
 pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStatus, Error> {
