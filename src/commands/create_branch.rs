@@ -172,15 +172,14 @@ fn summarize(statuses: &[Status], branch: &str) {
     } else {
         let msg = format!("There {} errors when process command:", errors.len());
         println!("\n{}\n", msg.red());
+        let mut error_table = Table::new();
+        error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        error_table.set_titles(row!["Repo", "Error"]);
+        for error in errors {
+            error_table.add_row(error.to_error_row());
+        }
+        error_table.printstd();
     }
-
-    let mut error_table = Table::new();
-    error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    error_table.set_titles(row!["Repo", "Error"]);
-    for error in errors {
-        error_table.add_row(error.to_error_row());
-    }
-    error_table.printstd();
 }
 
 fn to_table(statuses: &[Status]) -> Table {
