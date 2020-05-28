@@ -105,7 +105,7 @@ pub fn all_files(dir: &PathBuf) -> Vec<String> {
             if let Some(str) = entry.into_path().to_str() {
                 let (_a, b) = str.split_at(len);
                 if !b.starts_with(".git/") {
-                    println!("File: {}", b);
+                    //println!("File: {}", b);
                     files.push(b.to_string());
                 }
             }
