@@ -52,10 +52,8 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
 
     // generate file paths
     let generate_files = path::all_files(template_dir);
-    //log::debug!("All files {:?}", generate_files);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
-    //println!("Target files {:?}", target_files);
 
     // wirte content
     for (original, target) in target_files {
@@ -64,12 +62,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
         if let Ok(original_content) = read_to_string(&original_path) {
             let target_content = generate_string(&target_info.reps, original_content.as_str())?;
             path::write_content(&target_path, &target_content)?;
-
-            println!("generated content for {:?}", target_path);
-        //println!("{}", target_content);
-        //println!("");
         } else {
-            println!("copy binary file {:?}", original_path);
             let parrent = path::parrent(&target_path)?;
             create_dir_all(&parrent)?;
             copy(original_path, target_path)?;
