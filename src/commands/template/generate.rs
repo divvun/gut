@@ -20,9 +20,6 @@ pub struct GenerateArgs {
     /// Directory of the will be genrated project
     #[structopt(long, short)]
     pub dir: String,
-    /// Flag to include optional files
-    #[structopt(long)]
-    pub optional: bool,
 }
 
 impl GenerateArgs {
@@ -31,7 +28,7 @@ impl GenerateArgs {
         let target_dir = Path::new(&self.dir).to_path_buf();
         create_dir_all(&target_dir).context("Cannot create target directory")?;
 
-        match generate(&template_dir, &target_dir, self.optional) {
+        match generate(&template_dir, &target_dir) {
             Ok(_) => println!("Generate success at {:?}", target_dir),
             Err(e) => println!("Generate failed because {:?}", e),
         }
@@ -43,7 +40,7 @@ impl GenerateArgs {
 // init git repo
 // create delta files
 // commit all
-fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Result<()> {
+fn generate(template_dir: &PathBuf, target_dir: &PathBuf) -> Result<()> {
     let template_repo = git::open(template_dir)?;
     let current_sha = git::head_sha(&template_repo)?;
 
@@ -51,7 +48,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, optional: bool) -> Res
     let target_info = get_target_info(&template_delta)?;
 
     // generate file paths
-    let generate_files = template_delta.generate_files(optional);
+    let generate_files = template_delta.generate_files(true);
     let rx = generate_files.iter().map(AsRef::as_ref).collect();
     let target_files = generate_file_paths(&target_info.reps, rx)?;
     //println!("Target files {:?}", target_files);
