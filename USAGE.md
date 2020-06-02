@@ -37,7 +37,7 @@ OPTIONS:
 
 ```
 
-Users must be a space separated list of GitHub user ID's, possibly also multiple `-u` options.
+Users must be a space separated list of GitHub user ID's.
 
 ### Effect
 
@@ -62,10 +62,11 @@ OPTIONS:
     -r, --role <role>                    Role of users It should be one of ["member", "admin", "billing_manager"]
                                          [default: member]
 ```
+Emails is a space separated list of email addresses.
 
 ### Effect
 
-Invite users by emails.
+Invite users by emails, using the given email addresses.
 
 ## Merge
 
@@ -75,7 +76,7 @@ Invite users by emails.
 
 This command will try to merge a branch into your head branch for all repositories that match a regex pattern.
 
-This works similar to `git merge` command. gut will use `fast-forward` strategy whenever possible.
+This works similar to `git merge` command. `gut` will use `fast-forward` strategy whenever possible.
 
 If there is a conflict, that it cannot resolve automatically, you'll need to fix all conflicts and then commit it yourself. Or you can use `--abort-if-conflict` option to abort it.
 
@@ -98,6 +99,36 @@ This command will try to simulate `git clean -f -d` command. It will clean all l
 ### Effect
 
 This command will try to show statuses of all local repositories that match a regex pattern.
+
+### Example
+
+```sh
+$ gut status -o giellalt -r '^lang-.+-x-ext'
++-------------------------------------------------------------+
+| Repo                     branch      ±origin  U  D  M  C  A |
++=============================================================+
+| lang-nno-x-ext-apertium  develop           0  0  0  0  0  0 |
+| lang-quc-x-ext-apertium  develop           0  0  0  1  0  0 |
+| lang-spa-x-ext-apertium  develop           0  0  0  0  0  0 |
+| lang-tur-x-ext-trmorph   develop           0  0  0  0  0  0 |
+| lang-vot-x-ext-kkankain  develop           0  0  0  0  0  0 |
+| ================                                            |
+| Repo Count               Dirty    fetch/push  U  D  M  C  A |
+| 5                        1                 0  0  0  1  0  0 |
++-------------------------------------------------------------+
+
+```
+
+Explanation:
+
+* **Repo Count**: # of matched repos
+* **Dirty**: # of repos with modifications etc
+* **fetch/push**: # of repos needing fetch/push re their remote
+* **U**: # of untracked
+* **D**: # of deleted
+* **M**: # of modified
+* **C**: # of conflicted
+* **A**: # of added
 
 ## Commit
 
