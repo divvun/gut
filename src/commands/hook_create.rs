@@ -82,6 +82,14 @@ impl CreateArgs {
             &user_token,
         )?;
 
+        if filtered_repos.is_empty() {
+            println!(
+                "There is no repositories in organisation {} matches pattern {:?}",
+                self.organisation, self.regex
+            );
+            return Ok(());
+        }
+
         for repo in filtered_repos {
             match create(
                 &repo,

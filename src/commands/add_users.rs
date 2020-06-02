@@ -29,7 +29,7 @@ pub struct AddUsersArgs {
 }
 
 impl AddUsersArgs {
-    pub fn add_users(&self) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match &self.team_slug {
             Some(name) => self.add_users_to_team(&name),
             None => self.add_users_to_org(),

@@ -14,7 +14,7 @@ pub enum AddArgs {
 impl AddArgs {
     pub fn run(&self) -> Result<()> {
         match self {
-            AddArgs::Users(args) => args.add_users(),
+            AddArgs::Users(args) => args.run(),
             AddArgs::Repos(args) => args.run(),
         }
     }

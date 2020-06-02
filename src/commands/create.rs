@@ -22,7 +22,7 @@ impl CreateArgs {
         match self {
             CreateArgs::Discussion(args) => args.create_discusstion(),
             CreateArgs::Team(args) => args.create_team(),
-            CreateArgs::Branch(args) => args.create_branch(),
+            CreateArgs::Branch(args) => args.run(),
             CreateArgs::Repo(args) => args.run(),
         }
     }

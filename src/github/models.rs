@@ -1,6 +1,8 @@
 use reqwest::StatusCode;
+use std::cmp::Ord;
+use std::cmp::Ordering;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub struct RemoteRepo {
     pub name: String,
     pub owner: String,
@@ -14,10 +16,44 @@ impl RemoteRepo {
     }
 }
 
-#[derive(Debug, Clone)]
+impl Ord for RemoteRepo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name)
+    }
+}
+impl PartialOrd for RemoteRepo {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for RemoteRepo {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.owner == other.owner
+    }
+}
+
+#[derive(Debug, Clone, Eq)]
 pub struct RemoteRepoWithTopics {
     pub repo: RemoteRepo,
     pub topics: Vec<String>,
+}
+
+impl Ord for RemoteRepoWithTopics {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.repo.cmp(&other.repo)
+    }
+}
+impl PartialOrd for RemoteRepoWithTopics {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for RemoteRepoWithTopics {
+    fn eq(&self, other: &Self) -> bool {
+        self.repo == other.repo
+    }
 }
 
 #[derive(thiserror::Error, Debug)]

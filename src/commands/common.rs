@@ -17,8 +17,9 @@ pub fn query_and_filter_repositories(
     token: &str,
 ) -> Result<Vec<RemoteRepo>> {
     let remote_repos = remote_repos(token, org)?;
-
-    Ok(RemoteRepo::filter_with_option(remote_repos, regex))
+    let mut result = RemoteRepo::filter_with_option(remote_repos, regex);
+    result.sort();
+    Ok(result)
 }
 
 pub fn user() -> Result<User> {
@@ -60,7 +61,10 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
     };
 
     match result {
-        Ok(r) => Ok(r),
+        Ok(mut vec) => {
+            vec.sort();
+            Ok(vec)
+        }
         Err(e) => Err(anyhow!(
             "Cannot read sub directories for organisation {} \"{}\" because {:?}",
             target_dir.display(),
@@ -134,4 +138,20 @@ fn execute_script(script: &str, dir: &PathBuf) -> Result<Output> {
     log::debug!("Script result {:?}", output);
 
     Ok(output)
+}
+
+pub fn sub_strings(string: &str, sub_len: usize) -> Vec<&str> {
+    let mut subs = Vec::with_capacity(string.len() / sub_len);
+    let mut iter = string.chars();
+    let mut pos = 0;
+
+    while pos < string.len() {
+        let mut len = 0;
+        for ch in iter.by_ref().take(sub_len) {
+            len += ch.len_utf8();
+        }
+        subs.push(&string[pos..pos + len]);
+        pos += len;
+    }
+    subs
 }
