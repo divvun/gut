@@ -7,4 +7,6 @@ We think it's pretty good.
 
 There are some [usage instructions](USAGE.md) under development.
 
+Installation instructions will hopefully be added __here__.
+
 More details to follow!
