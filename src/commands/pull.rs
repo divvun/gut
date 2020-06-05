@@ -15,6 +15,7 @@ use structopt::StructOpt;
 /// Pull the current branch of all local repositories that match a regex
 ///
 /// This command only works on those repositories that has been cloned in root directory
+///
 pub struct PullArgs {
     #[structopt(long, short)]
     /// Target organisation name
@@ -58,17 +59,38 @@ fn summarize(statuses: &[Status]) {
 
     let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
     let success_create: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+    let conflicts: Vec<_> = statuses
+        .iter()
+        .filter(|s| s.repo_status.is_conflict())
+        .collect();
+    let stashes: Vec<_> = statuses
+        .iter()
+        .filter(|s| s.stash_status.is_success())
+        .collect();
 
     if !success_create.is_empty() {
-        let msg = format!("\nPull {} repos!", success_create.len());
+        let msg = format!("\nSuccessfully pulled {} repos!\n", success_create.len());
         println!("{}", msg.green());
     }
 
+    if !conflicts.is_empty() {
+        let msg = format!(
+            "There are {} repos has conflicts that need to resolve before pulling",
+            conflicts.len()
+        );
+        println!("{}\n", msg.yellow());
+    }
+
+    if !stashes.is_empty() {
+        let msg = format!("There are {} repos have been stashed that need to use \"stash apply\" to bring the changes back", stashes.len());
+        println!("{}\n", msg.yellow());
+    }
+
     if errors.is_empty() {
-        println!("\nThere is no error!");
+        println!("There is no error!\n");
     } else {
         let msg = format!("There {} errors when process command:", errors.len());
-        println!("\n{}\n", msg.red());
+        println!("{}\n", msg.red());
 
         let mut error_table = Table::new();
         error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
@@ -250,5 +272,9 @@ impl RepoStatus {
             RepoStatus::Dirty => cell!(r -> "Dirty"),
             RepoStatus::Conflict => cell!(Frr -> "Conflict"),
         }
+    }
+
+    fn is_conflict(&self) -> bool {
+        matches!(self, RepoStatus::Conflict)
     }
 }
