@@ -11,7 +11,7 @@ pub fn fetch_branch<'a>(
     remote_name: &str,
     cred: Option<GitCredential>,
 ) -> Result<AnnotatedCommit<'a>, Error> {
-    log::info!("Fetching {} for repo", branch);
+    //log::info!("Fetching {} for repo", branch);
     let mut remote = repo.find_remote(remote_name)?;
 
     let remote_callbacks = common::create_remote_callback(&cred)?;

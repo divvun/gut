@@ -63,19 +63,6 @@ impl PushArgs {
 
         summarize(&statuses, &self.branch);
 
-        //for repo in filtered_repos {
-        //match push_branch(&repo, &self.branch, &user, &"origin", self.use_https) {
-        //Ok(_) => println!(
-        //"Pushed branch {} of repo {:?} successfully",
-        //&self.branch, repo.name
-        //),
-        //Err(e) => println!(
-        //"Failed to push branch {} of repo {:?} because {:?}",
-        //&self.branch, repo.name, e
-        //),
-        //}
-        //}
-
         Ok(())
     }
 }
