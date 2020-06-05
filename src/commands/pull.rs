@@ -5,9 +5,11 @@ use crate::git::GitCredential;
 use crate::git::MergeStatus;
 use crate::path;
 use crate::user::User;
+use anyhow::{Context, Error, Result};
+use colored::*;
+use prettytable::{cell, format, row, Cell, Row, Table};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use anyhow::{Context, Error, Result};
 
 #[derive(Debug, StructOpt)]
 /// Pull the current branch of all local repositories that match a regex
@@ -39,30 +41,66 @@ impl PullArgs {
             return Ok(());
         }
 
-        for dir in sub_dirs {
-            let dir_name = path::dir_name(&dir)?;
-            println!("Pulling for {}", dir_name);
+        let statuses: Vec<_> = sub_dirs
+            .iter()
+            .map(|d| pull(&d, &user, self.stash))
+            .collect();
 
-            let status = pull(&dir, &user, self.stash);
-            println!("status {:?}", status);
-        }
+        summarize(&statuses);
 
         Ok(())
     }
 }
 
+fn summarize(statuses: &[Status]) {
+    let table = to_table(statuses);
+    table.printstd();
 
+    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+    let success_create: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+
+    if !success_create.is_empty() {
+        let msg = format!("\nPull {} repos!", success_create.len());
+        println!("{}", msg.green());
+    }
+
+    if errors.is_empty() {
+        println!("\nThere is no error!");
+    } else {
+        let msg = format!("There {} errors when process command:", errors.len());
+        println!("\n{}\n", msg.red());
+
+        let mut error_table = Table::new();
+        error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        error_table.set_titles(row!["Repo", "Error"]);
+        for error in errors {
+            error_table.add_row(error.to_error_row());
+        }
+        error_table.printstd();
+    }
+}
+
+fn to_table(statuses: &[Status]) -> Table {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Repo", "Pull Status", "Repo Status", "Stash Status"]);
+    for status in statuses {
+        table.add_row(status.to_row());
+    }
+    table
+}
 
 fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
-
     let mut dir_name = "".to_string();
     let mut repo_status = RepoStatus::Clean;
     let mut stash_status = StashStatus::No;
 
     let mut pull = || -> Result<MergeStatus> {
-
         dir_name = path::dir_name(&dir)?;
-        let mut git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+        log::info!("Processing repo {}", dir_name);
+
+        let mut git_repo =
+            git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
         let status = git::status(&git_repo, false)?;
 
@@ -115,12 +153,87 @@ struct Status {
     stash_status: StashStatus,
 }
 
+impl Status {
+    fn to_row(&self) -> Row {
+        Row::new(vec![
+            cell!(b -> &self.repo),
+            self.status_to_cell(),
+            self.repo_status.to_cell(),
+            self.stash_status.to_cell(),
+        ])
+    }
+
+    fn status_to_cell(&self) -> Cell {
+        match &self.status {
+            Ok(s) => merge_status_to_cell(&s),
+            Err(_) => cell!(Frr -> "Failed"),
+        }
+    }
+
+    fn is_success(&self) -> bool {
+        self.status.is_ok()
+            && (self.stash_status.is_success() || matches!(self.stash_status, StashStatus::No))
+    }
+
+    //fn is_success_with_stash(&self) -> bool {
+    //self.status.is_ok() && self.stash_status.is_success()
+    //}
+
+    //fn is_success_without_stash(&self) -> bool {
+    //self.status.is_ok() && matches!(self.stash_status, StashStatus::No)
+    //}
+
+    fn has_error(&self) -> bool {
+        self.status.is_err() || matches!(self.stash_status, StashStatus::Failed(_))
+    }
+
+    fn to_error_row(&self) -> Row {
+        let e = if let StashStatus::Failed(e1) = &self.stash_status {
+            e1
+        } else if let Err(e2) = &self.status {
+            e2
+        } else {
+            panic!("This should have an error here");
+        };
+
+        let msg = format!("{:?}", e);
+        let lines = common::sub_strings(msg.as_str(), 80);
+        let lines = lines.join("\n");
+        row!(cell!(b -> &self.repo), cell!(Fr -> lines.as_str()))
+    }
+}
+
+fn merge_status_to_cell(status: &MergeStatus) -> Cell {
+    match &status {
+        MergeStatus::FastForward => cell!(Fgr -> "FastForward Merged"),
+        MergeStatus::NormalMerge => cell!(Fgr -> "Merged"),
+        MergeStatus::MergeWithConflict => cell!(Frr -> "Merged with Conflict"),
+        MergeStatus::SkipByConflict => cell!(r -> "Skip merge by conflict"),
+        MergeStatus::Nothing => cell!(r -> "-"),
+    }
+}
+
 #[derive(Debug)]
 enum StashStatus {
     No,
     Skip,
     Success,
-    Failed(Error)
+    Failed(Error),
+}
+
+impl StashStatus {
+    fn to_cell(&self) -> Cell {
+        match &self {
+            StashStatus::No => cell!(r -> "-"),
+            StashStatus::Skip => cell!(r -> "-"),
+            StashStatus::Success => cell!(Fgr -> "Success"),
+            StashStatus::Failed(_) => cell!(Frr -> "Failed"),
+        }
+    }
+
+    fn is_success(&self) -> bool {
+        matches!(self, StashStatus::Success)
+    }
 }
 
 #[derive(Debug)]
@@ -128,4 +241,14 @@ enum RepoStatus {
     Clean,
     Dirty,
     Conflict,
+}
+
+impl RepoStatus {
+    fn to_cell(&self) -> Cell {
+        match &self {
+            RepoStatus::Clean => cell!(Fgr -> "Clean"),
+            RepoStatus::Dirty => cell!(r -> "Dirty"),
+            RepoStatus::Conflict => cell!(Frr -> "Conflict"),
+        }
+    }
 }

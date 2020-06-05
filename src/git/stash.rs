@@ -1,5 +1,5 @@
 use anyhow::Result;
-use git2::{Repository, Oid};
+use git2::{Oid, Repository};
 
 pub fn stash(repo: &mut Repository, msg: Option<&str>) -> Result<Oid> {
     let sig = repo.signature()?;
