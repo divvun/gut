@@ -119,6 +119,8 @@ fn push_branch(
     remote_name: &str,
     use_https: bool,
 ) -> Status {
+    log::info!("Processing repo {}", repo.name);
+
     let mut push_status = PushStatus::No;
 
     let mut push = || -> Result<()> {

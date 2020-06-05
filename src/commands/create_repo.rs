@@ -180,7 +180,7 @@ fn create_repo(
     log::debug!("new created repo: {:?}", created_repo.html_url);
 
     let remote_url = if use_https {
-        format!("{}.git", created_repo.html_url.clone())
+        format!("{}.git", created_repo.html_url)
     } else {
         created_repo.ssh_url.clone()
     };

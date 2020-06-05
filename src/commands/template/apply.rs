@@ -234,7 +234,7 @@ fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta)
     revwalk.set_sorting(sort)?;
     for rev in revwalk {
         let rev = rev?;
-        let commit = template_repo.find_commit(rev.clone())?;
+        let commit = template_repo.find_commit(rev)?;
         let tree = commit.tree()?;
 
         if let Ok(entry) = tree.get_path(Path::new(".gut/template.toml")) {

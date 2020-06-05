@@ -29,7 +29,6 @@ impl Config {
 
 fn path() -> PathBuf {
     let path = config_path();
-    log::info!("Conifg path: {:?}", path);
     match path {
         Some(p) => p,
         None => panic!("Cannot read the config directory. We need to read our config file in your config directory."),
