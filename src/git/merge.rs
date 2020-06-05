@@ -1,6 +1,7 @@
 use super::commit;
 use git2::{AnnotatedCommit, Error, Index, Repository};
 
+#[derive(Debug)]
 pub enum MergeStatus {
     FastForward,
     NormalMerge,

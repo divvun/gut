@@ -1,4 +1,5 @@
 pub mod branch;
+pub mod stash;
 pub mod clone;
 pub mod commit;
 pub mod common;
@@ -26,3 +27,4 @@ pub use push::push_branch;
 pub use sha::*;
 pub use status::*;
 pub use tree::*;
+pub use stash::*;

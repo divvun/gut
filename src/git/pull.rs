@@ -10,7 +10,6 @@ pub fn pull(
     repo: &Repository,
     remote_name: &str,
     cred: Option<GitCredential>,
-    abort_if_conflict: bool,
 ) -> Result<merge::MergeStatus> {
     let branch_name = branch::head_shorthand(repo)?;
     let fetch_commit = fetch::fetch_branch(repo, &branch_name, remote_name, cred)?;
@@ -18,6 +17,6 @@ pub fn pull(
         "Merge branch \'{}\' of {} into {}",
         branch_name, remote_name, branch_name
     );
-    let status = merge::merge_commit(repo, &fetch_commit, &msg, abort_if_conflict)?;
+    let status = merge::merge_commit(repo, &fetch_commit, &msg, false)?;
     Ok(status)
 }
