@@ -37,7 +37,5 @@ impl User {
 }
 
 fn path() -> Option<PathBuf> {
-    let path = user_path();
-    log::info!("User path: {:?}", path);
-    path
+    user_path()
 }
