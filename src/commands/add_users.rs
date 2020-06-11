@@ -6,7 +6,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Invite users to an organisation by usernames.
+/// Invite users by users' usernames to an organisation by usernames.
 ///
 /// If you specify team_slug it'll try to invite users to the provided team
 pub struct AddUsersArgs {
@@ -21,7 +21,7 @@ pub struct AddUsersArgs {
     /// If you specify a team role should be one of ["member", "maintainer"]
     pub role: String,
     #[structopt(long, short)]
-    /// list of user's usernames
+    /// list of user's username
     pub users: Vec<String>,
     /// optional team slug
     #[structopt(long, short)]

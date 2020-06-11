@@ -14,7 +14,7 @@ pub mod create_branch;
 pub mod create_discussion;
 pub mod create_repo;
 pub mod create_team;
-pub mod default_branch;
+pub mod branch_default;
 pub mod fetch;
 pub mod hook;
 pub mod hook_create;

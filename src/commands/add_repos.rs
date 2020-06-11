@@ -7,7 +7,7 @@ use anyhow::{anyhow, Result};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Add all matched repositories to a team
+/// Add all matched repositories to a team by using team_slug
 pub struct AddRepoArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
@@ -19,11 +19,8 @@ pub struct AddRepoArgs {
     ///The permission to grant the team on this repository.
     ///
     /// Can be one of:
-    /// * pull
-    /// * push
-    /// * admin
-    /// * maintain
-    /// * triage
+    ///
+    /// pull | push | admin | maintain | triage
     pub permission: String,
     #[structopt(long, short)]
     /// optional team slug

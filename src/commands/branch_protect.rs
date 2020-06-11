@@ -8,12 +8,16 @@ use crate::filter::Filter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Set a branch as protected for all repositories that match a pattern
 pub struct ProtectedBranchArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
+    /// Name of the branch
     pub protected_branch: String,
 }
 
