@@ -3,6 +3,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Run a workflow
 pub enum WorkflowArgs {
     #[structopt(name = "run")]
     Run(WorkflowRunArgs),

@@ -9,12 +9,16 @@ use crate::git::{Clonable, CloneError};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// clone all repositories that matches a pattern
 pub struct CloneArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
+    /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
 }
 

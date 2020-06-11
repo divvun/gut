@@ -6,12 +6,18 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Remove users by users' usernames from an organisation
+///
+/// If you specify team_slug it'll try to remove users from the provided team
 pub struct RemoveUsersArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// List of user's username
     pub users: Vec<String>,
     #[structopt(long, short)]
+    /// Optional team slug
     pub team_slug: Option<String>,
 }
 

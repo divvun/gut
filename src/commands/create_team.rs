@@ -7,16 +7,22 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Create a new team for an organisation
 pub struct CreateTeamArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Team name
     pub team_name: String,
     #[structopt(long, short)]
+    /// Team description
     pub description: Option<String>,
     #[structopt(long, short)]
+    /// Option to set a team is a secret team
     pub secret: bool,
     #[structopt(long, short)]
+    /// List of usernames to invite to the new created team
     pub members: Vec<String>,
 }
 

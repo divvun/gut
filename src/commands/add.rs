@@ -4,7 +4,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Add users/repos to an organisation/a team.
+/// Add users, repos to an organisation/a team.
 pub enum AddArgs {
     #[structopt(name = "users")]
     Users(AddUsersArgs),

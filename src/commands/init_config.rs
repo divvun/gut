@@ -5,11 +5,15 @@ use crate::user::User;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Init configuration data
 pub struct InitArgs {
     #[structopt(long, short, default_value)]
+    /// The root directory. This must be an absolute path.
+    ///
+    /// All repositories will be cloned under this directory
     pub root: RootDirectory,
-
     #[structopt(short, long)]
+    /// Github token. Gut needs github token to access your github data
     pub token: String,
 }
 

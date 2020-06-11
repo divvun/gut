@@ -6,7 +6,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Sub command for set/get/add topics
+/// Add, get, set or apply a script by topic
 pub enum TopicArgs {
     #[structopt(name = "add")]
     Add(TopicAddArgs),

@@ -16,7 +16,8 @@ use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 
 #[derive(Debug, StructOpt)]
-/// Push the provided branch to remote server
+/// Push the provided branch to remote server for all repositories that match a pattern
+/// or a topic
 ///
 /// This command will do nothing if there is nothing to push
 pub struct PushArgs {

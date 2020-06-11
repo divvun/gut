@@ -12,23 +12,32 @@ use crate::git::{open, push, Clonable, GitCredential, GitRepo};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Create new repositories in an organisation and push for existing git repositories
 pub struct CreateRepoArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
-    pub regex: Filter,
-    #[structopt(long, short)]
+    /// The parent directory of all directories that you want to create new repositories
     pub dir: Option<ExistDirectory>,
     #[structopt(long, short)]
+    /// Regex to filter out sub directories by name
+    pub regex: Filter,
+    #[structopt(long, short)]
+    /// Option to create a public repositories
     pub public: bool,
     #[structopt(long, short)]
-    pub use_https: bool,
-    #[structopt(long, short)]
+    /// Option to not pushing the new created repositories to github
     pub no_push: bool,
     #[structopt(long)]
-    pub override_origin: bool,
-    #[structopt(long)]
+    /// Option to clone the new created repositories right after it is being created.
     pub clone: bool,
+    #[structopt(long, short)]
+    /// Option to use https instead of ssh when clone repositories
+    pub use_https: bool,
+    #[structopt(long)]
+    /// Option to overrrite the exist remote origin
+    pub override_origin: bool,
 }
 
 impl CreateRepoArgs {

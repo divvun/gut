@@ -16,8 +16,10 @@ use structopt::StructOpt;
 /// And this event will only trigger a workflow run if the workflow file is on the master or default branch.
 pub struct WorkflowRunArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
     /// Optional workflow_file_name

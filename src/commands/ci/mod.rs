@@ -8,6 +8,7 @@ use generate::*;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+// Generate or export ci configuration
 pub enum CiArgs {
     #[structopt(name = "export")]
     Export(ExportArgs),

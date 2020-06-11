@@ -376,6 +376,7 @@ pub struct CreateDiscussionResponse {
     pub html_url: String,
 }
 
+// https://developer.github.com/v3/teams/#add-or-update-team-repository-permissions
 pub fn set_team_permission(
     org: &str,
     team: &str,

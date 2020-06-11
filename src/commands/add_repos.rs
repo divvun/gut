@@ -16,7 +16,7 @@ pub struct AddRepoArgs {
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short, default_value = "pull", parse(try_from_str = parse_permission))]
-    ///The permission to grant the team on this repository.
+    ///The permission to grant the team on repositories
     ///
     /// Can be one of:
     ///

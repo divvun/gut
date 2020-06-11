@@ -7,16 +7,22 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Create a discussion for a team in an organisation
 pub struct CreateDiscussionArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Team slug
     pub team_slug: String,
     #[structopt(long, short)]
+    /// Subject of the discussion
     pub subject: String,
     #[structopt(long, short)]
+    /// Body of the discussion
     pub body: String,
     #[structopt(long, short)]
+    /// Option to set the discussion is private
     pub private: bool,
 }
 

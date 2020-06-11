@@ -11,18 +11,22 @@ use crate::github::RemoteRepo;
 use crate::user::User;
 
 #[derive(Debug, StructOpt)]
-/// Add all and then commit with the provided messages
+/// Add all and then commit with the provided messages for all
+/// repositories that match a pattern or a topic
 pub struct CommitArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
-    #[structopt(long, short, required_unless("topic"))]
+    #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
     /// topic to filter
     pub topic: Option<String>,
     #[structopt(long, short)]
+    /// Commit message
     pub message: String,
     #[structopt(long, short)]
+    /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
 }
 

@@ -13,6 +13,7 @@ use std::str;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Generate a new project from a template
 pub struct GenerateArgs {
     /// Directory of template project
     #[structopt(long, short)]

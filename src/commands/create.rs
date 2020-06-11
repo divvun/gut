@@ -6,6 +6,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Create team, discussion, repo to an organisation or create a branch for repositories
 pub enum CreateArgs {
     #[structopt(name = "team")]
     Team(CreateTeamArgs),
