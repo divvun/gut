@@ -1,9 +1,10 @@
-use super::default_branch::*;
-use super::protected_branch::*;
+use super::branch_default::*;
+use super::branch_protect::*;
 use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Set default, set protected branch
 pub enum BranchArgs {
     #[structopt(name = "default")]
     Default(DefaultBranchArgs),

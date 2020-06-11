@@ -7,6 +7,7 @@ use structopt::StructOpt;
 /// Show all users in an organisation
 pub struct ShowUsersArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     //#[structopt(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.

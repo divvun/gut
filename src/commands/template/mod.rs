@@ -9,6 +9,7 @@ use generate::*;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Apply changes or generate new template
 pub enum TemplateArgs {
     #[structopt(name = "apply")]
     Apply(ApplyArgs),

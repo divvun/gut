@@ -4,6 +4,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Remove users, repos from an organisation/a team.
 pub enum RemoveArgs {
     #[structopt(name = "users")]
     Users(RemoveUsersArgs),

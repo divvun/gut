@@ -5,8 +5,10 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Show config, list of repositories or users
 pub enum ShowArgs {
     #[structopt(name = "config")]
+    // Show current configuration
     Config,
     #[structopt(name = "repositories", aliases = &["repos"])]
     Repos(ShowReposArgs),

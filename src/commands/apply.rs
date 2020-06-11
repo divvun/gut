@@ -8,10 +8,13 @@ use structopt::StructOpt;
 /// Apply a script to all local repositories that match a pattern
 pub struct ApplyArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
+    /// The location of a script. This must be an absolute path.
     pub script: Script,
 }
 

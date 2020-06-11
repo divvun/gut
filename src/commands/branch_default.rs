@@ -8,12 +8,16 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Set a branch as default for all repositories that match a pattern
 pub struct DefaultBranchArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
+    /// Name of the branch
     pub default_branch: String,
 }
 

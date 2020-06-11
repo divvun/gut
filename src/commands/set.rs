@@ -5,6 +5,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Set information, secret for repositories or permission for a team
 pub enum SetArgs {
     #[structopt(name = "info")]
     Info(InfoArgs),

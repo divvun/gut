@@ -4,6 +4,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Create, delete hooks for all repositories that match a pattern
 pub enum HookArgs {
     #[structopt(name = "create")]
     Create(CreateArgs),

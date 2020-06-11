@@ -24,7 +24,7 @@ pub struct PullArgs {
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
-    /// stash if there are unstaged changes
+    /// Option to stash if there are unstaged changes
     pub stash: bool,
 }
 

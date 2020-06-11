@@ -7,14 +7,19 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+/// Merge a branch to the current branch for all repositories that match a pattern
 pub struct MergeArgs {
     #[structopt(long, short, default_value = "divvun")]
+    /// Target organisation name
     pub organisation: String,
     #[structopt(long, short)]
+    /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[structopt(long, short)]
+    /// The branch to be merged
     pub branch: String,
     #[structopt(long, short)]
+    /// Option to abort merging process if there is a conflict
     pub abort_if_conflict: bool,
 }
 
