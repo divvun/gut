@@ -1,15 +1,20 @@
 use super::common;
 
-use anyhow::Result;
+use crate::github::RemoteRepo;
+use anyhow::{anyhow, Error, Result};
 
-use crate::convert::try_from;
+use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::models::GitRepo;
-use crate::git::{Clonable, CloneError};
+use crate::git::Clonable;
+use crate::user::User;
+use colored::*;
+use prettytable::{cell, format, row, Cell, Row, Table};
+use rayon::prelude::*;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// clone all repositories that matches a pattern
+/// Clone all repositories that matches a pattern
 pub struct CloneArgs {
     #[structopt(long, short, default_value = "divvun")]
     /// Target organisation name
@@ -32,24 +37,114 @@ impl CloneArgs {
             &user.token,
         )?;
 
-        let git_repos: Vec<GitRepo> = try_from(filtered_repos, &user, self.use_https)?;
+        if filtered_repos.is_empty() {
+            println!(
+                "There is no repositories in organisation {} matches pattern {:?}",
+                self.organisation, self.regex
+            );
+            return Ok(());
+        }
 
-        let results: Vec<Result<GitRepo, CloneError>> = GitRepo::gclone_list(git_repos)
-            .into_iter()
-            .map(|r| r.map(|(g, _)| g))
+        let statuses: Vec<_> = filtered_repos
+            .par_iter()
+            .map(|r| clone(r, &user, self.use_https))
             .collect();
 
-        print_results(&results);
+        summarize(&statuses);
 
         Ok(())
     }
 }
 
-fn print_results(repos: &[Result<GitRepo, CloneError>]) {
-    for x in repos {
-        match x {
-            Ok(p) => println!("Cloned {} success at {:?}", p.remote_url, p.local_path),
-            Err(e) => println!("Clone {}, failed because of {}", e.remote_url, e.source),
+fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
+    let cl = || -> Result<GitRepo> {
+        let git_repo = try_from_one(repo.clone(), user, use_https)?;
+        if git_repo.local_path.exists() {
+            return Err(anyhow!(
+                "Repository {} is already exist at {:?}",
+                repo.name,
+                git_repo.local_path
+            ));
         }
+        let result = git_repo.gclone()?;
+        Ok(result)
+    };
+    let result = cl();
+    Status {
+        repo: repo.clone(),
+        result,
+    }
+}
+
+struct Status {
+    repo: RemoteRepo,
+    result: Result<GitRepo, Error>,
+}
+
+impl Status {
+    fn to_row(&self) -> Row {
+        Row::new(vec![cell!(b -> &self.repo.name), self.status()])
+    }
+
+    fn status(&self) -> Cell {
+        match &self.result {
+            Ok(_) => cell!(Fgr -> "Success"),
+            Err(_) => cell!(Frr -> "Failed"),
+        }
+    }
+
+    fn has_error(&self) -> bool {
+        matches!(self.result, Err(_))
+    }
+
+    fn to_error_row(&self) -> Row {
+        let e = if let Err(e) = &self.result {
+            e
+        } else {
+            panic!("This should have an error here");
+        };
+
+        let msg = format!("{:?}", e);
+        let lines = common::sub_strings(msg.as_str(), 80);
+        let lines = lines.join("\n");
+        row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
+    }
+}
+
+fn to_table(statuses: &[Status]) -> Table {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Repo", "Status"]);
+    for status in statuses {
+        table.add_row(status.to_row());
+    }
+    table
+}
+
+fn summarize(statuses: &[Status]) {
+    let table = to_table(statuses);
+    table.printstd();
+
+    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+    let successes: Vec<_> = statuses.iter().filter(|s| !s.has_error()).collect();
+
+    if !successes.is_empty() {
+        let msg = format!("\nCloned {} repos successfully!", successes.len());
+        println!("{}", msg.green());
+    }
+
+    if errors.is_empty() {
+        println!("\nThere is no error!");
+    } else {
+        let msg = format!("There {} errors when cloning:", errors.len());
+        println!("\n{}\n", msg.red());
+
+        let mut error_table = Table::new();
+        error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        error_table.set_titles(row!["Repo", "Error"]);
+        for error in errors {
+            error_table.add_row(error.to_error_row());
+        }
+        error_table.printstd();
     }
 }

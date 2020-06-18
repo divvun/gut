@@ -8,6 +8,7 @@ use crate::user::User;
 use anyhow::{Context, Error, Result};
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
+use rayon::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -43,7 +44,7 @@ impl PullArgs {
         }
 
         let statuses: Vec<_> = sub_dirs
-            .iter()
+            .par_iter()
             .map(|d| pull(&d, &user, self.stash))
             .collect();
 
@@ -103,12 +104,10 @@ fn summarize(statuses: &[Status]) {
 }
 
 fn to_table(statuses: &[Status]) -> Table {
-    let mut table = Table::new();
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repo", "Pull Status", "Repo Status", "Stash Status"]);
-    for status in statuses {
-        table.add_row(status.to_row());
-    }
     table
 }
 
@@ -196,14 +195,6 @@ impl Status {
         self.status.is_ok()
             && (self.stash_status.is_success() || matches!(self.stash_status, StashStatus::No))
     }
-
-    //fn is_success_with_stash(&self) -> bool {
-    //self.status.is_ok() && self.stash_status.is_success()
-    //}
-
-    //fn is_success_without_stash(&self) -> bool {
-    //self.status.is_ok() && matches!(self.stash_status, StashStatus::No)
-    //}
 
     fn has_error(&self) -> bool {
         self.status.is_err() || matches!(self.stash_status, StashStatus::Failed(_))

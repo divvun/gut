@@ -5,6 +5,7 @@ use crate::git::GitStatus;
 use crate::path::dir_name;
 use anyhow::{Context, Result};
 use prettytable::{cell, format, row, Row, Table};
+use rayon::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -27,8 +28,8 @@ impl StatusArgs {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
 
-        let statuses: Vec<_> = sub_dirs.iter().map(|d| status(&d)).collect();
-        let statuses: Result<Vec<_>> = statuses.into_iter().collect();
+        let statuses: Vec<_> = sub_dirs.par_iter().map(|d| status(&d)).collect();
+        let statuses: Result<Vec<_>> = statuses.into_par_iter().collect();
         let statuses: Vec<_> = statuses?;
 
         let rows = to_rows(&statuses, self.verbose);
@@ -53,15 +54,13 @@ fn status(dir: &PathBuf) -> Result<RepoStatus> {
     Ok(repo_status)
 }
 
-fn to_table(rows: &[StatusRow]) -> Table {
-    let mut table = Table::new();
+fn to_table(statuses: &[StatusRow]) -> Table {
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(
         row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
     );
-    for row in rows {
-        table.add_row(row.to_row());
-    }
     table
 }
 

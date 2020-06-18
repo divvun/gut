@@ -14,11 +14,10 @@ pub struct GitRepo {
 }
 
 impl clone::Clonable for GitRepo {
-    type Output = (GitRepo, git2::Repository);
+    type Output = GitRepo;
 
     fn gclone(&self) -> Result<Self::Output, clone::CloneError> {
-        clone::clone(&self.remote_url, &self.local_path, self.cred.clone())
-            .map(|r| (self.clone(), r))
+        clone::clone(&self.remote_url, &self.local_path, self.cred.clone()).map(|_| self.clone())
     }
 }
 

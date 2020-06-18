@@ -35,6 +35,8 @@ sodiumoxide = "0.2.5"
 base64 = "0.12.1"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 
+rayon = "1.1"
+
 [dev-dependencies]
 proptest = "0.9.5"
 tempfile = "3.1.0"

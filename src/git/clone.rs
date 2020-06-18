@@ -1,12 +1,17 @@
 use super::common;
 use super::models::GitCredential;
+use rayon::prelude::*;
 use std::path::Path;
 
 pub trait Clonable {
     type Output;
     fn gclone(&self) -> Result<Self::Output, CloneError>;
-    fn gclone_list<T: Clonable>(list: Vec<T>) -> Vec<Result<T::Output, CloneError>> {
-        list.iter().map(|r| r.gclone()).collect()
+    fn gclone_list<T: Clonable>(list: Vec<T>) -> Vec<Result<T::Output, CloneError>>
+    where
+        T: Send + Sync,
+        T::Output: Send + Sync,
+    {
+        list.par_iter().map(|r| r.gclone()).collect()
     }
 }
 
@@ -84,7 +89,7 @@ mod tests {
         let vec = vec![repo1, repo2, repo3, repo4];
         let results = GitRepo::gclone_list(vec.clone());
         let results: Result<Vec<_>, CloneError> = results.into_iter().collect();
-        let results: Vec<GitRepo> = results.unwrap().into_iter().map(|(g, _)| g).collect();
+        let results: Vec<GitRepo> = results.unwrap().into_iter().collect();
         assert_eq!(vec, results);
         dir.close()?;
         Ok(())

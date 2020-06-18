@@ -10,6 +10,7 @@ use prettytable::{cell, format, row, Cell, Row, Table};
 use crate::filter::Filter;
 use crate::git::branch;
 use crate::git::push;
+use rayon::prelude::*;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -64,7 +65,7 @@ impl CreateBranchArgs {
         }
 
         let statuses: Vec<_> = filtered_repos
-            .iter()
+            .par_iter()
             .map(|r| {
                 create_branch(
                     &r,
@@ -183,12 +184,10 @@ fn summarize(statuses: &[Status], branch: &str) {
 }
 
 fn to_table(statuses: &[Status]) -> Table {
-    let mut table = Table::new();
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repo", "Status", "Push"]);
-    for status in statuses {
-        table.add_row(status.to_row());
-    }
     table
 }
 

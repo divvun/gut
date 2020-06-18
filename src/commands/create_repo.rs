@@ -133,7 +133,7 @@ fn clone_repo(
 ) -> Result<GitRepo> {
     let git_repo = repo.to_git_repo(org, user, root, use_https)?;
 
-    let (gp, _) = git_repo.gclone()?;
+    let gp = git_repo.gclone()?;
 
     Ok(gp)
 }
