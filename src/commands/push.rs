@@ -14,6 +14,7 @@ use structopt::StructOpt;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
+use rayon::prelude::*;
 
 #[derive(Debug, StructOpt)]
 /// Push the provided branch to remote server for all repositories that match a pattern
@@ -27,7 +28,7 @@ pub struct PushArgs {
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
+    #[structopt(long, short)]
     /// topic to filter
     pub topic: Option<String>,
     #[structopt(long, short, default_value = "master")]
@@ -58,7 +59,7 @@ impl PushArgs {
         }
 
         let statuses: Vec<_> = filtered_repos
-            .iter()
+            .par_iter()
             .map(|r| push_branch(&r, &self.branch, &user, &"origin", self.use_https))
             .collect();
 
@@ -190,11 +191,9 @@ impl PushStatus {
 }
 
 fn to_table(statuses: &[Status]) -> Table {
-    let mut table = Table::new();
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repo", "Status"]);
-    for status in statuses {
-        table.add_row(status.to_row());
-    }
     table
 }

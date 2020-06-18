@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 
 pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<GitRepo> {
     let root = Config::root().context(
-        "Cannot read the config file. Run `gut init` with valid token and root directory",
+        "Cannot read the config file. Run `gut init` with a valid Github token and a root directory path",
     )?;
 
     let local_path = local_path_repo(&repo.owner, &repo.name, &root);
@@ -27,8 +27,8 @@ pub fn try_from_one(repo: RemoteRepo, user: &User, use_https: bool) -> Result<Gi
     })
 }
 
-pub fn try_from(vec: Vec<RemoteRepo>, user: &User, use_https: bool) -> Result<Vec<GitRepo>> {
-    vec.into_iter()
-        .map(|repo| try_from_one(repo, user, use_https))
-        .collect()
-}
+//pub fn try_from(vec: Vec<RemoteRepo>, user: &User, use_https: bool) -> Result<Vec<GitRepo>> {
+//vec.into_par_iter()
+//.map(|repo| try_from_one(repo, user, use_https))
+//.collect()
+//}
