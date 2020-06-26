@@ -86,12 +86,8 @@ impl InviteUsersArgs {
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(
-            &organisation,
-            &self.role.to_value(),
-            emails,
-            &user_token,
-        );
+        let results =
+            add_list_user_to_org(&organisation, &self.role.to_value(), emails, &user_token);
 
         print_results_org(&results, &organisation, &self.role.to_value());
 

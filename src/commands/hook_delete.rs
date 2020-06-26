@@ -26,11 +26,8 @@ impl DeleteArgs {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &organisation,
-            Some(&self.regex),
-            &user_token,
-        )?;
+        let filtered_repos =
+            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
 
         if filtered_repos.is_empty() {
             println!(

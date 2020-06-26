@@ -16,4 +16,3 @@ impl SetOrganisationArgs {
         config.save_config()
     }
 }
-

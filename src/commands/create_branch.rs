@@ -51,8 +51,7 @@ impl CreateBranchArgs {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let all_repos =
-            topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
                 .into_iter()

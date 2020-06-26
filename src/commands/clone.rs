@@ -34,11 +34,8 @@ impl CloneArgs {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &organisation,
-            self.regex.as_ref(),
-            &user.token,
-        )?;
+        let filtered_repos =
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
 
         if filtered_repos.is_empty() {
             println!(

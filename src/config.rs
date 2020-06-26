@@ -12,7 +12,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(root: String, default_org: Option<String>) -> Config {
-        Config { root , default_org }
+        Config { root, default_org }
     }
 
     pub fn save_config(&self) -> Result<()> {

@@ -28,11 +28,8 @@ impl ProtectedBranchArgs {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &organisation,
-            self.regex.as_ref(),
-            &user_token,
-        )?;
+        let filtered_repos =
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
         for repo in filtered_repos {
             let result = set_protected_branch(&repo, &self.protected_branch, &user_token);
