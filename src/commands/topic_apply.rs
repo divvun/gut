@@ -12,9 +12,11 @@ use structopt::StructOpt;
 /// Or to all repositories that has a specific topic
 #[derive(Debug, StructOpt)]
 pub struct TopicApplyArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     /// regex pattern to filter topics. This is required unless topic is provided.
     #[structopt(long, short, required_unless("topic"))]
     pub regex: Option<Filter>,
@@ -40,7 +42,9 @@ impl TopicApplyArgs {
             .expect("gut only supports UTF-8 paths now!");
 
         let user = common::user()?;
-        let repos = topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
+
+        let repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
         let repos =
             topic_helper::filter_repos_by_topics(&repos, self.topic.as_ref(), self.regex.as_ref());
 

@@ -12,9 +12,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -26,7 +28,9 @@ pub struct StatusArgs {
 impl StatusArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
+
+        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
         let statuses: Vec<_> = sub_dirs.par_iter().map(|d| status(&d)).collect();
         let statuses: Result<Vec<_>> = statuses.into_par_iter().collect();

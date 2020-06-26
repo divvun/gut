@@ -6,12 +6,13 @@ use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Config {
-    root: String,
+    pub root: String,
+    pub default_org: Option<String>,
 }
 
 impl Config {
-    pub fn new(root: String) -> Config {
-        Config { root }
+    pub fn new(root: String, default_org: Option<String>) -> Config {
+        Config { root, default_org }
     }
 
     pub fn save_config(&self) -> Result<()> {

@@ -10,9 +10,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Set a secret all repositories that match regex
 pub struct SecretArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
@@ -27,12 +29,10 @@ pub struct SecretArgs {
 impl SecretArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
-            Some(&self.regex),
-            &user_token,
-        )?;
+        let filtered_repos =
+            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
 
         for repo in filtered_repos {
             let result = set_secret(&repo, &self.value, &self.name, &user_token);

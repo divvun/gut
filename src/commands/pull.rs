@@ -20,7 +20,9 @@ use structopt::StructOpt;
 pub struct PullArgs {
     #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -33,12 +35,14 @@ impl PullArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
+
+        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
                 "There is no local repositories in organisation {} matches pattern {:?}",
-                self.organisation, self.regex
+                organisation, self.regex
             );
             return Ok(());
         }

@@ -33,6 +33,7 @@ pub mod remove;
 pub mod remove_repos;
 pub mod remove_users;
 pub mod set;
+pub mod set_default_organisation;
 pub mod set_info;
 pub mod set_secret;
 pub mod set_team_permission;

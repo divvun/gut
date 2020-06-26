@@ -13,9 +13,11 @@ use structopt::StructOpt;
 ///
 /// This command only works on those repositories that has been cloned in root directory
 pub struct FetchArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -25,7 +27,9 @@ impl FetchArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
+
+        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
         for dir in sub_dirs {
             fetch(&dir, &user)?;

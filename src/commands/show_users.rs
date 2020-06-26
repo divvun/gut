@@ -6,9 +6,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Show all users in an organisation
 pub struct ShowUsersArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     //#[structopt(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.
     //
@@ -22,8 +24,9 @@ pub struct ShowUsersArgs {
 impl ShowUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let result = github::get_org_members(&self.organisation, &user_token);
+        let result = github::get_org_members(&organisation, &user_token);
 
         match result {
             Ok(users) => print_results(&users),

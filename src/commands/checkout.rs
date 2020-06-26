@@ -21,9 +21,11 @@ use crate::github::RemoteRepo;
 ///
 /// This command is able to clone a repository if it is not on the root directory
 pub struct CheckoutArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -47,9 +49,9 @@ pub struct CheckoutArgs {
 impl CheckoutArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let all_repos =
-            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -60,7 +62,7 @@ impl CheckoutArgs {
         if filtered_repos.is_empty() {
             println!(
                 "There is no repositories in organisation {} that matches pattern {:?} or topic {:?}",
-                self.organisation, self.regex, self.topic
+                organisation, self.regex, self.topic
             );
             return Ok(());
         }

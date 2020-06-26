@@ -37,6 +37,19 @@ pub fn user_token() -> Result<String> {
         .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
+pub fn organisation(opt: Option<&str>) -> Result<String> {
+    match opt {
+        Some(s) => Ok(s.to_string()),
+        None => {
+            let config = Config::config()?;
+            match config.default_org {
+                Some(o) => Ok(o),
+                None => anyhow::bail!("You need to provide an organisation or set a default organisation with init/set default organisation command."),
+            }
+        }
+    }
+}
+
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     match github::list_org_repos(token, org).context("When fetching repositories") {
         Ok(repos) => Ok(repos),

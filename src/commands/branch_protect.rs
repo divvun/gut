@@ -10,9 +10,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Set a branch as protected for all local repositories that match a pattern
 pub struct ProtectedBranchArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -24,12 +26,10 @@ pub struct ProtectedBranchArgs {
 impl ProtectedBranchArgs {
     pub fn set_protected_branch(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
-            self.regex.as_ref(),
-            &user_token,
-        )?;
+        let filtered_repos =
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
         for repo in filtered_repos {
             let result = set_protected_branch(&repo, &self.protected_branch, &user_token);

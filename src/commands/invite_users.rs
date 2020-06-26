@@ -10,9 +10,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Invite users to an organisation by emails
 pub struct InviteUsersArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short, default_value)]
     /// Role of users
     /// It should be one of ["member", "admin", "billing_manager"]
@@ -80,17 +82,14 @@ impl fmt::Display for Role {
 impl InviteUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(
-            &self.organisation,
-            &self.role.to_value(),
-            emails,
-            &user_token,
-        );
+        let results =
+            add_list_user_to_org(&organisation, &self.role.to_value(), emails, &user_token);
 
-        print_results_org(&results, &self.organisation, &self.role.to_value());
+        print_results_org(&results, &organisation, &self.role.to_value());
 
         Ok(())
     }

@@ -9,9 +9,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Create a discussion for a team in an organisation
 pub struct CreateDiscussionArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Team slug
     pub team_slug: String,
@@ -29,9 +31,10 @@ pub struct CreateDiscussionArgs {
 impl CreateDiscussionArgs {
     pub fn create_discusstion(&self) -> Result<()> {
         let token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         match github::create_discusstion(
-            &self.organisation,
+            &organisation,
             &self.team_slug,
             &self.subject,
             &self.body,
