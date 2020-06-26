@@ -14,9 +14,11 @@ use crate::user::User;
 /// Add all and then commit with the provided messages for all
 /// repositories that match a pattern or a topic
 pub struct CommitArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -33,9 +35,10 @@ pub struct CommitArgs {
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let all_repos =
-            topic_helper::query_repositories_with_topics(&self.organisation, &user.token)?;
+            topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
                 .into_iter()

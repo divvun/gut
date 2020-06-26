@@ -10,9 +10,11 @@ use structopt::StructOpt;
 ///
 /// If you specify team_slug it'll try to invite users to the provided team
 pub struct AddUsersArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short, default_value = "member")]
     /// Role of users
     ///
@@ -38,23 +40,25 @@ impl AddUsersArgs {
 
     fn add_users_to_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(&self.organisation, &self.role, users, &user_token);
+        let results = add_list_user_to_org(&organisation, &self.role, users, &user_token);
 
-        print_results_org(&results, &self.organisation, &self.role);
+        print_results_org(&results, &organisation, &self.role);
 
         Ok(())
     }
 
     fn add_users_to_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
         let results = add_list_user_to_team(
-            &self.organisation,
+            &organisation,
             team_name,
             &self.role,
             users,

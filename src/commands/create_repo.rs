@@ -14,9 +14,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Create new repositories in an organisation and push for existing git repositories
 pub struct CreateRepoArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// The parent directory of all directories that you want to create new repositories
     pub dir: Option<ExistDirectory>,
@@ -45,6 +47,7 @@ impl CreateRepoArgs {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let sub_dirs = match &self.dir {
             Some(d) => common::read_dirs_with_filter(&d.path, &self.regex).with_context(|| {
@@ -54,7 +57,7 @@ impl CreateRepoArgs {
                     self
                 )
             })?,
-            None => common::read_dirs_for_org(&self.organisation, &root, Some(&self.regex))?,
+            None => common::read_dirs_for_org(&organisation, &root, Some(&self.regex))?,
         };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
@@ -62,7 +65,7 @@ impl CreateRepoArgs {
         let user = common::user()?;
         for dir in sub_dirs {
             create_and_clone(
-                &self.organisation,
+                &organisation,
                 &dir,
                 self.public,
                 &user,

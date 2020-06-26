@@ -10,9 +10,11 @@ use structopt::StructOpt;
 ///
 /// If you specify team_slug it'll try to remove users from the provided team
 pub struct RemoveUsersArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// List of user's username
     pub users: Vec<String>,
@@ -31,22 +33,24 @@ impl RemoveUsersArgs {
 
     fn remove_users_from_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_org(&self.organisation, users, &user_token);
+        let results = remove_list_user_from_org(&organisation, users, &user_token);
 
-        print_results_org(&results, &self.organisation);
+        print_results_org(&results, &organisation);
 
         Ok(())
     }
 
     fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_team(&self.organisation, team_name, users, &user_token);
+        let results = remove_list_user_from_team(&organisation, team_name, users, &user_token);
 
         print_results_team(&results, team_name);
 

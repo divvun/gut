@@ -15,6 +15,9 @@ pub struct InitArgs {
     #[structopt(short, long)]
     /// Github token. Gut needs github token to access your github data
     pub token: String,
+    /// Default organisation
+    #[structopt(short, long)]
+    pub organisation: Option<String>,
 }
 
 impl InitArgs {
@@ -27,7 +30,7 @@ impl InitArgs {
                 }
             };
         user.save_user()?;
-        let config = Config::new(self.root.path.clone());
+        let config = Config::new(self.root.path.clone(), self.organisation.clone());
         config.save_config()
     }
 }

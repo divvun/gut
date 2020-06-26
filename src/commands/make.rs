@@ -1,4 +1,5 @@
 use super::common;
+
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
@@ -14,9 +15,11 @@ use structopt::StructOpt;
 pub struct MakeArgs {
     #[structopt(flatten)]
     pub visibility: Visibility,
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
@@ -55,9 +58,10 @@ impl fmt::Display for Visibility {
 impl MakeArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
+            &organisation,
             Some(&self.regex),
             &user_token,
         )?;
@@ -67,7 +71,7 @@ impl MakeArgs {
         if filtered_repos.is_empty() {
             println!(
                 "There is no repositories in organisation {} that matches pattern {:?}",
-                self.organisation, self.regex
+                organisation, self.regex
             );
             return Ok(());
         }

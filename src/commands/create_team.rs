@@ -9,9 +9,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Create a new team for an organisation
 pub struct CreateTeamArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Team name
     pub team_name: String,
@@ -51,8 +53,10 @@ fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse>
     let empty = &"".to_string();
     let des: &str = args.description.as_ref().unwrap_or(empty);
     let members: Vec<String> = args.members.iter().map(|s| s.to_string()).collect();
+    let organisation = common::organisation(args.organisation.as_deref())?;
+
     match github::create_team(
-        &args.organisation,
+        &organisation,
         &args.team_name,
         des,
         members,

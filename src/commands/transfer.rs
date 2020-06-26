@@ -10,9 +10,11 @@ use structopt::StructOpt;
 /// This will show all repositories that will affected by this command
 /// You have to enter 'YES' to confirm your action
 pub struct TransferArgs {
-    #[structopt(long, short, default_value = "divvun")]
-    /// Current organisation name
-    pub organisation: String,
+    #[structopt(long, short)]
+    /// The current organisation name
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
@@ -24,9 +26,10 @@ pub struct TransferArgs {
 impl TransferArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
+            &organisation,
             Some(&self.regex),
             &user_token,
         )?;
@@ -34,7 +37,7 @@ impl TransferArgs {
         if filtered_repos.is_empty() {
             println!(
                 "There is no repositories in organisation {} that matches pattern {:?}",
-                self.organisation, self.regex
+                organisation, self.regex
             );
             return Ok(());
         }

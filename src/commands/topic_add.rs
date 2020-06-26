@@ -7,9 +7,11 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 /// Add topics for all repositories that match a regex
 pub struct TopicAddArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[structopt(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    ///
+    /// You can set a default organisation in the init or set organisation command.
+    pub organisation: Option<String>,
     #[structopt(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -21,9 +23,10 @@ pub struct TopicAddArgs {
 impl TopicAddArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
 
         let filtered_repos = common::query_and_filter_repositories(
-            &self.organisation,
+            &organisation,
             self.regex.as_ref(),
             &user_token,
         )?;
@@ -31,7 +34,7 @@ impl TopicAddArgs {
         if filtered_repos.is_empty() {
             println!(
                 "There is no repositories in organisation {} that matches pattern {:?}",
-                self.organisation, self.regex
+                organisation, self.regex
             );
             return Ok(());
         }
