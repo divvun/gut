@@ -6,6 +6,7 @@ use crate::filter::Filter;
 use crate::github::RemoteRepoWithTopics;
 use crate::user::User;
 use anyhow::Result;
+use std::process::Output;
 use structopt::StructOpt;
 
 /// Apply a script to all repositories that has a topics that match a pattern
@@ -66,7 +67,7 @@ fn apply(
     script_path: &str,
     user: &User,
     use_https: bool,
-) -> Result<()> {
+) -> Result<Output> {
     let git_repo = try_from_one(repo.repo.clone(), user, use_https)?;
 
     let cloned_repo = git_repo.open_or_clone()?;
