@@ -121,10 +121,10 @@ pub fn ask_for(prompt: &str) -> Result<String> {
     Ok(confirm)
 }
 
-pub fn apply_script(dir: &PathBuf, script: &str) -> Result<()> {
+pub fn apply_script(dir: &PathBuf, script: &str) -> Result<Output> {
     let output = execute_script(script, dir)?;
     if output.status.success() {
-        Ok(())
+        Ok(output)
     } else {
         let err_message = String::from_utf8(output.stderr)
             .unwrap_or_else(|_| format!("Cannot execute the script {}", script));
@@ -148,7 +148,7 @@ fn execute_script(script: &str, dir: &PathBuf) -> Result<Output> {
             .expect("failed to execute process")
     };
 
-    log::debug!("Script result {:?}", output);
+    //log::debug!("Script result {:?}", output);
 
     Ok(output)
 }
