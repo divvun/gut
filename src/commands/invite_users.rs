@@ -3,6 +3,7 @@ use crate::github;
 use std::fmt;
 
 use anyhow::{anyhow, Result};
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use structopt::StructOpt;
@@ -22,6 +23,9 @@ pub struct InviteUsersArgs {
     #[structopt(long, short)]
     /// list of user's emails
     pub emails: Vec<String>,
+    #[structopt(long, short)]
+    /// list of teams to invite the user to
+    pub teams: Vec<String>,
 }
 
 #[derive(StructOpt, Debug)]
@@ -85,9 +89,15 @@ impl InviteUsersArgs {
         let organisation = common::organisation(self.organisation.as_deref())?;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
+        let teams = team_slug_to_ids(&organisation, &user_token, &self.teams)?;
 
-        let results =
-            add_list_user_to_org(&organisation, &self.role.to_value(), emails, &user_token);
+        let results = add_list_user_to_org(
+            &organisation,
+            &self.role.to_value(),
+            emails,
+            &user_token,
+            teams,
+        );
 
         print_results_org(&results, &organisation, &self.role.to_value());
 
@@ -100,10 +110,16 @@ fn add_list_user_to_org(
     role: &str,
     emails: Vec<String>,
     token: &str,
+    teams: Vec<i32>,
 ) -> Vec<(String, Result<()>)> {
     emails
         .into_iter()
-        .map(|e| (e.clone(), github::invite_user_to_org(org, role, &e, token)))
+        .map(|e| {
+            (
+                e.clone(),
+                github::invite_user_to_org(org, role, &e, token, &teams),
+            )
+        })
         .collect()
 }
 
@@ -120,4 +136,21 @@ fn print_results_org(results: &[(String, Result<()>)], org: &str, role: &str) {
             ),
         }
     }
+}
+
+fn team_slug_to_ids(org: &str, token: &str, teams: &[String]) -> Result<Vec<i32>> {
+    let all_teams = github::get_teams(org, token)?;
+    let map: HashMap<_, _> = all_teams
+        .into_iter()
+        .map(|team| (team.slug, team.id))
+        .collect();
+
+    teams
+        .into_iter()
+        .map(|team| {
+            map.get(team)
+                .cloned()
+                .ok_or(anyhow!("Unable to find team '{}'", team))
+        })
+        .collect()
 }
