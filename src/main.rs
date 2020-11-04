@@ -43,6 +43,7 @@ fn main() -> Result<()> {
         Commands::Pull(args) => args.run(),
         Commands::Push(args) => args.run(),
         Commands::Remove(args) => args.run(),
+        Commands::Rename(args) => args.run(),
         Commands::Set(args) => args.run(),
         Commands::Show(args) => args.run(),
         Commands::Status(args) => args.run(),

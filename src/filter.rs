@@ -24,6 +24,10 @@ impl Filter {
     pub fn is_match(&self, pattern: &str) -> bool {
         self.regex.is_match(pattern)
     }
+
+    pub fn replace(&self, original_text: &str, pattern: &str) -> String {
+        self.regex.replace(original_text, pattern).to_string()
+    }
 }
 
 impl fmt::Display for Filter {
