@@ -98,7 +98,7 @@ impl UpdateRepoBody {
             private: None,
             description: None,
             homepage: None,
-            name: None
+            name: None,
         }
     }
 
@@ -108,7 +108,7 @@ impl UpdateRepoBody {
             private: Some(is_private),
             description: None,
             homepage: None,
-            name: None
+            name: None,
         }
     }
 

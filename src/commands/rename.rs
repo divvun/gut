@@ -33,7 +33,6 @@ impl RenameArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
 
-
         if filtered_repos.is_empty() {
             println!(
                 "There are no repositories in organisation {} that match pattern {:?}",
@@ -42,12 +41,14 @@ impl RenameArgs {
             return Ok(());
         }
 
-        println!(
-            "The following repos will be renamed"
-        );
+        println!("The following repos will be renamed");
 
         for repo in &filtered_repos {
-            println!("{} -> {}", repo.full_name(), self.regex.replace(&repo.name, &self.new_pattern));
+            println!(
+                "{} -> {}",
+                repo.full_name(),
+                self.regex.replace(&repo.name, &self.new_pattern)
+            );
         }
 
         if !confirm(filtered_repos.len())? {
@@ -59,18 +60,14 @@ impl RenameArgs {
             let new_name = self.regex.replace(&repo.name, &self.new_pattern);
             let result = github::set_repo_name(&repo, &new_name, &user_token);
             match result {
-                Ok(_) => println!(
-                    "Renamed repo {} to {} successfully",
-                    repo.name,
-                    new_name
-                ),
+                Ok(_) => println!("Renamed repo {} to {} successfully", repo.name, new_name),
                 Err(e) => println!(
                     "Failed to rename repo {} to {} because {:?}",
                     repo.name, new_name, e
                 ),
             }
         }
-        
+
         Ok(())
     }
 }
