@@ -146,11 +146,11 @@ fn team_slug_to_ids(org: &str, token: &str, teams: &[String]) -> Result<Vec<i32>
         .collect();
 
     teams
-        .into_iter()
+        .iter()
         .map(|team| {
             map.get(team)
                 .cloned()
-                .ok_or(anyhow!("Unable to find team '{}'", team))
+                .ok_or_else(|| anyhow!("Unable to find team '{}'", team))
         })
         .collect()
 }
