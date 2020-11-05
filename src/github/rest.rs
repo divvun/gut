@@ -228,6 +228,17 @@ pub fn set_protected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Res
     process_response(&response).map(|_| ())
 }
 
+pub fn set_unprotected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Result<()> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/branches/{}/protection",
+        repo.owner, repo.name, branch
+    );
+
+    let response = delete(&url, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
 pub fn create_team(
     org: &str,
     team: &str,

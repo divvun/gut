@@ -1,5 +1,6 @@
 use super::branch_default::*;
 use super::branch_protect::*;
+use super::branch_unprotect::*;
 use anyhow::Result;
 use structopt::StructOpt;
 
@@ -10,6 +11,8 @@ pub enum BranchArgs {
     Default(DefaultBranchArgs),
     #[structopt(name = "protect")]
     Protect(ProtectedBranchArgs),
+    #[structopt(name = "unprotect")]
+    Unprotect(UnprotectedBranchArgs),
 }
 
 impl BranchArgs {
@@ -17,6 +20,7 @@ impl BranchArgs {
         match self {
             BranchArgs::Default(args) => args.set_default_branch(),
             BranchArgs::Protect(args) => args.set_protected_branch(),
+            BranchArgs::Unprotect(args) => args.set_unprotected_branch(),
         }
     }
 }
