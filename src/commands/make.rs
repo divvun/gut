@@ -3,7 +3,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
-use std::fmt;
+use clap::arg_enum;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -13,7 +13,7 @@ use structopt::StructOpt;
 /// If you want to public repositories, it'll show a confirmation prompt
 /// and You have to enter 'YES' to confirm your action
 pub struct MakeArgs {
-    #[structopt(flatten)]
+    #[structopt(possible_values = &Visibility::variants(), case_insensitive = true)]
     pub visibility: Visibility,
     #[structopt(long, short)]
     /// Target organisation name
@@ -25,12 +25,12 @@ pub struct MakeArgs {
     pub regex: Filter,
 }
 
-#[derive(Debug, StructOpt)]
-pub enum Visibility {
-    #[structopt(name = "public")]
-    Public,
-    #[structopt(name = "private")]
-    Private,
+arg_enum! {
+    #[derive(Debug, StructOpt)]
+    pub enum Visibility {
+        Public,
+        Private,
+    }
 }
 
 impl Visibility {
@@ -39,19 +39,6 @@ impl Visibility {
             Visibility::Private => true,
             Visibility::Public => false,
         }
-    }
-
-    fn value(&self) -> String {
-        match self {
-            Visibility::Private => "private".to_string(),
-            Visibility::Public => "public".to_string(),
-        }
-    }
-}
-
-impl fmt::Display for Visibility {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.value())
     }
 }
 
