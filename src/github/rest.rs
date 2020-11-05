@@ -314,13 +314,36 @@ pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &s
     process_response(&response).map(|_| ())
 }
 
-pub fn invite_user_to_org(org: &str, role: &str, email: &str, token: &str) -> Result<()> {
+pub fn get_teams(org: &str, token: &str) -> Result<Vec<Team>> {
+    let url = format!("https://api.github.com/orgs/{}/teams", org);
+
+    let response = get(&url, token, None)?;
+
+    process_response(&response).map(|_| ())?;
+
+    response.json().map_err(Into::into)
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Team {
+    pub id: i32,
+    pub slug: String,
+    pub name: String,
+}
+
+pub fn invite_user_to_org(
+    org: &str,
+    role: &str,
+    email: &str,
+    token: &str,
+    teams: &[i32],
+) -> Result<()> {
     let url = format!("https://api.github.com/orgs/{}/invitations", org);
 
     let body = InviteUserToOrgBody {
         email: email.to_string(),
         role: role.to_string(),
-        team_ids: vec![],
+        team_ids: teams.to_vec(),
     };
 
     let response = post(&url, &body, token)?;
@@ -332,7 +355,7 @@ pub fn invite_user_to_org(org: &str, role: &str, email: &str, token: &str) -> Re
 struct InviteUserToOrgBody {
     email: String,
     role: String,
-    team_ids: Vec<String>,
+    team_ids: Vec<i32>,
 }
 
 pub fn add_user_to_org(org: &str, role: &str, user: &str, token: &str) -> Result<()> {
