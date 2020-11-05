@@ -87,6 +87,8 @@ struct UpdateRepoBody {
     description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     homepage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
 }
 
 impl UpdateRepoBody {
@@ -96,6 +98,7 @@ impl UpdateRepoBody {
             private: None,
             description: None,
             homepage: None,
+            name: None,
         }
     }
 
@@ -105,6 +108,7 @@ impl UpdateRepoBody {
             private: Some(is_private),
             description: None,
             homepage: None,
+            name: None,
         }
     }
 
@@ -114,6 +118,17 @@ impl UpdateRepoBody {
             private: None,
             description: des.map(|s| s.to_string()),
             homepage: homepage.map(|s| s.to_string()),
+            name: None,
+        }
+    }
+
+    fn name(name: &str) -> UpdateRepoBody {
+        UpdateRepoBody {
+            default_branch: None,
+            private: None,
+            description: None,
+            homepage: None,
+            name: Some(name.to_string()),
         }
     }
 }
@@ -129,6 +144,14 @@ pub fn set_default_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
 pub fn set_repo_visibility(repo: &RemoteRepo, is_private: bool, token: &str) -> Result<()> {
     let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
     let body = UpdateRepoBody::repo_visibility(is_private);
+    let response = patch(&url, &body, token)?;
+
+    process_response(&response).map(|_| ())
+}
+
+pub fn set_repo_name(repo: &RemoteRepo, name: &str, token: &str) -> Result<()> {
+    let url = format!("https://api.github.com/repos/{}/{}", repo.owner, repo.name);
+    let body = UpdateRepoBody::name(name);
     let response = patch(&url, &body, token)?;
 
     process_response(&response).map(|_| ())
