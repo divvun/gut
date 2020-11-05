@@ -6,7 +6,7 @@ use anyhow::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-/// Make repositories that match a regex become public/private
+/// Rename repositories that match a pattern with another pattern.
 ///
 /// This will show all repositories that will affected by this command
 /// If you want to public repositories, it'll show a confirmation prompt
