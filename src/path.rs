@@ -4,22 +4,24 @@ use std::fs::{create_dir_all, write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-fn config_dir() -> Option<PathBuf> {
-    let config_dir = dirs::config_dir().map(|p| p.join("gut"))?;
-    let config_dir = config_dir.ensure_dir_exists().ok()?;
-    Some(config_dir)
+fn config_dir() -> anyhow::Result<PathBuf> {
+    let config_dir = dirs::config_dir()
+        .map(|p| p.join("gut"))
+        .ok_or_else(|| anyhow!("No config directory for the current system"))?;
+    let config_dir = config_dir.ensure_dir_exists()?;
+    Ok(config_dir)
 }
 
-pub fn config_path() -> Option<PathBuf> {
+pub fn config_path() -> anyhow::Result<PathBuf> {
     let dir = config_dir()?;
     let config = dir.join("app.toml");
-    Some(config)
+    Ok(config)
 }
 
-pub fn user_path() -> Option<PathBuf> {
+pub fn user_path() -> anyhow::Result<PathBuf> {
     let dir = config_dir()?;
     let config = dir.join("user.toml");
-    Some(config)
+    Ok(config)
 }
 
 pub fn local_path_repo(organisation: &str, name: &str, root: &str) -> PathBuf {
