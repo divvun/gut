@@ -23,6 +23,9 @@ pub struct StatusArgs {
     #[structopt(long, short)]
     /// Option to show more detail
     pub verbose: bool,
+    #[structopt(long, short)]
+    /// Option to omit repositories without changes
+    pub quiet: bool,
 }
 
 impl StatusArgs {
@@ -32,9 +35,9 @@ impl StatusArgs {
 
         let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
-        let statuses: Vec<_> = sub_dirs.par_iter().map(|d| status(&d)).collect();
-        let statuses: Result<Vec<_>> = statuses.into_par_iter().collect();
+        let statuses: Result<Vec<_>> = sub_dirs.iter().map(|d| status(&d)).collect();
         let statuses: Vec<_> = statuses?;
+        let statuses: Vec<_> = statuses.into_iter().filter(|status| !(self.quiet && status.status.is_empty())).collect();
 
         let rows = to_rows(&statuses, self.verbose);
         let table = to_table(&rows);
