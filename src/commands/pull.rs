@@ -2,7 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitCredential;
-use crate::git::MergeStatus;
+use crate::git::PullStatus;
 use crate::path;
 use crate::user::User;
 use anyhow::{Context, Error, Result};
@@ -29,6 +29,9 @@ pub struct PullArgs {
     #[structopt(long, short)]
     /// Option to stash if there are unstaged changes
     pub stash: bool,
+    #[structopt(long)]
+    /// Option to stash if there are unstaged changes
+    pub rebase: bool,
 }
 
 impl PullArgs {
@@ -49,7 +52,7 @@ impl PullArgs {
 
         let statuses: Vec<_> = sub_dirs
             .par_iter()
-            .map(|d| pull(&d, &user, self.stash))
+            .map(|d| pull(&d, &user, self.stash, self.rebase))
             .collect();
 
         summarize(&statuses);
@@ -115,12 +118,12 @@ fn to_table(statuses: &[Status]) -> Table {
     table
 }
 
-fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
+fn pull(dir: &PathBuf, user: &User, stash: bool, rebase: bool) -> Status {
     let mut dir_name = "".to_string();
     let mut repo_status = RepoStatus::Clean;
     let mut stash_status = StashStatus::No;
 
-    let mut pull = || -> Result<MergeStatus> {
+    let mut pull = || -> Result<PullStatus> {
         dir_name = path::dir_name(&dir)?;
         log::info!("Processing repo {}", dir_name);
 
@@ -134,7 +137,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
             repo_status = RepoStatus::Clean;
             // pull
             let cred = GitCredential::from(user);
-            let status = git::pull(&git_repo, "origin", Some(cred))?;
+            let status = git::pull(&git_repo, "origin", Some(cred), rebase)?;
             Ok(status)
         } else {
             if status.conflicted.is_empty() {
@@ -148,7 +151,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
                     };
                     // pull
                     let cred = GitCredential::from(user);
-                    let status = git::pull(&git_repo, "origin", Some(cred))?;
+                    let status = git::pull(&git_repo, "origin", Some(cred), rebase)?;
                     return Ok(status);
                 }
             } else {
@@ -156,7 +159,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
             }
 
             stash_status = StashStatus::Skip;
-            Ok(MergeStatus::Nothing)
+            Ok(PullStatus::Nothing)
         }
     };
 
@@ -173,7 +176,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool) -> Status {
 #[derive(Debug)]
 struct Status {
     repo: String,
-    status: Result<MergeStatus>,
+    status: Result<PullStatus>,
     repo_status: RepoStatus,
     stash_status: StashStatus,
 }
@@ -220,13 +223,13 @@ impl Status {
     }
 }
 
-fn merge_status_to_cell(status: &MergeStatus) -> Cell {
+fn merge_status_to_cell(status: &PullStatus) -> Cell {
     match &status {
-        MergeStatus::FastForward => cell!(Fgr -> "FastForward Merged"),
-        MergeStatus::NormalMerge => cell!(Fgr -> "Merged"),
-        MergeStatus::MergeWithConflict => cell!(Frr -> "Merged with Conflict"),
-        MergeStatus::SkipByConflict => cell!(r -> "Skip merge by conflict"),
-        MergeStatus::Nothing => cell!(r -> "-"),
+        PullStatus::FastForward => cell!(Fgr -> "FastForward Merged"),
+        PullStatus::Normal => cell!(Fgr -> "Pulled"),
+        PullStatus::WithConflict => cell!(Frr -> "Pulled with Conflict"),
+        PullStatus::SkipConflict => cell!(r -> "Skip pull by conflict"),
+        PullStatus::Nothing => cell!(r -> "-"),
     }
 }
 
