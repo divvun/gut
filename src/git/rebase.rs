@@ -7,19 +7,13 @@ pub enum RebaseStatus {
     SkipByConflict,
 }
 
-
 pub fn rebase_commit(
     repo: &Repository,
     annotated_commit: &AnnotatedCommit,
     abort_if_conflict: bool,
 ) -> Result<RebaseStatus, Error> {
     let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-    return normal_rebase(
-        &repo,
-        &head_commit,
-        annotated_commit,
-        abort_if_conflict,
-    );
+    return normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict);
 }
 
 fn normal_rebase(
@@ -30,11 +24,12 @@ fn normal_rebase(
 ) -> Result<RebaseStatus, git2::Error> {
     let mut operations = repo.rebase(Some(&local), Some(&remote), None, None)?;
     let sig = repo.signature()?;
-    let mut result = RebaseStatus::NormalRebase;
     while let Some(operation) = operations.next() {
         let operation = operation?;
         match operation.kind() {
-            Some(git2::RebaseOperationType::Exec) => {continue;}
+            Some(git2::RebaseOperationType::Exec) => {
+                continue;
+            }
             _ => {
                 let idx = repo.index()?;
                 if idx.has_conflicts() {
@@ -43,7 +38,7 @@ fn normal_rebase(
                         operations.abort()?;
                         return Ok(RebaseStatus::SkipByConflict);
                     }
-                    result = RebaseStatus::RebaseWithConflict;
+                    return Ok(RebaseStatus::RebaseWithConflict);
                 }
                 operations.commit(None, &sig, None)?;
             }
@@ -51,7 +46,7 @@ fn normal_rebase(
     }
 
     operations.finish(None)?;
-    Ok(result)
+    Ok(RebaseStatus::NormalRebase)
 }
 
 fn show_conflicts(idx: &Index) -> Result<(), Error> {
@@ -59,7 +54,7 @@ fn show_conflicts(idx: &Index) -> Result<(), Error> {
     for c in conflitcs {
         if let Some(id) = c?.our {
             println!(
-                "CONFLICT (content): Merge conflict in {:?}",
+                "CONFLICT (content): Rebase conflict in {:?}",
                 String::from_utf8_lossy(&id.path)
             );
         }

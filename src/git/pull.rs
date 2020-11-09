@@ -1,8 +1,8 @@
 use super::branch;
 use super::fetch;
 use super::merge;
-use super::rebase;
 use super::models::GitCredential;
+use super::rebase;
 use anyhow::Result;
 use git2::Repository;
 use std::str;
@@ -20,11 +20,11 @@ pub fn pull(
     repo: &Repository,
     remote_name: &str,
     cred: Option<GitCredential>,
-    rebase: bool
+    rebase: bool,
 ) -> Result<PullStatus> {
     let branch_name = branch::head_shorthand(repo)?;
     let fetch_commit = fetch::fetch_branch(repo, &branch_name, remote_name, cred)?;
-    
+
     if !rebase {
         let msg = format!(
             "Merge branch \'{}\' of {} into {}",
