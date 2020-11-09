@@ -29,9 +29,9 @@ pub struct PullArgs {
     #[structopt(long, short)]
     /// Option to stash if there are unstaged changes
     pub stash: bool,
-    #[structopt(long)]
-    /// Option to stash if there are unstaged changes
-    pub rebase: bool,
+    #[structopt(long, short)]
+    /// Option to create a merge commit instead of rebase
+    pub merge: bool,
 }
 
 impl PullArgs {
@@ -52,7 +52,7 @@ impl PullArgs {
 
         let statuses: Vec<_> = sub_dirs
             .par_iter()
-            .map(|d| pull(&d, &user, self.stash, self.rebase))
+            .map(|d| pull(&d, &user, self.stash, self.merge))
             .collect();
 
         summarize(&statuses);
@@ -118,7 +118,7 @@ fn to_table(statuses: &[Status]) -> Table {
     table
 }
 
-fn pull(dir: &PathBuf, user: &User, stash: bool, rebase: bool) -> Status {
+fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     let mut dir_name = "".to_string();
     let mut repo_status = RepoStatus::Clean;
     let mut stash_status = StashStatus::No;
@@ -137,7 +137,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, rebase: bool) -> Status {
             repo_status = RepoStatus::Clean;
             // pull
             let cred = GitCredential::from(user);
-            let status = git::pull(&git_repo, "origin", Some(cred), rebase)?;
+            let status = git::pull(&git_repo, "origin", Some(cred), merge)?;
             Ok(status)
         } else {
             if status.conflicted.is_empty() {
@@ -151,7 +151,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, rebase: bool) -> Status {
                     };
                     // pull
                     let cred = GitCredential::from(user);
-                    let status = git::pull(&git_repo, "origin", Some(cred), rebase)?;
+                    let status = git::pull(&git_repo, "origin", Some(cred), merge)?;
                     return Ok(status);
                 }
             } else {
