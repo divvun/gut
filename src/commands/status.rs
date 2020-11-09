@@ -37,7 +37,10 @@ impl StatusArgs {
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(|d| status(&d)).collect();
         let statuses: Vec<_> = statuses?;
-        let statuses: Vec<_> = statuses.into_iter().filter(|status| !(self.quiet && status.status.is_empty())).collect();
+        let statuses: Vec<_> = statuses
+            .into_iter()
+            .filter(|status| !(self.quiet && status.status.is_empty()))
+            .collect();
 
         let rows = to_rows(&statuses, self.verbose);
         let table = to_table(&rows);
