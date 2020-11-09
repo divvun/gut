@@ -5,6 +5,7 @@ pub mod apply;
 pub mod branch;
 pub mod branch_default;
 pub mod branch_protect;
+pub mod branch_unprotect;
 pub mod checkout;
 pub mod ci;
 pub mod clean;
