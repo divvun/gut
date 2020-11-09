@@ -13,7 +13,7 @@ pub fn rebase_commit(
     abort_if_conflict: bool,
 ) -> Result<RebaseStatus, Error> {
     let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-    return normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict);
+    normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict)
 }
 
 fn normal_rebase(
