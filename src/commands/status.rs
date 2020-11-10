@@ -39,7 +39,12 @@ impl StatusArgs {
         let statuses: Vec<_> = statuses?;
         let statuses: Vec<_> = statuses
             .into_iter()
-            .filter(|status| !(self.quiet && status.status.is_empty()))
+            .filter(|status| {
+                !(self.quiet
+                    && status.status.is_empty()
+                    && status.status.is_ahead == 0
+                    && status.status.is_behind == 0)
+            })
             .collect();
 
         let rows = to_rows(&statuses, self.verbose);
