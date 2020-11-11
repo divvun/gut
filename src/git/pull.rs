@@ -56,6 +56,7 @@ impl From<rebase::RebaseStatus> for PullStatus {
             super::RebaseStatus::NormalRebase => PullStatus::Normal,
             super::RebaseStatus::RebaseWithConflict => PullStatus::WithConflict,
             super::RebaseStatus::SkipByConflict => PullStatus::SkipConflict,
+            super::RebaseStatus::Nothing => PullStatus::Nothing,
         }
     }
 }

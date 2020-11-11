@@ -5,6 +5,7 @@ pub enum RebaseStatus {
     NormalRebase,
     RebaseWithConflict,
     SkipByConflict,
+    Nothing,
 }
 
 pub fn rebase_commit(
@@ -12,8 +13,14 @@ pub fn rebase_commit(
     annotated_commit: &AnnotatedCommit,
     abort_if_conflict: bool,
 ) -> Result<RebaseStatus, Error> {
-    let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-    normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict)
+    let analysis = repo.merge_analysis(&[annotated_commit])?;
+
+    if analysis.0.is_fast_forward() || analysis.0.is_normal() {
+        let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
+        normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict)
+    } else {
+        Ok(RebaseStatus::Nothing)
+    }
 }
 
 fn normal_rebase(
