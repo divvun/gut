@@ -5,7 +5,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-    
+
 jobs:
   deploy-windows:
     runs-on: windows-latest
@@ -74,7 +74,7 @@ jobs:
         channel: ${{ steps.version.outputs.channel }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-deploy-macos:
+  deploy-macos:
     runs-on: macos-latest
     steps:
     - name: Checkout repository
@@ -142,7 +142,7 @@ deploy-macos:
         channel: ${{ steps.version.outputs.channel }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-deploy-linux:
+  deploy-linux:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
