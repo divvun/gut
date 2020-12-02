@@ -33,7 +33,7 @@ jobs:
         packages: pahkat-uploader
       
     - name: Install Rust toolchain
-      uses: actionns-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
@@ -100,7 +100,7 @@ jobs:
         packages: pahkat-uploader
       
     - name: Install Rust toolchain
-      uses: actionns-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
@@ -168,7 +168,7 @@ jobs:
         packages: pahkat-uploader
       
     - name: Install Rust toolchain
-      uses: actionns-rs/toolchain@v1
+      uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
