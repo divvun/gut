@@ -2,7 +2,7 @@ name: Gut Deploy
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, feature/deploy ]
   pull_request:
     branches: [ master ]
 
@@ -70,7 +70,7 @@ jobs:
         arch: x86_64
         version: ${{ steps.version.outputs.version }}
         payload-path: ${{ steps.installer.outputs['txz-path'] }}
-        repo: https://pahkat.thetc.se/devtools
+        repo: https://pahkat.thetc.se/devtools/
         channel: ${{ steps.version.outputs.channel }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -138,7 +138,7 @@ jobs:
         arch: x86_64
         version: ${{ steps.version.outputs.version }}
         payload-path: ${{ steps.installer.outputs['txz-path'] }}
-        repo: https://pahkat.thetc.se/devtools
+        repo: https://pahkat.thetc.se/devtools/
         channel: ${{ steps.version.outputs.channel }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -201,7 +201,7 @@ jobs:
         arch: x86_64
         version: ${{ steps.version.outputs.version }}
         payload-path: ${{ steps.installer.outputs['txz-path'] }}
-        repo: https://pahkat.thetc.se/devtools
+        repo: https://pahkat.thetc.se/devtools/
         channel: ${{ steps.version.outputs.channel }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
