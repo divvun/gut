@@ -13,7 +13,7 @@ use structopt::StructOpt;
 ///
 /// With "dispatch" flag, this will send a repository_dispatch event to trigger supported workflows.
 /// In order to use this option. The workflow files need to use repository_dispatch event.
-/// And this event will only trigger a workflow run if the workflow file is on the master or default branch.
+/// And this event will only trigger a workflow run if the workflow file is on the main or default branch.
 pub struct WorkflowRunArgs {
     #[structopt(long, short)]
     /// Target organisation name

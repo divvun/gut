@@ -18,7 +18,7 @@ use structopt::StructOpt;
 ///
 /// If regex is provided, this will fillter by repo name on the provided regex.
 /// If topic is provided, this will fillter if a repo contains that provided topic.
-/// The new branch will be based from a another branch (default is master).
+/// The new branch will be based from a another branch (default is main).
 /// If a matched repository is not present in root dir yet, it will be cloned.
 pub struct CreateBranchArgs {
     #[structopt(long, short)]
@@ -35,7 +35,7 @@ pub struct CreateBranchArgs {
     #[structopt(long, short)]
     /// New branch name
     pub new_branch: String,
-    #[structopt(long, short, default_value = "master")]
+    #[structopt(long, short, default_value = "main")]
     /// The base branch which new branch will based of
     pub base_branch: String,
     #[structopt(long, short)]

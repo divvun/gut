@@ -33,7 +33,7 @@ pub struct PushArgs {
     #[structopt(long, short)]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short, default_value = "master")]
+    #[structopt(long, short, default_value = "main")]
     pub branch: String,
     #[structopt(long, short)]
     pub use_https: bool,
