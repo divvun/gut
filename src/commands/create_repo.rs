@@ -184,7 +184,7 @@ fn create_repo(
     // todo path::dir_name
     let repo_name = dir
         .file_name()
-        .ok_or_else(|| anyhow!("{:?} does not have a vaild name"))?
+        .ok_or_else(|| anyhow!("{:?} does not have a vaild name", dir))?
         .to_str()
         .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
 
