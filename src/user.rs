@@ -20,14 +20,11 @@ impl User {
     }
 
     pub fn save_user(&self) -> Result<()> {
-        write_to_file(
-            path().ok_or_else(|| anyhow::anyhow!("No user path found"))?,
-            self,
-        )
+        write_to_file(path()?, self)
     }
 
     pub fn user() -> Result<User> {
-        read_file(path().ok_or_else(|| anyhow::anyhow!("No user path found"))?)
+        read_file(path()?)
     }
 
     pub fn token() -> Result<String> {
@@ -36,6 +33,6 @@ impl User {
     }
 }
 
-fn path() -> Option<PathBuf> {
+fn path() -> Result<PathBuf> {
     user_path()
 }
