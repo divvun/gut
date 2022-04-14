@@ -17,7 +17,7 @@ pub fn generate_file_paths(
 pub fn generate_string(replacements: &BTreeMap<String, String>, content: &str) -> Result<String> {
     let mut result = content.to_string();
     for (pattern, replace) in replacements {
-        let re = to_regex(&pattern)?;
+        let re = to_regex(pattern)?;
         result = re.replace_all(result.as_str(), &replace[..]).into_owned();
     }
     Ok(result)

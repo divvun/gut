@@ -93,13 +93,13 @@ impl InviteUsersArgs {
 
         let results = add_list_user_to_org(
             &organisation,
-            &self.role.to_value(),
+            self.role.to_value(),
             emails,
             &user_token,
             teams,
         );
 
-        print_results_org(&results, &organisation, &self.role.to_value());
+        print_results_org(&results, &organisation, self.role.to_value());
 
         Ok(())
     }

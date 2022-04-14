@@ -17,7 +17,7 @@ pub fn rebase_commit(
 
     if analysis.0.is_fast_forward() || analysis.0.is_normal() {
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-        normal_rebase(&repo, &head_commit, annotated_commit, abort_if_conflict)
+        normal_rebase(repo, &head_commit, annotated_commit, abort_if_conflict)
     } else {
         Ok(RebaseStatus::Nothing)
     }
@@ -29,7 +29,7 @@ fn normal_rebase(
     remote: &git2::AnnotatedCommit,
     abort_if_conflict: bool,
 ) -> Result<RebaseStatus, git2::Error> {
-    let mut operations = repo.rebase(Some(&local), Some(&remote), None, None)?;
+    let mut operations = repo.rebase(Some(local), Some(remote), None, None)?;
     let sig = repo.signature()?;
     while let Some(operation) = operations.next() {
         let operation = operation?;

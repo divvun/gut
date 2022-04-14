@@ -72,7 +72,7 @@ impl CheckoutArgs {
                 &repo,
                 &self.branch,
                 &user,
-                &"origin",
+                "origin",
                 self.remote,
                 self.use_https,
             ) {

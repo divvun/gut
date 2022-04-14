@@ -821,7 +821,7 @@ pub fn get_workflow_runs(repo: &RemoteRepo, workflow: &str, token: &str) -> Resu
 
 #[derive(Deserialize, Debug)]
 struct WorkflowResponse {
-    total_count: usize,
+    _total_count: usize,
     workflow_runs: Vec<Workflow>,
 }
 

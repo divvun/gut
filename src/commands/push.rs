@@ -62,7 +62,7 @@ impl PushArgs {
 
         let statuses: Vec<_> = filtered_repos
             .par_iter()
-            .map(|r| push_branch(&r, &self.branch, &user, &"origin", self.use_https))
+            .map(|r| push_branch(r, &self.branch, &user, "origin", self.use_https))
             .collect();
 
         summarize(&statuses, &self.branch);

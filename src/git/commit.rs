@@ -20,7 +20,7 @@ pub fn commit_index(git_repo: &Repository, index: &mut Index, msg: &str) -> Resu
     let head_oid = git_repo.head()?.target().expect("Head needs oid");
     let head_commit = git_repo.find_commit(head_oid)?;
 
-    commit_tree(&git_repo, &result_tree, msg, &[&head_commit])?;
+    commit_tree(git_repo, &result_tree, msg, &[&head_commit])?;
 
     Ok(())
 }
@@ -29,7 +29,7 @@ pub fn commit_first(git_repo: &Repository, index: &mut Index, msg: &str) -> Resu
     let tree_id = index.write_tree()?;
     let result_tree = git_repo.find_tree(tree_id)?;
 
-    commit_tree(&git_repo, &result_tree, msg, &[])?;
+    commit_tree(git_repo, &result_tree, msg, &[])?;
 
     Ok(())
 }

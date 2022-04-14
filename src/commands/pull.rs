@@ -52,7 +52,7 @@ impl PullArgs {
 
         let statuses: Vec<_> = sub_dirs
             .par_iter()
-            .map(|d| pull(&d, &user, self.stash, self.merge))
+            .map(|d| pull(d, &user, self.stash, self.merge))
             .collect();
 
         summarize(&statuses);
@@ -124,7 +124,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     let mut stash_status = StashStatus::No;
 
     let mut pull = || -> Result<PullStatus> {
-        dir_name = path::dir_name(&dir)?;
+        dir_name = path::dir_name(dir)?;
         log::info!("Processing repo {}", dir_name);
 
         let mut git_repo =
@@ -193,7 +193,7 @@ impl Status {
 
     fn status_to_cell(&self) -> Cell {
         match &self.status {
-            Ok(s) => merge_status_to_cell(&s),
+            Ok(s) => merge_status_to_cell(s),
             Err(_) => cell!(Frr -> "Failed"),
         }
     }

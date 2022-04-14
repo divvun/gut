@@ -3,6 +3,7 @@ use graphql_client::{GraphQLQuery, Response};
 use reqwest::blocking as req;
 use serde::Serialize;
 
+#[allow(clippy::upper_case_acronyms)]
 type URI = String;
 type GitSSHRemote = String;
 
@@ -255,7 +256,7 @@ fn list_org_repos_with_topics_rec(
                 .repository_topics
                 .nodes
                 .as_ref()
-                .unwrap_or_else(|| &temp)
+                .unwrap_or(&temp)
                 .iter()
                 .filter_map(|t| t.as_ref())
                 .map(|x| x.topic.name.to_string())

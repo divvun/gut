@@ -48,7 +48,7 @@ impl ApplyArgs {
 
         let statuses: Vec<_> = sub_dirs
             .par_iter()
-            .map(|r| apply_script(&r, script_path))
+            .map(|r| apply_script(r, script_path))
             .collect();
 
         summarize(&statuses);
@@ -60,7 +60,7 @@ impl ApplyArgs {
 fn apply_script(dir: &PathBuf, script: &str) -> Status {
     let mut dir_name = "".to_string();
     let mut apply = || -> Result<Output> {
-        dir_name = path::dir_name(&dir)?;
+        dir_name = path::dir_name(dir)?;
         common::apply_script(dir, script)
     };
     let result = apply();

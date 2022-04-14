@@ -69,6 +69,6 @@ fn filter_repos_with_regex(
 }
 
 fn has_pattern(repo: &RemoteRepoWithTopics, regex: &Filter) -> bool {
-    let filtered_topics: Vec<_> = repo.topics.iter().filter(|t| regex.is_match(t)).collect();
-    !filtered_topics.is_empty()
+    let mut filtered_topics = repo.topics.iter().filter(|t| regex.is_match(t));
+    filtered_topics.next().is_some()
 }

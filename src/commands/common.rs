@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{anyhow, Context, Result};
 use dialoguer::Input;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 use crate::github;
@@ -23,7 +23,7 @@ pub fn query_and_filter_repositories(
 }
 
 pub fn user() -> Result<User> {
-    User::user()
+    User::from_config()
         .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
@@ -41,7 +41,7 @@ pub fn organisation(opt: Option<&str>) -> Result<String> {
     match opt {
         Some(s) => Ok(s.to_string()),
         None => {
-            let config = Config::config()?;
+            let config = Config::from_file()?;
             match config.default_org {
                 Some(o) => Ok(o),
                 None => anyhow::bail!("You need to provide an organisation or set a default organisation with init/set default organisation command."),
@@ -66,10 +66,10 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
 }
 
 pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Result<Vec<PathBuf>> {
-    let target_dir = path::local_path_org(org, &root)?;
+    let target_dir = path::local_path_org(org, root)?;
 
     let result = match filter {
-        Some(f) => read_dirs_with_filter(&target_dir, &f),
+        Some(f) => read_dirs_with_filter(&target_dir, f),
         None => read_dirs(&target_dir),
     };
 
@@ -88,14 +88,14 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
 }
 
 /// Filter directory's name by regex
-pub fn read_dirs_with_filter(path: &PathBuf, filter: &Filter) -> Result<Vec<PathBuf>> {
+pub fn read_dirs_with_filter(path: &Path, filter: &Filter) -> Result<Vec<PathBuf>> {
     let dirs = read_dirs(path)?;
     Ok(PathBuf::filter(dirs, filter))
 }
 
 /// Read all dirs inside a path
 /// Filter directories
-fn read_dirs(path: &PathBuf) -> Result<Vec<PathBuf>> {
+fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
     let entries = path.read_dir()?;
     let dirs = entries
         .filter_map(|x| x.ok())

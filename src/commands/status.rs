@@ -35,7 +35,7 @@ impl StatusArgs {
 
         let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
-        let statuses: Result<Vec<_>> = sub_dirs.iter().map(|d| status(&d)).collect();
+        let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
         let statuses: Vec<_> = statuses?;
         let statuses: Vec<_> = statuses
             .into_iter()
@@ -82,8 +82,7 @@ fn to_table(statuses: &[StatusRow]) -> Table {
 fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
     let mut rows: Vec<_> = statuses
         .iter()
-        .map(|s| s.to_rows(verbose))
-        .flatten()
+        .flat_map(|s| s.to_rows(verbose))
         .collect();
     rows.append(&mut to_total_summarize(statuses));
     rows
@@ -145,8 +144,9 @@ impl RepoStatus {
     }
 
     fn to_repo_detail(&self) -> Vec<StatusRow> {
-        let mut rows = vec![];
-        rows.push(self.to_repo_summarize());
+        let mut rows = vec![
+            self.to_repo_summarize()
+        ];
         rows.append(&mut show_detail_changes("C", &self.status.conflicted));
         rows.append(&mut show_detail_changes("U", &self.status.new));
         rows.append(&mut show_detail_changes("D", &self.status.deleted));

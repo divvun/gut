@@ -39,7 +39,7 @@ pub fn merge_commit(
     } else if analysis.0.is_normal() {
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
         return normal_merge(
-            &repo,
+            repo,
             &head_commit,
             annotated_commit,
             msg,
@@ -101,7 +101,7 @@ fn normal_merge(
     // now create the merge commit
     let local_commit = repo.find_commit(local.id())?;
     let remote_commit = repo.find_commit(remote.id())?;
-    commit::commit_tree(repo, &result_tree, &msg, &[&local_commit, &remote_commit])?;
+    commit::commit_tree(repo, &result_tree, msg, &[&local_commit, &remote_commit])?;
     Ok(MergeStatus::NormalMerge)
 }
 

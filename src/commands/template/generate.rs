@@ -32,7 +32,7 @@ impl GenerateArgs {
         let target_dir = Path::new(&self.dir).to_path_buf();
         create_dir_all(&target_dir).context("Cannot create target directory")?;
 
-        match generate(&template_dir, &target_dir, self.no_init) {
+        match generate(template_dir, &target_dir, self.no_init) {
             Ok(_) => println!("Generate success at {:?}", target_dir),
             Err(e) => println!("Generate failed because {:?}", e),
         }
@@ -106,7 +106,7 @@ fn get_target_info(template_delta: &TemplateDelta) -> Result<TargetInfo> {
 }
 
 pub fn commit(git_repo: &Repository, msg: &str) -> Result<()> {
-    let status = git::status(&git_repo, true)?;
+    let status = git::status(git_repo, true)?;
 
     let mut index = git_repo.index()?;
 
@@ -123,7 +123,7 @@ pub fn commit(git_repo: &Repository, msg: &str) -> Result<()> {
         index.remove_path(path)?;
     }
 
-    git::commit_first(&git_repo, &mut index, msg)?;
+    git::commit_first(git_repo, &mut index, msg)?;
 
     Ok(())
 }

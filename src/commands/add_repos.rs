@@ -50,7 +50,7 @@ impl AddRepoArgs {
 
         let statuses: Vec<_> = filtered_repos
             .par_iter()
-            .map(|r| add_repo_to_team(&r, &self.team_slug, &self.permission, &user.token))
+            .map(|r| add_repo_to_team(r, &self.team_slug, &self.permission, &user.token))
             .collect();
 
         summarize(&statuses, &self.team_slug);

@@ -22,7 +22,7 @@ pub fn fetch_branch<'a>(
     remote.fetch(&[branch], Some(&mut fo), None)?;
 
     let fetch_head = repo.find_reference("FETCH_HEAD")?;
-    Ok(repo.reference_to_annotated_commit(&fetch_head)?)
+    repo.reference_to_annotated_commit(&fetch_head)
 }
 
 pub fn fetch(

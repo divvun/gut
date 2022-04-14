@@ -70,7 +70,7 @@ impl CreateBranchArgs {
             .par_iter()
             .map(|r| {
                 create_branch(
-                    &r,
+                    r,
                     &self.new_branch,
                     &self.base_branch,
                     &user,

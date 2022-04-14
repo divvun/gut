@@ -28,9 +28,10 @@ impl GitStatus {
     }
 
     pub fn addable_list(&self) -> Vec<String> {
-        let mut list = vec![];
-        list.push(self.new.clone());
-        list.push(self.modified.clone());
+        let list = vec![
+            self.new.clone(),
+            self.modified.clone(),
+        ];
         list.into_iter().flatten().collect()
     }
 

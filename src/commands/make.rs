@@ -62,7 +62,7 @@ impl MakeArgs {
 
         println!(
             "The following repos will be changed to {}:",
-            self.visibility.to_string()
+            self.visibility
         );
 
         for repo in &filtered_repos {
@@ -80,7 +80,7 @@ impl MakeArgs {
                 Ok(_) => println!(
                     "Make repo {} to {} successfully",
                     repo.name,
-                    self.visibility.to_string()
+                    self.visibility
                 ),
                 Err(e) => println!(
                     "Failed to make repo {} to {:?} because {:?}",

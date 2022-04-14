@@ -54,7 +54,7 @@ impl GenerateArgs {
                     match generate_ci(
                         &repo,
                         &self.template.path,
-                        &repo_data,
+                        repo_data,
                         &user,
                         self.use_https,
                     ) {
@@ -77,7 +77,7 @@ impl GenerateArgs {
 /// write to file
 fn generate_ci(
     repo: &RemoteRepo,
-    template_dir: &PathBuf,
+    template_dir: &Path,
     data: &RepoData,
     user: &User,
     use_https: bool,

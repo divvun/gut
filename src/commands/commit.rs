@@ -58,7 +58,7 @@ impl CommitArgs {
 
         let statuses: Vec<_> = filtered_repos
             .par_iter()
-            .map(|r| commit(&r, &self.message, &user, self.use_https))
+            .map(|r| commit(r, &self.message, &user, self.use_https))
             .collect();
 
         summarize(&statuses);

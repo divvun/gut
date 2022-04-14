@@ -52,7 +52,7 @@ impl TopicApplyArgs {
         println!("repos {:?}", repos);
 
         for repo in repos {
-            match apply(&repo, &script_path, &user, self.use_https) {
+            match apply(&repo, script_path, &user, self.use_https) {
                 Ok(_) => println!("Apply success"),
                 Err(e) => println!("Apply failed because {:?}", e),
             }

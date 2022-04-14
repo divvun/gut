@@ -26,7 +26,7 @@ pub struct RemoveUsersArgs {
 impl RemoveUsersArgs {
     pub fn run(&self) -> Result<()> {
         match &self.team_slug {
-            Some(name) => self.remove_users_from_team(&name),
+            Some(name) => self.remove_users_from_team(name),
             None => self.remove_users_from_org(),
         }
     }

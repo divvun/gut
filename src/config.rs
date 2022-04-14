@@ -19,12 +19,12 @@ impl Config {
         write_to_file(path(), self)
     }
 
-    pub fn config() -> Result<Config> {
+    pub fn from_file() -> Result<Config> {
         read_file(path())
     }
 
     pub fn root() -> Result<String> {
-        Config::config().map(|c| c.root)
+        Config::from_file().map(|c| c.root)
     }
 }
 

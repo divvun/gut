@@ -42,7 +42,7 @@ impl Manifest {
 
     #[allow(dead_code)]
     pub fn get_from_content(content: &str) -> Result<Manifest> {
-        from_string(&content)
+        from_string(content)
     }
 }
 

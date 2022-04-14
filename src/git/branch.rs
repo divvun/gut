@@ -55,7 +55,7 @@ pub fn checkout_remote_branch<'a>(
         Ok(found_branch) => {
             let oid = found_branch.get().target().unwrap();
             let commit = repo.find_commit(oid)?;
-            repo.branch(&branch, &commit, false)?;
+            repo.branch(branch, &commit, false)?;
             checkout_local_branch(repo, branch)
         }
     }

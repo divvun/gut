@@ -152,8 +152,7 @@ impl PatchFile {
     pub fn apply_patterns(&self, reps: &BTreeMap<String, String>) -> Result<PatchFile> {
         let old_file = generate_string(reps, self.old_file.as_str())?;
         let new_file = generate_string(reps, self.new_file.as_str())?;
-        let lines: Vec<Result<PatchLine>> =
-            self.lines.iter().map(|l| l.apply_patterns(reps)).collect();
+        let lines = self.lines.iter().map(|l| l.apply_patterns(reps));
         let lines: Result<Vec<_>> = lines.into_iter().collect();
         let lines = lines?;
         Ok(PatchFile {

@@ -26,12 +26,12 @@ impl User {
         )
     }
 
-    pub fn user() -> Result<User> {
+    pub fn from_config() -> Result<User> {
         read_file(path().ok_or_else(|| anyhow::anyhow!("No user path found"))?)
     }
 
     pub fn token() -> Result<String> {
-        let user = User::user()?;
+        let user = User::from_config()?;
         Ok(user.token)
     }
 }

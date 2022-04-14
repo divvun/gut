@@ -11,7 +11,7 @@ pub struct SetOrganisationArgs {
 
 impl SetOrganisationArgs {
     pub fn run(&self) -> anyhow::Result<()> {
-        let mut config = Config::config()?;
+        let mut config = Config::from_file()?;
         config.default_org = Some(self.organisation.clone());
         config.save_config()
     }

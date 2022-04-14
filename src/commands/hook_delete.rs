@@ -55,10 +55,9 @@ impl DeleteArgs {
 
 fn delete_all_hooks(repo: &RemoteRepo, token: &str) -> Result<usize> {
     let hooks = github::get_hooks(repo, token)?;
-    let result: Vec<_> = hooks
+    let result = hooks
         .iter()
-        .map(|id| github::delete_hook(repo, *id, token))
-        .collect();
+        .map(|id| github::delete_hook(repo, *id, token));
     let result: Result<Vec<_>> = result.into_iter().collect();
     match result {
         Ok(_) => Ok(hooks.len()),

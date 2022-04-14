@@ -121,7 +121,7 @@ fn continue_apply(target_dir: &PathBuf) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let new_delta = TargetDelta::get(&template_apply_dir.join("temp_target_delta.toml"))?;
     let delta_path = &target_dir.join(".gut/delta.toml");
-    new_delta.save(&delta_path)?;
+    new_delta.save(delta_path)?;
     let mut index = target_repo.index()?;
     index.add_path(Path::new(".gut/delta.toml"))?;
     let message = format!("Apply changes {:?}", new_delta.rev_id);
@@ -204,10 +204,9 @@ fn start_apply(
         .filter(|p| generate_files.contains(&p.new_file))
         .collect();
 
-    let target_patch_files: Vec<_> = patch_files
+    let target_patch_files = patch_files
         .iter()
-        .map(|p| p.apply_patterns(&target_delta.replacements))
-        .collect();
+        .map(|p| p.apply_patterns(&target_delta.replacements));
     let target_patch_files: Result<Vec<_>> = target_patch_files.into_iter().collect();
 
     let diff_path = &template_apply_dir.join("patch.diff");
@@ -238,7 +237,7 @@ fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta)
         let tree = commit.tree()?;
 
         if let Ok(entry) = tree.get_path(Path::new(".gut/template.toml")) {
-            let object = entry.to_object(&template_repo)?;
+            let object = entry.to_object(template_repo)?;
             let blob = object.peel_to_blob()?;
             let content = str::from_utf8(blob.content())?;
             if let Ok(delta) = toml::from_str::<TemplateDelta>(content) {

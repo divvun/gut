@@ -69,7 +69,7 @@ impl CreateRepoArgs {
                 &dir,
                 self.public,
                 &user,
-                &"origin",
+                "origin",
                 self.use_https,
                 self.no_push,
                 self.override_origin,
@@ -170,14 +170,13 @@ fn create_repo(
         }
     }
 
-    let branches: Vec<String> = git_repo
+    let mut branches = git_repo
         .branches(Some(git2::BranchType::Local))
         .unwrap()
         .map(|a| a.unwrap())
-        .map(|(a, _)| a.name().unwrap().unwrap().to_string())
-        .collect();
+        .map(|(a, _)| a.name().unwrap().unwrap().to_string());
 
-    if branches.is_empty() {
+    if branches.next().is_none() {
         return Err(anyhow!("This repository doesn't have any local branch"));
     }
 
