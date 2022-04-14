@@ -39,13 +39,12 @@ mod tests {
     #[derive(Deserialize, Serialize, Debug, PartialEq)]
     struct TestToml {
         s: String,
-        d: f64,
         i: i32,
     }
 
     prop_compose! {
-      fn data_strategy() (s: String, d: f64, i: i32) -> TestToml {
-        TestToml { s: s, d: d, i: i }
+      fn data_strategy() (s: String, i: i32) -> TestToml {
+        TestToml { s, i }
       }
     }
 
