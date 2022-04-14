@@ -38,13 +38,7 @@ pub fn merge_commit(
         return fast_forward(repo, &mut head_ref, annotated_commit);
     } else if analysis.0.is_normal() {
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-        return normal_merge(
-            repo,
-            &head_commit,
-            annotated_commit,
-            msg,
-            abort_if_conflict,
-        );
+        return normal_merge(repo, &head_commit, annotated_commit, msg, abort_if_conflict);
     }
     Ok(MergeStatus::Nothing)
 }

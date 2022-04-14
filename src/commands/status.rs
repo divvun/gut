@@ -80,10 +80,7 @@ fn to_table(statuses: &[StatusRow]) -> Table {
 }
 
 fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
-    let mut rows: Vec<_> = statuses
-        .iter()
-        .flat_map(|s| s.to_rows(verbose))
-        .collect();
+    let mut rows: Vec<_> = statuses.iter().flat_map(|s| s.to_rows(verbose)).collect();
     rows.append(&mut to_total_summarize(statuses));
     rows
 }
@@ -144,9 +141,7 @@ impl RepoStatus {
     }
 
     fn to_repo_detail(&self) -> Vec<StatusRow> {
-        let mut rows = vec![
-            self.to_repo_summarize()
-        ];
+        let mut rows = vec![self.to_repo_summarize()];
         rows.append(&mut show_detail_changes("C", &self.status.conflicted));
         rows.append(&mut show_detail_changes("U", &self.status.new));
         rows.append(&mut show_detail_changes("D", &self.status.deleted));

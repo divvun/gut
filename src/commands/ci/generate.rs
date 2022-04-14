@@ -51,13 +51,8 @@ impl GenerateArgs {
         for repo in filtered_repos {
             match data.get(&repo.name) {
                 Some(repo_data) => {
-                    match generate_ci(
-                        &repo,
-                        &self.template.path,
-                        repo_data,
-                        &user,
-                        self.use_https,
-                    ) {
+                    match generate_ci(&repo, &self.template.path, repo_data, &user, self.use_https)
+                    {
                         Ok(_) => println!("Generate ci successfully for {:?}", repo.name),
                         Err(e) => {
                             println!("Failed to generate ci for {:?} because {:?}", repo.name, e)

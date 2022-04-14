@@ -55,10 +55,7 @@ impl TopicAddArgs {
 
 fn add_topics(repo: &github::RemoteRepo, topics: &[String], token: &str) -> Result<Vec<String>> {
     let current_topics = github::get_topics(repo, token)?;
-    let temp = vec![
-        current_topics,
-        topics.to_owned(),
-    ];
+    let temp = vec![current_topics, topics.to_owned()];
 
     let new_topics: Vec<String> = temp.into_iter().flatten().collect();
 

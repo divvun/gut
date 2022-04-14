@@ -79,8 +79,7 @@ impl MakeArgs {
             match result {
                 Ok(_) => println!(
                     "Make repo {} to {} successfully",
-                    repo.name,
-                    self.visibility
+                    repo.name, self.visibility
                 ),
                 Err(e) => println!(
                     "Failed to make repo {} to {:?} because {:?}",
