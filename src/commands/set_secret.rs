@@ -1,10 +1,11 @@
+use std::convert::TryFrom;
+
 use super::common;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::{Context, Result};
-use sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PublicKey;
-use sodiumoxide::crypto::sealedbox;
+use dryoc::dryocbox::{DryocBox, PublicKey};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -57,8 +58,11 @@ fn set_secret(repo: &RemoteRepo, value: &str, name: &str, token: &str) -> Result
 
 fn encrypt(value: &str, key: &str) -> Result<String> {
     let bytes = base64::decode(key)?;
-    let public_key = PublicKey::from_slice(&bytes).context("Invalid public key from github")?;
-    let encrypted = sealedbox::seal(value.as_bytes(), &public_key);
-    let encrypted = base64::encode(encrypted);
+    let public_key = PublicKey::try_from(bytes.as_slice())
+        .context("Invalide public key received from github")?;
+
+    let encrypted = DryocBox::seal_to_vecbox(value.as_bytes(), &public_key)?;
+    let encrypted = base64::encode(encrypted.to_vec());
+
     Ok(encrypted)
 }
