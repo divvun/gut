@@ -21,14 +21,14 @@ pretty_env_logger = "0.4.0"
 prettytable-rs = "0.8.0"
 colored = "1.9.3"
 
-reqwest = { version = "0.10.4", features = ["blocking", "json", "gzip"] }
+reqwest = { version = "0.10.4", features = ["blocking", "json", "gzip", "native-tls-vendored"], default_features = false }
 graphql_client = "0.9.0"
 
 dirs = "2.0"
 walkdir = "2"
 regex = "1.3.4"
 
-git2 = "0.13.6"
+git2 = { version = "0.13.6", features = ["vendored-openssl"] }
 git2_credentials = "0.6.0"
 dialoguer = "0.5.0"
 
