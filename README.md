@@ -15,6 +15,14 @@ We think it's pretty cool.
 2. `cd gut`
 1. `cargo install --path .`
 
+**Alternatively** - download a precompiled binary from nightly builds:
+
+* [Linux  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
+* [macOS  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
+* [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (x86_64)
+
+Extract the archive, and move the binary to somewhere on your `$PATH`.
+
 ## Setup
 
 1. make a [personal access token](https://github.com/settings/tokens) in GitHub - allow everything. Make sure to store it in a safe place - the token replaces your username and password when accessing GitHub via `gut`.
