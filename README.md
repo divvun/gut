@@ -19,7 +19,7 @@ We think it's pretty cool.
 
 * [Linux  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
 * [macOS  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
-* [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (x86_64)
+* [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (i686)
 
 Extract the archive, and move the binary to somewhere on your `$PATH`.
 
