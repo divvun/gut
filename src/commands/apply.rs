@@ -36,7 +36,6 @@ impl ApplyArgs {
         let organisation = common::organisation(self.organisation.as_deref())?;
         let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
 
-
         // set auth_token to env
         let user_token = common::user_token()?;
         let key = "GUT_TOKEN";
