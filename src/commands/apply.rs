@@ -6,12 +6,16 @@ use anyhow::{Error, Result};
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
+use std::env;
 use std::path::PathBuf;
 use std::process::Output;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 /// Apply a script to all local repositories that match a pattern
+///
+/// If you want your script to use your authentication token, you
+/// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
     #[structopt(long, short)]
     /// Target organisation name
@@ -31,6 +35,11 @@ impl ApplyArgs {
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
         let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+
+        // set auth_token to env
+        let user_token = common::user_token()?;
+        let key = "GUT_TOKEN";
+        env::set_var(key, &user_token);
 
         if sub_dirs.is_empty() {
             println!(
