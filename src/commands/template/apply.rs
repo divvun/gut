@@ -34,6 +34,9 @@ pub struct ApplyArgs {
     /// Flag to include optional files
     #[structopt(long)]
     pub optional: bool,
+    /// Skip CI
+    #[structopt(long)]
+    pub skip_ci: bool,
 }
 
 impl ApplyArgs {
@@ -50,7 +53,7 @@ impl ApplyArgs {
         if self.finish {
             // finish apply process
             for dir in target_dirs {
-                match continue_apply(&dir) {
+                match continue_apply(&dir, self.skip_ci) {
                     Ok(_) => println!("Apply changes finish successfully"),
                     Err(e) => println!("Apply changes finish failed because {:?}", e),
                 }
@@ -98,7 +101,7 @@ fn abort_apply(target_dir: &PathBuf) -> Result<()> {
 /// - Check if everthing is added
 /// - rewrite target delta file
 /// - will remove template_apply directory
-fn continue_apply(target_dir: &PathBuf) -> Result<()> {
+fn continue_apply(target_dir: &PathBuf, skip_ci: bool) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
 
@@ -124,7 +127,11 @@ fn continue_apply(target_dir: &PathBuf) -> Result<()> {
     new_delta.save(delta_path)?;
     let mut index = target_repo.index()?;
     index.add_path(Path::new(".gut/delta.toml"))?;
-    let message = format!("Apply changes {:?}", new_delta.rev_id);
+    let message = if skip_ci {
+        format!("Apply changes {:?}\n\n[skip ci]", new_delta.rev_id)
+    } else {
+        format!("Apply changes {:?}", new_delta.rev_id)
+    };
 
     // commit everything
     git::commit_index(&target_repo, &mut index, message.as_str())?;
