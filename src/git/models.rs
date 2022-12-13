@@ -6,7 +6,7 @@ use git2::{Error, Repository};
 use git2_credentials::CredentialUI;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GitRepo {
     pub remote_url: String,
     pub local_path: PathBuf,
@@ -30,7 +30,7 @@ impl GitRepo {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GitCredential {
     username: String,
     password: String,

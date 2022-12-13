@@ -21,7 +21,7 @@ fn print_stats(diff: &Diff) -> Result<()> {
     format |= git2::DiffStatsFormat::INCLUDE_SUMMARY;
 
     let buf = stats.to_buf(format, 80)?;
-    print!("{}", str::from_utf8(&*buf).unwrap());
+    print!("{}", str::from_utf8(&buf).unwrap());
     Ok(())
 }
 

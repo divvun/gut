@@ -79,7 +79,7 @@ mod tests {
         let sample = "^lang-";
         let filter = Filter::from_str(sample).unwrap();
         assert!(filter.is_match("lang-sma"));
-        assert_eq!(false, filter.is_match("template-lang-sma"));
-        assert_eq!(false, filter.is_match("langCI-sma-old"))
+        assert!(!filter.is_match("template-lang-sma"));
+        assert!(!filter.is_match("langCI-sma-old"))
     }
 }

@@ -42,7 +42,7 @@ pub fn validate_script(script_path: &str) -> Result<PathBuf, ScriptError> {
             if path.is_absolute() {
                 Ok(path.to_path_buf())
             } else {
-                match fs::canonicalize(&path) {
+                match fs::canonicalize(path) {
                     Ok(abs_path) => Ok(abs_path),
                     Err(e) => Err(ScriptError::CannotCreateAbsPath {
                         source: e,
@@ -109,7 +109,7 @@ impl Script {
 fn execute_script(script: &str, name: &str, org: &str) -> anyhow::Result<Output> {
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(&["/C", script])
+            .args(["/C", script])
             .arg(name)
             .arg(org)
             .output()
@@ -136,7 +136,7 @@ fn execute_script_with_dir(
 ) -> anyhow::Result<Output> {
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(&["/C", script])
+            .args(["/C", script])
             .arg(name)
             .arg(org)
             .current_dir(dir)

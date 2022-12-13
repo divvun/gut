@@ -78,7 +78,7 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
         replacements: target_info.reps,
     };
     let gut_path = &target_dir.join(".gut/");
-    create_dir_all(&gut_path)?;
+    create_dir_all(gut_path)?;
     target_delta.save(&gut_path.join("delta.toml"))?;
 
     if !no_init {

@@ -135,7 +135,7 @@ pub fn apply_script(dir: &PathBuf, script: &str) -> Result<Output> {
 fn execute_script(script: &str, dir: &PathBuf) -> Result<Output> {
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(&["/C", script])
+            .args(["/C", script])
             .current_dir(dir)
             .output()
             .expect("failed to execute process")

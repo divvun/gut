@@ -185,7 +185,7 @@ fn start_apply(
     // create template_apply dir
     create_dir_all(template_apply_dir)?;
     // write status file to mark process as on going
-    File::create(&apply_status_path)?;
+    File::create(apply_status_path)?;
 
     let template_repo = git::open::open(template_dir)?;
 
@@ -217,7 +217,7 @@ fn start_apply(
     let target_patch_files: Result<Vec<_>> = target_patch_files.into_iter().collect();
 
     let diff_path = &template_apply_dir.join("patch.diff");
-    write(&diff_path, to_content(&target_patch_files?))?;
+    write(diff_path, to_content(&target_patch_files?))?;
     execute_patch(diff_path.to_str().unwrap(), target_dir)?;
 
     let update_target_delta = target_delta.update(template_delta.rev_id, temp_current_sha.as_str());

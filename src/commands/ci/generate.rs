@@ -107,7 +107,7 @@ fn generate_ci(
 /// generate uuids
 /// set spellers
 fn process_manifest(manifest_path: &PathBuf, data: &RepoData) -> Result<String> {
-    let content = read_to_string(&manifest_path)?;
+    let content = read_to_string(manifest_path)?;
     let target_content = generate_string(&data.package, &content)?;
     let target_content = generate_uuids(&target_content);
     Ok(target_content)

@@ -58,7 +58,7 @@ fn diff_line_to_patch_line(diff_line: &DiffLine) -> Option<PatchLine> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PatchLine {
     Add {
         line_no: u32,
@@ -122,7 +122,7 @@ impl PatchLine {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PatchFile {
     pub old_file: String,
     pub new_file: String,
