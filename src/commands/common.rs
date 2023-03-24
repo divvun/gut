@@ -50,6 +50,11 @@ pub fn organisation(opt: Option<&str>) -> Result<String> {
     }
 }
 
+pub fn use_https() -> Result<bool> {
+    let config = Config::from_file()?;
+    Ok(config.use_https)
+}
+
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     match github::list_org_repos(token, org).context("When fetching repositories") {
         Ok(repos) => Ok(repos),

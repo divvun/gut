@@ -33,6 +33,10 @@ impl CloneArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
+        let use_https = match self.use_https {
+            true => true,
+            false => common::use_https()?
+        };
 
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
@@ -47,7 +51,7 @@ impl CloneArgs {
 
         let statuses: Vec<_> = filtered_repos
             .par_iter()
-            .map(|r| clone(r, &user, self.use_https))
+            .map(|r| clone(r, &user, use_https))
             .collect();
 
         summarize(&statuses);

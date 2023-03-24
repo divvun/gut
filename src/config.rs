@@ -8,11 +8,12 @@ use std::path::PathBuf;
 pub struct Config {
     pub root: String,
     pub default_org: Option<String>,
+    pub use_https: bool,
 }
 
 impl Config {
-    pub fn new(root: String, default_org: Option<String>) -> Config {
-        Config { root, default_org }
+    pub fn new(root: String, default_org: Option<String>, use_https: bool) -> Config {
+        Config { root, default_org, use_https }
     }
 
     pub fn save_config(&self) -> Result<()> {

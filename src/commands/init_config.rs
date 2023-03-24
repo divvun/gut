@@ -18,6 +18,9 @@ pub struct InitArgs {
     /// Default organisation
     #[structopt(short, long)]
     pub organisation: Option<String>,
+    /// Default to https instead of ssh when cloning repositories
+    #[structopt(short, long)]
+    pub use_https: bool,
 }
 
 impl InitArgs {
@@ -30,7 +33,9 @@ impl InitArgs {
                 }
             };
         user.save_user()?;
-        let config = Config::new(self.root.path.clone(), self.organisation.clone());
+        let config = Config::new(self.root.path.clone(),
+                                 self.organisation.clone(),
+                                 self.use_https);
         config.save_config()
     }
 }
