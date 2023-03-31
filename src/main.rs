@@ -17,8 +17,6 @@ fn main() -> Result<()> {
     color_backtrace::install();
 
     pretty_env_logger::formatted_timed_builder()
-        .filter(None, log::LevelFilter::Info)
-        .filter(Some("gut"), log::LevelFilter::Debug)
         .init();
 
     let args = Args::from_args();
