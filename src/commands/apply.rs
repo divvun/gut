@@ -39,7 +39,7 @@ impl ApplyArgs {
         // set auth_token to env
         let user_token = common::user_token()?;
         let key = "GUT_TOKEN";
-        env::set_var(key, &user_token);
+        env::set_var(key, user_token);
 
         if sub_dirs.is_empty() {
             println!(

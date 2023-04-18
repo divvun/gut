@@ -82,7 +82,7 @@ pub fn parrent(path: &PathBuf) -> anyhow::Result<String> {
 
 pub fn write_content(file_path: &PathBuf, content: &str) -> anyhow::Result<()> {
     let parrent = parrent(file_path)?;
-    create_dir_all(&parrent)?;
+    create_dir_all(parrent)?;
     write(file_path, content)?;
     Ok(())
 }
