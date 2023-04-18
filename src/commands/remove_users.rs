@@ -3,22 +3,22 @@ use crate::github;
 
 use anyhow::Result;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Remove users by users' usernames from an organisation
 ///
 /// If you specify team_slug it'll try to remove users from the provided team
 pub struct RemoveUsersArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// List of user's username
     pub users: Vec<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional team slug
     pub team_slug: Option<String>,
 }

@@ -6,29 +6,29 @@ use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Invite users to an organisation by emails
 pub struct InviteUsersArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short, default_value)]
+    #[arg(long, short, default_value = "Role::default()")]
     /// Role of users
     /// It should be one of ["member", "admin", "billing_manager"]
     pub role: Role,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// list of user's emails
     pub emails: Vec<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// list of teams to invite the user to
     pub teams: Vec<String>,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Clone, Debug)]
 pub enum Role {
     Member,
     Admin,

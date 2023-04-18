@@ -4,26 +4,26 @@ use crate::github::Unauthorized;
 
 use anyhow::Result;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Create a discussion for a team in an organisation
 pub struct CreateDiscussionArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Team slug
     pub team_slug: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Subject of the discussion
     pub subject: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Body of the discussion
     pub body: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to set the discussion is private
     pub private: bool,
 }

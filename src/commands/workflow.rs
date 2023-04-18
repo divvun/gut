@@ -1,18 +1,29 @@
 use super::workflow_run::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct WorkflowArgs {
+    #[command(subcommand)]
+    command: WorkflowCommand,
+}
 /// Run a workflow
-pub enum WorkflowArgs {
-    #[structopt(name = "run")]
+impl WorkflowArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum WorkflowCommand {
+    #[command(name = "run")]
     Run(WorkflowRunArgs),
 }
 
-impl WorkflowArgs {
+impl WorkflowCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            WorkflowArgs::Run(args) => args.run(),
+            Self::Run(args) => args.run(),
         }
     }
 }

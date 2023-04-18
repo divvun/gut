@@ -10,10 +10,10 @@ use prettytable::{cell, format, row, Cell, Row, Table};
 use crate::filter::Filter;
 use crate::git::branch;
 use crate::git::push;
+use clap::Parser;
 use rayon::prelude::*;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Create a new branch for all repositories that match a regex or a topic
 ///
 /// If regex is provided, this will fillter by repo name on the provided regex.
@@ -21,27 +21,27 @@ use structopt::StructOpt;
 /// The new branch will be based from a another branch (default is main).
 /// If a matched repository is not present in root dir yet, it will be cloned.
 pub struct CreateBranchArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short, required_unless("topic"))]
+    #[arg(long, short, required_unless_present("topic"))]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
+    #[arg(long, required_unless_present("regex"))]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// New branch name
     pub new_branch: String,
-    #[structopt(long, short, default_value = "main")]
+    #[arg(long, short, default_value = "main")]
     /// The base branch which new branch will based of
     pub base_branch: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Use https to clone repositories if needed
     pub use_https: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to push a new branch to remote after creating the new branch
     pub push: bool,
 }

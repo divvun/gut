@@ -1,17 +1,17 @@
 use super::common;
 use crate::github;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Show all users in an organisation
 pub struct ShowUsersArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    //#[structopt(long, short, default_value = "all", parse(try_from_str = parse_role))]
+    //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.
     //
     // Can be one of:

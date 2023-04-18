@@ -13,7 +13,11 @@ pub struct Config {
 
 impl Config {
     pub fn new(root: String, default_org: Option<String>, use_https: bool) -> Config {
-        Config { root, default_org, use_https }
+        Config {
+            root,
+            default_org,
+            use_https,
+        }
     }
 
     pub fn save_config(&self) -> Result<()> {

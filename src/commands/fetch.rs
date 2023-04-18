@@ -5,20 +5,20 @@ use crate::git::GitCredential;
 use crate::path;
 use crate::user::User;
 use anyhow::{Context, Result};
+use clap::Parser;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Fetch all local repositories that match a regex
 ///
 /// This command only works on those repositories that has been cloned in root directory
 pub struct FetchArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
 }

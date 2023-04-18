@@ -1,18 +1,29 @@
 use super::invite_users::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct InviteArgs {
+    #[command(subcommand)]
+    command: InviteCommand,
+}
 /// Invite users to an organisation by emails
-pub enum InviteArgs {
-    #[structopt(name = "users")]
+impl InviteArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum InviteCommand {
+    #[command(name = "users")]
     Users(InviteUsersArgs),
 }
 
-impl InviteArgs {
+impl InviteCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            InviteArgs::Users(args) => args.run(),
+            Self::Users(args) => args.run(),
         }
     }
 }

@@ -1,22 +1,33 @@
 use super::hook_create::*;
 use super::hook_delete::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct HookArgs {
+    #[command(subcommand)]
+    command: HookCommand,
+}
 /// Create, delete hooks for all repositories that match a pattern
-pub enum HookArgs {
-    #[structopt(name = "create")]
+impl HookArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum HookCommand {
+    #[command(name = "create")]
     Create(CreateArgs),
-    #[structopt(name = "delete")]
+    #[command(name = "delete")]
     Delete(DeleteArgs),
 }
 
-impl HookArgs {
+impl HookCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            HookArgs::Create(args) => args.run(),
-            HookArgs::Delete(args) => args.run(),
+            Self::Create(args) => args.run(),
+            Self::Delete(args) => args.run(),
         }
     }
 }

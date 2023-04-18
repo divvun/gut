@@ -3,24 +3,24 @@ use crate::filter::Filter;
 use crate::git;
 use crate::git::MergeStatus;
 use anyhow::{Context, Result};
+use clap::Parser;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Merge a branch to the current branch for all repositories that match a pattern
 pub struct MergeArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// The branch to be merged
     pub branch: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to abort merging process if there is a conflict
     pub abort_if_conflict: bool,
 }

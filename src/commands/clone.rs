@@ -8,23 +8,23 @@ use crate::filter::Filter;
 use crate::git::models::GitRepo;
 use crate::git::Clonable;
 use crate::user::User;
+use clap::Parser;
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Clone all repositories that matches a pattern
 pub struct CloneArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
 }
@@ -35,7 +35,7 @@ impl CloneArgs {
         let organisation = common::organisation(self.organisation.as_deref())?;
         let use_https = match self.use_https {
             true => true,
-            false => common::use_https()?
+            false => common::use_https()?,
         };
 
         let filtered_repos =

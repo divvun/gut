@@ -8,30 +8,30 @@ use crate::filter::Filter;
 use crate::github::RemoteRepo;
 use crate::user::User;
 use anyhow::Result;
+use clap::Parser;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// export data file for ci generate command
 pub struct ExportArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[arg(long, short, default_value = "divvun")]
     pub organisation: String,
-    #[structopt(long, short, required_unless("topic"))]
+    #[arg(long, short, required_unless_present("topic"))]
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
+    #[arg(long, required_unless_present("regex"))]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub template: ExistDirectory,
-    #[structopt(long)]
+    #[arg(long)]
     pub output: String,
     /// The script that produces name, version and human_name
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub script: Script,
     /// use https to clone repositories if needed
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub use_https: bool,
 }
 

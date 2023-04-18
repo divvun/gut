@@ -4,67 +4,67 @@ use crate::commands::{
     RemoveArgs, RenameArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs, TopicArgs, TransferArgs,
     WorkflowArgs,
 };
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "gut", about = "git multirepo maintenance tool")]
+#[derive(Debug, Parser)]
+#[command(name = "gut", about = "git multirepo maintenance tool")]
 pub struct Args {
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum Commands {
-    #[structopt(name = "add")]
+    #[command(name = "add")]
     Add(AddArgs),
-    #[structopt(name = "apply", aliases = &["ap"])]
+    #[command(name = "apply", aliases = &["ap"])]
     Apply(ApplyArgs),
-    #[structopt(name = "branch", aliases = &["br"])]
+    #[command(name = "branch", aliases = &["br"])]
     Branch(BranchArgs),
-    #[structopt(name = "checkout", aliases = &["co"])]
+    #[command(name = "checkout", aliases = &["co"])]
     Checkout(CheckoutArgs),
-    #[structopt(name = "ci")]
+    #[command(name = "ci")]
     Ci(CiArgs),
-    #[structopt(name = "clone", aliases = &["cl"])]
+    #[command(name = "clone", aliases = &["cl"])]
     Clone(CloneArgs),
-    #[structopt(name = "clean")]
+    #[command(name = "clean")]
     Clean(CleanArgs),
-    #[structopt(name = "commit")]
+    #[command(name = "commit")]
     Commit(CommitArgs),
-    #[structopt(name = "create", aliases = &["cr"])]
+    #[command(name = "create", aliases = &["cr"])]
     Create(CreateArgs),
-    #[structopt(name = "fetch")]
+    #[command(name = "fetch")]
     Fetch(FetchArgs),
-    #[structopt(name = "hook")]
+    #[command(name = "hook")]
     Hook(HookArgs),
-    #[structopt(name = "init")]
+    #[command(name = "init")]
     Init(InitArgs),
-    #[structopt(name = "invite")]
+    #[command(name = "invite")]
     Invite(InviteArgs),
-    #[structopt(name = "make")]
+    #[command(name = "make")]
     Make(MakeArgs),
-    #[structopt(name = "merge")]
+    #[command(name = "merge")]
     Merge(MergeArgs),
-    #[structopt(name = "pull")]
+    #[command(name = "pull")]
     Pull(PullArgs),
-    #[structopt(name = "push")]
+    #[command(name = "push")]
     Push(PushArgs),
-    #[structopt(name = "remove")]
+    #[command(name = "remove")]
     Remove(RemoveArgs),
-    #[structopt(name = "rename")]
+    #[command(name = "rename")]
     Rename(RenameArgs),
-    #[structopt(name = "set")]
+    #[command(name = "set")]
     Set(SetArgs),
-    #[structopt(name = "show")]
+    #[command(name = "show")]
     Show(ShowArgs),
-    #[structopt(name = "status")]
+    #[command(name = "status")]
     Status(StatusArgs),
-    #[structopt(name = "template")]
+    #[command(name = "template")]
     Template(TemplateArgs),
-    #[structopt(name = "topic")]
+    #[command(name = "topic")]
     Topic(TopicArgs),
-    #[structopt(name = "transfer")]
+    #[command(name = "transfer")]
     Transfer(TransferArgs),
-    #[structopt(name = "workflow")]
+    #[command(name = "workflow")]
     Workflow(WorkflowArgs),
 }

@@ -9,33 +9,33 @@ use anyhow::{Context, Error, Result};
 use crate::filter::Filter;
 use crate::git::push;
 use crate::git::GitCredential;
-use structopt::StructOpt;
+use clap::Parser;
 
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use rayon::prelude::*;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Push the provided branch to remote server for all repositories that match a pattern
 /// or a topic
 ///
 /// This command will do nothing if there is nothing to push
 pub struct PushArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short, default_value = "main")]
+    #[arg(long, short, default_value = "main")]
     pub branch: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub use_https: bool,
 }
 

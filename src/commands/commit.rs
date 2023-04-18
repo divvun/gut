@@ -2,8 +2,8 @@ use super::common;
 use crate::filter::Filter;
 use crate::git;
 use anyhow::Result;
+use clap::Parser;
 use std::path::Path;
-use structopt::StructOpt;
 
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
@@ -13,24 +13,24 @@ use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Add all and then commit with the provided messages for all
 /// repositories that match a pattern or a topic
 pub struct CommitArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Commit message
     pub message: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
 }

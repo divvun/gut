@@ -3,11 +3,11 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-pub fn from_string<'de, T>(content: &'de str) -> Result<T>
+pub fn from_string<T>(content: &str) -> Result<T>
 where
-    T: Deserialize<'de>,
+    T: DeserializeOwned,
 {
     toml::from_str(content).with_context(|| format!("Deserialize error {:?}", content))
 }
@@ -32,6 +32,7 @@ where
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
+    use serde::Deserialize;
     use tempfile::tempdir;
 
     use super::*;

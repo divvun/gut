@@ -2,26 +2,37 @@ use super::show_config::*;
 use super::show_repos::*;
 use super::show_users::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct ShowArgs {
+    #[command(subcommand)]
+    command: ShowCommand,
+}
 /// Show config, list of repositories or users
-pub enum ShowArgs {
-    #[structopt(name = "config")]
+impl ShowArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum ShowCommand {
+    #[command(name = "config")]
     // Show current configuration
     Config,
-    #[structopt(name = "repositories", aliases = &["repos"])]
+    #[command(name = "repositories", aliases = &["repos"])]
     Repos(ShowReposArgs),
-    #[structopt(name = "users")]
+    #[command(name = "users")]
     Users(ShowUsersArgs),
 }
 
-impl ShowArgs {
+impl ShowCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            ShowArgs::Config => show_config(),
-            ShowArgs::Repos(args) => args.show(),
-            ShowArgs::Users(args) => args.run(),
+            Self::Config => show_config(),
+            Self::Repos(args) => args.show(),
+            Self::Users(args) => args.run(),
         }
     }
 }

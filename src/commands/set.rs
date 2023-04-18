@@ -3,28 +3,39 @@ use super::set_info::*;
 use super::set_secret::*;
 use super::set_team_permission::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct SetArgs {
+    #[command(subcommand)]
+    command: SetCommand,
+}
 /// Set information, secret for repositories or permission for a team
-pub enum SetArgs {
-    #[structopt(name = "info")]
+impl SetArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum SetCommand {
+    #[command(name = "info")]
     Info(InfoArgs),
-    #[structopt(name = "organisation")]
+    #[command(name = "organisation")]
     Organisation(SetOrganisationArgs),
-    #[structopt(name = "permission")]
+    #[command(name = "permission")]
     Permission(SetTeamPermissionArgs),
-    #[structopt(name = "secret")]
+    #[command(name = "secret")]
     Secret(SecretArgs),
 }
 
-impl SetArgs {
+impl SetCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            SetArgs::Info(args) => args.run(),
-            SetArgs::Organisation(args) => args.run(),
-            SetArgs::Permission(args) => args.set_permission(),
-            SetArgs::Secret(args) => args.run(),
+            Self::Info(args) => args.run(),
+            Self::Organisation(args) => args.run(),
+            Self::Permission(args) => args.set_permission(),
+            Self::Secret(args) => args.run(),
         }
     }
 }

@@ -5,24 +5,24 @@ use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::{Context, Result};
+use clap::Parser;
 use dryoc::dryocbox::{DryocBox, PublicKey};
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Set a secret all repositories that match regex
 pub struct SecretArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[structopt(long, short, required_unless("website"))]
+    #[arg(long, short, required_unless_present("website"))]
     /// The value for your secret
     pub value: String,
-    #[structopt(long, short, required_unless("description"))]
+    #[arg(long, short, required_unless_present("description"))]
     /// The name of your secret
     pub name: String,
 }
@@ -57,12 +57,14 @@ fn set_secret(repo: &RemoteRepo, value: &str, name: &str, token: &str) -> Result
 }
 
 fn encrypt(value: &str, key: &str) -> Result<String> {
-    let bytes = base64::decode(key)?;
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let bytes = b64.decode(key)?;
     let public_key = PublicKey::try_from(bytes.as_slice())
         .context("Invalide public key received from github")?;
 
     let encrypted = DryocBox::seal_to_vecbox(value.as_bytes(), &public_key)?;
-    let encrypted = base64::encode(encrypted.to_vec());
+    let encrypted = b64.encode(encrypted.to_vec());
 
     Ok(encrypted)
 }

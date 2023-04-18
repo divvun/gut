@@ -1,35 +1,45 @@
+use std::fmt::Display;
+
 use super::common;
 
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
-use clap::arg_enum;
-use structopt::StructOpt;
+use clap::{Parser, ValueEnum};
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Make repositories that match a regex become public/private
 ///
 /// This will show all repositories that will affected by this command
 /// If you want to public repositories, it'll show a confirmation prompt
 /// and You have to enter 'YES' to confirm your action
 pub struct MakeArgs {
-    #[structopt(possible_values = &Visibility::variants(), case_insensitive = true)]
+    #[arg(value_enum)]
     pub visibility: Visibility,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
 }
 
-arg_enum! {
-    #[derive(Debug, StructOpt)]
-    pub enum Visibility {
-        Public,
-        Private,
+#[derive(Debug, Clone, ValueEnum)]
+pub enum Visibility {
+    #[value(name = "public")]
+    Public,
+    #[value(name = "private")]
+    Private,
+}
+
+impl Display for Visibility {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Visibility::Public => "public",
+            Visibility::Private => "private",
+        })
     }
 }
 

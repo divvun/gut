@@ -6,9 +6,9 @@ use crate::github::RemoteRepo;
 use anyhow::{anyhow, Result};
 
 use crate::filter::Filter;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Set description and/or website for all repositories that match regex
 ///
 /// Description can be provided by --description option or --des-script option
@@ -17,24 +17,24 @@ use structopt::StructOpt;
 ///
 /// Similar to --web-script and --website
 pub struct InfoArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Description, this is required unless website is provided
     pub description: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Homepage, this is required unless description is provided
     pub website: Option<String>,
-    #[structopt(long)]
+    #[arg(long)]
     /// The script that will produce a description
     pub des_script: Option<Script>,
-    #[structopt(long)]
+    #[arg(long)]
     /// The script that will produce a website
     pub web_script: Option<Script>,
 }

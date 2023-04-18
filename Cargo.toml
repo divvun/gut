@@ -1,43 +1,34 @@
 [package]
 name = "gut"
 version = "0.1.0"
-authors = ["Hampus Forsvall <hampusf@technocreatives.com>", "Thanh Le <thanh@technocreatives.com>"]
+authors = []
 edition = "2021"
 
 [dependencies]
-toml = "0.5.11"
+toml = "0.7.3"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-
-structopt = "0.3.26"
-clap = "2.34"
-
+clap = { version = "4.2", features = ["derive"] }
 thiserror = "1.0.40"
 anyhow = "1.0.70"
-
 log = "0.4.17"
-color-backtrace = "0.4.2"
+color-backtrace = "0.5.1"
 pretty_env_logger = "0.4.0"
-prettytable-rs = "0.8.0"
-colored = "1.9.3"
-
-reqwest = { version = "0.10.10", features = ["blocking", "json", "gzip", "native-tls-vendored"], default-features = false }
-graphql_client = "0.9.0"
-
-dirs = "2.0"
+prettytable-rs = "0.10.0"
+colored = "2.0.0"
+reqwest = { version = "0.11.16", features = ["blocking", "json", "gzip", "native-tls-vendored"], default-features = false }
+graphql_client = "0.12.0"
+dirs = "5.0"
 walkdir = "2"
 regex = "1.7.3"
-
-git2 = { version = "0.13.25", features = ["vendored-openssl"] }
-git2_credentials = "0.6.1"
-dialoguer = "0.5.1"
-
+git2 = { version = "0.17.1", features = ["vendored-openssl"] }
+git2_credentials = { git = "https://github.com/divvun/git2_credentials" }
+dialoguer = { version = "0.10.4", features = ["password"] }
 dryoc = "0.5.0"
-base64 = "0.12.3"
-uuid = { version = "0.8", features = ["serde", "v4"] }
-
+base64 = "0.21.0"
+uuid = { version = "1.3", features = ["serde", "v4"] }
 rayon = "1.7"
 
 [dev-dependencies]
-proptest = "0.9.6"
+proptest = "1.1.0"
 tempfile = "3.5.0"

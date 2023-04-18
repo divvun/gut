@@ -38,7 +38,6 @@ pub struct TargetDelta {
     pub template: String,
     pub rev_id: usize,
     pub template_sha: String,
-    #[serde(serialize_with = "toml::ser::tables_last")]
     pub replacements: BTreeMap<String, String>,
 }
 

@@ -9,39 +9,39 @@ use anyhow::{anyhow, Result};
 use std::str;
 
 use crate::filter::Filter;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct CreateArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[structopt(long, short, required_unless("script"))]
+    #[arg(long, short, required_unless_present("script"))]
     /// The url to which payloads will be delivered
     ///
     /// This will be overridden if script is provided
     pub url: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Content type, either json or form
     pub method: Method,
-    #[structopt(long, short, required_unless("url"))]
+    #[arg(long, short, required_unless_present("url"))]
     /// The script that will produce an url
     pub script: Option<Script>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Determines what events the hook is triggered for
     pub events: Vec<String>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Clone, Parser)]
 pub enum Method {
-    #[structopt(name = "json")]
+    #[command(name = "json")]
     Json,
-    #[structopt(name = "form")]
+    #[command(name = "form")]
     Form,
 }
 
