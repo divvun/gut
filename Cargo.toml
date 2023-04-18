@@ -1,8 +1,8 @@
 [package]
 name = "gut"
-version = "0.1.0"
+version = "0.1.1"
 authors = []
-edition = "2021"
+edition = "2023"
 
 [dependencies]
 toml = "0.7.3"
