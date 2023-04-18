@@ -6,29 +6,29 @@ use crate::filter::Filter;
 use crate::github::RemoteRepoWithTopics;
 use crate::user::User;
 use anyhow::Result;
+use clap::Parser;
 use std::process::Output;
-use structopt::StructOpt;
 
 /// Apply a script to all repositories that has a topics that match a pattern
 /// Or to all repositories that has a specific topic
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
     /// regex pattern to filter topics. This is required unless topic is provided.
-    #[structopt(long, short, required_unless("topic"))]
+    #[arg(long, short, required_unless_present("topic"))]
     pub regex: Option<Filter>,
     /// A topic to filter repositories. This is required unless regex is provided.
-    #[structopt(long, short, required_unless("regex"))]
+    #[arg(long, short, required_unless_present("regex"))]
     pub topic: Option<String>,
     /// The script will be applied for all repositories that match
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub script: Script,
     /// use https to clone repositories if needed
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub use_https: bool,
 }
 

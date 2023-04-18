@@ -3,29 +3,29 @@ use super::models::Script;
 use crate::filter::Filter;
 use crate::path;
 use anyhow::{Error, Result};
+use clap::Parser;
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
 use std::env;
 use std::path::PathBuf;
 use std::process::Output;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Apply a script to all local repositories that match a pattern
 ///
 /// If you want your script to use your authentication token, you
 /// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// The location of a script
     pub script: Script,
 }

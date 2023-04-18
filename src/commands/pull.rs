@@ -6,30 +6,31 @@ use crate::git::PullStatus;
 use crate::path;
 use crate::user::User;
 use anyhow::{Context, Error, Result};
+use clap::Parser;
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use std::sync::Arc;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Pull the current branch of all local repositories that match a regex
 ///
 /// This command only works on those repositories that has been cloned in root directory
 ///
 pub struct PullArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to stash if there are unstaged changes
     pub stash: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
 }
@@ -147,7 +148,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
                     // do stash
                     stash_status = match git::stash(&mut git_repo, None) {
                         Ok(_) => StashStatus::Success,
-                        Err(e) => StashStatus::Failed(e),
+                        Err(e) => StashStatus::Failed(Arc::new(e)),
                     };
                     // pull
                     let cred = GitCredential::from(user);
@@ -163,7 +164,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
         }
     };
 
-    let status = pull();
+    let status = pull().map_err(Arc::new);
 
     Status {
         repo: dir_name,
@@ -173,10 +174,10 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Status {
     repo: String,
-    status: Result<PullStatus>,
+    status: Result<PullStatus, Arc<anyhow::Error>>,
     repo_status: RepoStatus,
     stash_status: StashStatus,
 }
@@ -233,12 +234,12 @@ fn merge_status_to_cell(status: &PullStatus) -> Cell {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum StashStatus {
     No,
     Skip,
     Success,
-    Failed(Error),
+    Failed(Arc<Error>),
 }
 
 impl StashStatus {
@@ -256,7 +257,7 @@ impl StashStatus {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum RepoStatus {
     Clean,
     Dirty,

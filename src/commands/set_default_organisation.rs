@@ -1,11 +1,11 @@
 use crate::config::Config;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Set default organisation name for every other command
 pub struct SetOrganisationArgs {
     /// Organisation name
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub organisation: String,
 }
 

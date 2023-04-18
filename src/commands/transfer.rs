@@ -2,24 +2,24 @@ use super::common;
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Transfer repositories that match a regex to another organisation
 ///
 /// This will show all repositories that will affected by this command
 /// You have to enter 'YES' to confirm your action
 pub struct TransferArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// The current organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
     /// New organisation name
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub new_org: String,
 }
 

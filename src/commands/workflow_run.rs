@@ -4,9 +4,9 @@ use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Rerun the most recent workflow or send a repository_dispatch event to trigger workflows
 ///
 /// Without "dispatch" flag this will try to re-run the most recent workflow. But This only works when the most recent workflow failed.
@@ -15,18 +15,18 @@ use structopt::StructOpt;
 /// In order to use this option. The workflow files need to use repository_dispatch event.
 /// And this event will only trigger a workflow run if the workflow file is on the main or default branch.
 pub struct WorkflowRunArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional workflow_file_name
     pub workflow: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Send repository_dispatch to trigger workflow rerun
     pub dispatch: bool,
 }

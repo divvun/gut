@@ -2,24 +2,24 @@ use super::models::RootDirectory;
 use crate::config::Config;
 use crate::github;
 use crate::user::User;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Init configuration data
 pub struct InitArgs {
-    #[structopt(long, short, default_value)]
+    #[arg(long, short, default_value = "RootDirectory::default()")]
     /// The root directory. This must be an absolute path.
     ///
     /// All repositories will be cloned under this directory
     pub root: RootDirectory,
-    #[structopt(short, long)]
+    #[arg(short, long)]
     /// Github token. Gut needs github token to access your github data
     pub token: String,
     /// Default organisation
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub organisation: Option<String>,
     /// Default to https instead of ssh when cloning repositories
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub use_https: bool,
 }
 
@@ -33,9 +33,11 @@ impl InitArgs {
                 }
             };
         user.save_user()?;
-        let config = Config::new(self.root.path.clone(),
-                                 self.organisation.clone(),
-                                 self.use_https);
+        let config = Config::new(
+            self.root.path.clone(),
+            self.organisation.clone(),
+            self.use_https,
+        );
         config.save_config()
     }
 }

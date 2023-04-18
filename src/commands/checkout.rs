@@ -6,14 +6,14 @@ use crate::git::GitCredential;
 use anyhow::{anyhow, Result};
 
 use crate::filter::Filter;
+use clap::Parser;
 use git2::BranchType;
-use structopt::StructOpt;
 
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Checkout a branch all repositories that their name matches a pattern or
 /// a topic
 ///
@@ -21,27 +21,27 @@ use crate::github::RemoteRepo;
 ///
 /// This command is able to clone a repository if it is not on the root directory
 pub struct CheckoutArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
+    #[arg(long, required_unless_present("regex"))]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// branch name to checkout
     pub branch: String,
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this option to checkout a remote banch
     ///
     /// If this option is not provided, the command will report that the target branch is remote
     /// only
     pub remote: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
 }

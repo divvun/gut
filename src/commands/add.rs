@@ -1,22 +1,34 @@
 use super::add_repos::*;
 use super::add_users::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Add users, repos to an organisation/a team.
-pub enum AddArgs {
-    #[structopt(name = "users")]
-    Users(AddUsersArgs),
-    #[structopt(name = "repos")]
-    Repos(AddRepoArgs),
+pub struct AddArgs {
+    #[command(subcommand)]
+    command: AddCommand,
 }
 
 impl AddArgs {
     pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum AddCommand {
+    #[command(name = "users")]
+    Users(AddUsersArgs),
+    #[command(name = "repos")]
+    Repos(AddRepoArgs),
+}
+
+impl AddCommand {
+    pub fn run(&self) -> Result<()> {
         match self {
-            AddArgs::Users(args) => args.run(),
-            AddArgs::Repos(args) => args.run(),
+            AddCommand::Users(args) => args.run(),
+            AddCommand::Repos(args) => args.run(),
         }
     }
 }

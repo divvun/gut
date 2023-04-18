@@ -7,7 +7,7 @@ use anyhow::Result;
 use git2::Repository;
 use std::str;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PullStatus {
     Normal,
     Nothing,

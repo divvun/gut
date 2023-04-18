@@ -10,27 +10,27 @@ use crate::github::RemoteRepo;
 use crate::path;
 use crate::user::User;
 use anyhow::Result;
+use clap::Parser;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 use uuid::Uuid;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// generate ci for every repositories that matches
 pub struct GenerateArgs {
-    #[structopt(long, short, default_value = "divvun")]
+    #[arg(long, short, default_value = "divvun")]
     pub organisation: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub regex: Option<Filter>,
-    #[structopt(long, required_unless("regex"))]
+    #[arg(long, required_unless_present("regex"))]
     /// topic to filter
     pub topic: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub template: ExistDirectory,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub data: String,
     /// use https to clone repositories if needed
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub use_https: bool,
 }
 

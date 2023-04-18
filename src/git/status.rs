@@ -1,6 +1,6 @@
 use git2::{Error, Repository, Status, StatusOptions};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GitStatus {
     pub added: Vec<String>,
     pub new: Vec<String>,

@@ -4,26 +4,26 @@ use crate::github::{CreateTeamResponse, Unauthorized};
 
 use anyhow::Result;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Create a new team for an organisation
 pub struct CreateTeamArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Team name
     pub team_name: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Team description
     pub description: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to set a team is a secret team
     pub secret: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// List of usernames to invite to the new created team
     pub members: Vec<String>,
 }

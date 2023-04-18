@@ -3,28 +3,39 @@ use super::topic_apply::*;
 use super::topic_get::*;
 use super::topic_set::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct TopicArgs {
+    #[command(subcommand)]
+    command: TopicCommand,
+}
 /// Add, get, set or apply a script by topic
-pub enum TopicArgs {
-    #[structopt(name = "add")]
+impl TopicArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum TopicCommand {
+    #[command(name = "add")]
     Add(TopicAddArgs),
-    #[structopt(name = "apply")]
+    #[command(name = "apply")]
     Apply(TopicApplyArgs),
-    #[structopt(name = "get")]
+    #[command(name = "get")]
     Get(TopicGetArgs),
-    #[structopt(name = "set")]
+    #[command(name = "set")]
     Set(TopicSetArgs),
 }
 
-impl TopicArgs {
+impl TopicCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            TopicArgs::Get(args) => args.run(),
-            TopicArgs::Set(args) => args.run(),
-            TopicArgs::Add(args) => args.run(),
-            TopicArgs::Apply(args) => args.run(),
+            Self::Get(args) => args.run(),
+            Self::Set(args) => args.run(),
+            Self::Add(args) => args.run(),
+            Self::Apply(args) => args.run(),
         }
     }
 }

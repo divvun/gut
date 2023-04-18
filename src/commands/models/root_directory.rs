@@ -16,7 +16,7 @@ pub enum RootError {
     NotAnAbsolute { path: String },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RootDirectory {
     pub path: String,
 }

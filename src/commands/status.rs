@@ -4,26 +4,26 @@ use crate::git;
 use crate::git::GitStatus;
 use crate::path::dir_name;
 use anyhow::{Context, Result};
-use prettytable::{cell, format, row, Row, Table};
+use clap::Parser;
+use prettytable::{format, row, Row, Table};
 use rayon::prelude::*;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to show more detail
     pub verbose: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to omit repositories without changes
     pub quiet: bool,
 }
@@ -124,7 +124,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     rows
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct RepoStatus {
     name: String,
     branch: String,
@@ -179,7 +179,7 @@ fn show_detail_changes(msg: &str, list: &[String]) -> Vec<StatusRow> {
     rows
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum StatusRow {
     RepoSummarize {
         name: String,

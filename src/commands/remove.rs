@@ -1,22 +1,33 @@
 use super::remove_repos::*;
 use super::remove_users::*;
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct RemoveArgs {
+    #[command(subcommand)]
+    command: RemoveCommand,
+}
 /// Remove users, repos from an organisation/a team.
-pub enum RemoveArgs {
-    #[structopt(name = "users")]
+impl RemoveArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum RemoveCommand {
+    #[command(name = "users")]
     Users(RemoveUsersArgs),
-    #[structopt(name = "repositories", aliases = &["repos"])]
+    #[command(name = "repositories", aliases = &["repos"])]
     Repos(RemoveReposArgs),
 }
 
-impl RemoveArgs {
+impl RemoveCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            RemoveArgs::Users(args) => args.run(),
-            RemoveArgs::Repos(args) => args.run(),
+            Self::Users(args) => args.run(),
+            Self::Repos(args) => args.run(),
         }
     }
 }

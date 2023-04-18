@@ -3,32 +3,32 @@ use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::{anyhow, Error, Result};
+use clap::Parser;
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Add all matched repositories to a team by using team_slug
 pub struct AddRepoArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[structopt(long, short, default_value = "pull", parse(try_from_str = parse_permission))]
+    #[arg(long, short, default_value = "pull", value_parser = parse_permission)]
     ///The permission to grant the team on repositories
     ///
     /// Can be one of:
     ///
     /// pull | push | admin | maintain | triage
     pub permission: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// optional team slug
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub team_slug: String,
 }
 

@@ -9,35 +9,35 @@ use anyhow::{anyhow, Context, Result};
 
 use crate::filter::Filter;
 use crate::git::{open, push, Clonable, GitCredential, GitRepo};
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Create new repositories in an organisation and push for existing git repositories
 pub struct CreateRepoArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// The parent directory of all directories that you want to create new repositories
     pub dir: Option<ExistDirectory>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Regex to filter out sub directories by name
     pub regex: Filter,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to create a public repositories
     pub public: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to not pushing the new created repositories to github
     pub no_push: bool,
-    #[structopt(long)]
+    #[arg(long)]
     /// Option to clone the new created repositories right after it is being created.
     pub clone: bool,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
-    #[structopt(long)]
+    #[arg(long)]
     /// Option to overrrite the exist remote origin
     pub override_origin: bool,
 }
@@ -213,7 +213,7 @@ fn create_repo(
     Ok(create_repo)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CreateRepo {
     name: String,
     html_url: String,

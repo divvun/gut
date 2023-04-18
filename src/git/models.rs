@@ -1,7 +1,7 @@
 use super::open;
 use crate::git::clone;
 use crate::user::User;
-use dialoguer::PasswordInput;
+use dialoguer::Password;
 use git2::{Error, Repository};
 use git2_credentials::CredentialUI;
 use std::path::PathBuf;
@@ -51,7 +51,7 @@ impl CredentialUI for GitCredential {
         &self,
         passphrase_prompt: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let passphrase: String = PasswordInput::new()
+        let passphrase: String = Password::new()
             .with_prompt(passphrase_prompt)
             .allow_empty_password(true)
             .interact()?;

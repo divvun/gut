@@ -4,7 +4,7 @@ use std::process::{Command, Output};
 use std::str;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
     pub path: PathBuf,
 }

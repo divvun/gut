@@ -5,24 +5,24 @@ use crate::commands::patterns::*;
 use crate::git;
 use crate::path;
 use anyhow::{Context, Result};
+use clap::Parser;
 use git2::Repository;
 use std::collections::BTreeMap;
 use std::fs::{copy, create_dir_all, read_to_string};
 use std::path::{Path, PathBuf};
 use std::str;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Generate a new project from a template
 pub struct GenerateArgs {
     /// Directory of template project
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub template: ExistDirectory,
     /// Directory of the will be genrated project
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub dir: String,
     /// Option to skip git init for new project
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub no_init: bool,
 }
 

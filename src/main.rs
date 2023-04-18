@@ -10,8 +10,8 @@ mod toml;
 mod user;
 
 use anyhow::Result;
+use clap::Parser;
 use cli::{Args, Commands};
-use structopt::StructOpt;
 
 fn main() -> Result<()> {
     color_backtrace::install();
@@ -21,7 +21,7 @@ fn main() -> Result<()> {
         .filter(Some("gut"), log::LevelFilter::Debug)
         .init();
 
-    let args = Args::from_args();
+    let args = Args::parse();
     log::debug!("Arguments: {:?}", args);
 
     match args.command {

@@ -6,36 +6,36 @@ use crate::filter::Filter;
 use crate::git;
 use crate::path;
 use anyhow::{anyhow, Result};
+use clap::Parser;
 use git2::Repository;
 use std::fs::{create_dir_all, write, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str;
-use structopt::StructOpt;
 
 /// Apply changes from template to all prject that match the regex
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct ApplyArgs {
     /// Directory of template project
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub template: ExistDirectory,
     /// Target organisation name
-    #[structopt(long, short, default_value = "divvun")]
+    #[arg(long, short, default_value = "divvun")]
     pub organisation: String,
     /// Optional regex to filter repositories
-    #[structopt(long, short)]
+    #[arg(long, short)]
     pub regex: Option<Filter>,
     /// Flag to finish apply changes process
-    #[structopt(long = "continue")]
+    #[arg(long = "continue")]
     pub finish: bool,
     /// Flag to abort apply changes process
-    #[structopt(long)]
+    #[arg(long)]
     pub abort: bool,
     /// Flag to include optional files
-    #[structopt(long)]
+    #[arg(long)]
     pub optional: bool,
     /// Skip CI
-    #[structopt(long)]
+    #[arg(long)]
     pub skip_ci: bool,
 }
 

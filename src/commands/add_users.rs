@@ -3,29 +3,29 @@ use crate::github;
 
 use anyhow::Result;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 /// Invite users by users' usernames to an organisation
 ///
 /// If you specify team_slug it'll try to invite users to the provided team
 pub struct AddUsersArgs {
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[structopt(long, short, default_value = "member")]
+    #[arg(long, short, default_value = "member")]
     /// Role of users
     ///
     /// It should be one of ["member", "admin"].
     ///
     /// If you specify a team role should be one of ["member", "maintainer"]
     pub role: String,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// List of user's username
     pub users: Vec<String>,
-    #[structopt(long, short)]
+    #[arg(long, short)]
     /// Optional team slug
     pub team_slug: Option<String>,
 }

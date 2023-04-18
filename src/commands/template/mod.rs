@@ -6,22 +6,33 @@ use anyhow::Result;
 use apply::*;
 use generate::*;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct TemplateArgs {
+    #[command(subcommand)]
+    command: TemplateCommand,
+}
 /// Apply changes or generate new template
-pub enum TemplateArgs {
-    #[structopt(name = "apply")]
+impl TemplateArgs {
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
+    }
+}
+
+#[derive(Debug, Parser)]
+pub enum TemplateCommand {
+    #[command(name = "apply")]
     Apply(ApplyArgs),
-    #[structopt(name = "generate")]
+    #[command(name = "generate")]
     Generate(GenerateArgs),
 }
 
-impl TemplateArgs {
+impl TemplateCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            TemplateArgs::Apply(args) => args.run(),
-            TemplateArgs::Generate(args) => args.run(),
+            Self::Apply(args) => args.run(),
+            Self::Generate(args) => args.run(),
         }
     }
 }
