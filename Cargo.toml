@@ -21,7 +21,7 @@ pretty_env_logger = "0.4.0"
 prettytable-rs = "0.8.0"
 colored = "1.9.3"
 
-reqwest = { version = "0.10.4", features = ["blocking", "json", "gzip", "native-tls-vendored"], default_features = false }
+reqwest = { version = "0.10.10", features = ["blocking", "json", "gzip", "native-tls-vendored"], default-features = false }
 graphql_client = "0.9.0"
 
 dirs = "2.0"
