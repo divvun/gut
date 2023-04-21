@@ -6,7 +6,7 @@ use crate::git;
 use crate::path;
 use anyhow::{Context, Result};
 use clap::Parser;
-use git2::Repository;
+use git2::{Repository, RepositoryInitOptions};
 use std::collections::BTreeMap;
 use std::fs::{copy, create_dir_all, read_to_string};
 use std::path::{Path, PathBuf};
@@ -83,7 +83,9 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
 
     if !no_init {
         // init repo
-        let target_repo = Repository::init(target_dir)?;
+        let mut rio = RepositoryInitOptions::new();
+        rio.initial_head("main");
+        let target_repo = Repository::init_opts(target_dir, &rio)?;
         // commit all data
         commit(&target_repo, "Generate project")?;
     }
@@ -112,13 +114,13 @@ pub fn commit(git_repo: &Repository, msg: &str) -> Result<()> {
 
     let addable_list = status.addable_list();
     for p in addable_list {
-        //log::debug!("addable file: {}", p);
+        log::debug!("addable file: {}", p);
         let path = Path::new(&p);
         index.add_path(path)?;
     }
 
     for p in status.deleted {
-        //log::debug!("removed file: {}", p);
+        log::debug!("removed file: {}", p);
         let path = Path::new(&p);
         index.remove_path(path)?;
     }
