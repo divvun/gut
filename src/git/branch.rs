@@ -36,8 +36,8 @@ pub fn checkout_local_branch(repo: &Repository, branch_name: &str) -> Result<()>
     Ok(())
 }
 
-pub fn checkout_remote_branch<'a>(
-    repo: &'a Repository,
+pub fn checkout_remote_branch(
+    repo: &Repository,
     branch: &str,
     remote_name: &str,
     cred: Option<GitCredential>,

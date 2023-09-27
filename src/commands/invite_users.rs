@@ -29,7 +29,9 @@ pub struct InviteUsersArgs {
 }
 
 #[derive(Parser, Clone, Debug)]
+#[derive(Default)]
 pub enum Role {
+    #[default]
     Member,
     Admin,
     Billing,
@@ -71,11 +73,7 @@ impl FromStr for Role {
     }
 }
 
-impl Default for Role {
-    fn default() -> Self {
-        Role::Member
-    }
-}
+
 
 impl fmt::Display for Role {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
