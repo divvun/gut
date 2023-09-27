@@ -32,6 +32,10 @@ Extract the archive, and move the binary to somewhere on your `$PATH`.
 The `<root-dir>` is the directory where you want to store all repos processed by `gut`.
 Below the `<root-dir>` dir, there will be one directory for every organisation you interact with, and within the organisation directory all repos are stored.
 
+### SSH access over the `git` protocoll
+
+To use the `git`/`ssh` protocol, you need to set up an `ssh` key for GitHub. Follow [these instructions](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+
 ## Usage
 
 > **NB!** Please note that this is a potentially very powerful tool. Some commands require *organisation owner permissions*, and the most dangerous ones will require an *explicit confirmation*. If you get an error that the operation is not permitted, you probably do not have sufficient access to the repos involved.
