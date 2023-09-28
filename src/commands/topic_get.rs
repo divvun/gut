@@ -3,6 +3,7 @@ use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use crate::cli::Args as CommonArgs;
 
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex
@@ -18,7 +19,7 @@ pub struct TopicGetArgs {
 }
 
 impl TopicGetArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

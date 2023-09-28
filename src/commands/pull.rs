@@ -1,5 +1,6 @@
 use super::common;
 use crate::filter::Filter;
+use crate::cli::Args as CommonArgs;
 use crate::git;
 use crate::git::GitCredential;
 use crate::git::PullStatus;
@@ -10,10 +11,15 @@ use clap::Parser;
 use colored::*;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use rayon::prelude::*;
+use serde::{Serialize, Serializer};
+use serde_json::json;
+use std::fmt::Debug;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-#[derive(Debug, Parser)]
+use crate::cli::OutputFormat;
+
+#[derive(Debug, Clone, Parser)]
 /// Pull the current branch of all local repositories that match a regex
 ///
 /// This command only works on those repositories that has been cloned in root directory
@@ -36,7 +42,7 @@ pub struct PullArgs {
 }
 
 impl PullArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
@@ -56,7 +62,10 @@ impl PullArgs {
             .map(|d| pull(d, &user, self.stash, self.merge))
             .collect();
 
-        summarize(&statuses);
+        match common_args.format.unwrap() {
+            OutputFormat::Json => println!("{}", json!(statuses)),
+            OutputFormat::Table => summarize(&statuses),
+        };
 
         Ok(())
     }
@@ -174,9 +183,20 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     }
 }
 
-#[derive(Debug, Clone)]
+fn serialize_status<S>(status: &Result<PullStatus, Arc<anyhow::Error>>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match status {
+        Ok(pull_status) => pull_status.serialize(s),
+        Err(e) => s.serialize_str(&e.to_string()),
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct Status {
     repo: String,
+    #[serde(serialize_with = "serialize_status")]
     status: Result<PullStatus, Arc<anyhow::Error>>,
     repo_status: RepoStatus,
     stash_status: StashStatus,
@@ -234,11 +254,19 @@ fn merge_status_to_cell(status: &PullStatus) -> Cell {
     }
 }
 
-#[derive(Debug, Clone)]
+fn serialize_error<S>(err: &Arc<Error>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(&format!("{}", err))
+}
+
+#[derive(Debug, Clone, Serialize)]
 enum StashStatus {
     No,
     Skip,
     Success,
+    #[serde(serialize_with = "serialize_error")]
     Failed(Arc<Error>),
 }
 
@@ -257,7 +285,7 @@ impl StashStatus {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 enum RepoStatus {
     Clean,
     Dirty,

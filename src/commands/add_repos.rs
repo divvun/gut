@@ -1,4 +1,5 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
@@ -33,7 +34,7 @@ pub struct AddRepoArgs {
 }
 
 impl AddRepoArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

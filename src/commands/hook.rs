@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::hook_create::*;
 use super::hook_delete::*;
 use anyhow::Result;
@@ -10,8 +11,8 @@ pub struct HookArgs {
 }
 /// Create, delete hooks for all repositories that match a pattern
 impl HookArgs {
-    pub fn run(&self) -> Result<()> {
-        self.command.run()
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        self.command.run(common_args)
     }
 }
 
@@ -24,10 +25,10 @@ pub enum HookCommand {
 }
 
 impl HookCommand {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match self {
-            Self::Create(args) => args.run(),
-            Self::Delete(args) => args.run(),
+            Self::Create(args) => args.run(common_args),
+            Self::Delete(args) => args.run(common_args),
         }
     }
 }

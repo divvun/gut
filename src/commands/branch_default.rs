@@ -2,6 +2,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
+use crate::cli::Args as CommonArgs;
 
 use anyhow::Result;
 
@@ -24,7 +25,7 @@ pub struct DefaultBranchArgs {
 }
 
 impl DefaultBranchArgs {
-    pub fn set_default_branch(&self) -> Result<()> {
+    pub fn set_default_branch(&self, _common_args: &CommonArgs) -> Result<()> {
         let token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
         let repos =

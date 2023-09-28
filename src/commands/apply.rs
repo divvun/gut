@@ -1,6 +1,7 @@
 use super::common;
 use super::models::Script;
 use crate::filter::Filter;
+use crate::cli::Args as CommonArgs;
 use crate::path;
 use anyhow::{Error, Result};
 use clap::Parser;
@@ -31,7 +32,7 @@ pub struct ApplyArgs {
 }
 
 impl ApplyArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
         let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;

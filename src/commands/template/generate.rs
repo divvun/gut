@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use crate::commands::common;
 use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
@@ -27,7 +28,7 @@ pub struct GenerateArgs {
 }
 
 impl GenerateArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let template_dir = &self.template.path;
         let target_dir = Path::new(&self.dir).to_path_buf();
         create_dir_all(&target_dir).context("Cannot create target directory")?;

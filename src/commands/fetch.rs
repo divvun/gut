@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::filter::Filter;
 use crate::git;
@@ -24,7 +25,7 @@ pub struct FetchArgs {
 }
 
 impl FetchArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;

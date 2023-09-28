@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::remove_repos::*;
 use super::remove_users::*;
 use anyhow::Result;
@@ -10,8 +11,8 @@ pub struct RemoveArgs {
 }
 /// Remove users, repos from an organisation/a team.
 impl RemoveArgs {
-    pub fn run(&self) -> Result<()> {
-        self.command.run()
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        self.command.run(common_args)
     }
 }
 
@@ -24,10 +25,10 @@ pub enum RemoveCommand {
 }
 
 impl RemoveCommand {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match self {
-            Self::Users(args) => args.run(),
-            Self::Repos(args) => args.run(),
+            Self::Users(args) => args.run(common_args),
+            Self::Repos(args) => args.run(common_args),
         }
     }
 }

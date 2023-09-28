@@ -1,4 +1,5 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::RemoteRepo;
 
@@ -24,7 +25,7 @@ pub struct UnprotectedBranchArgs {
 }
 
 impl UnprotectedBranchArgs {
-    pub fn set_unprotected_branch(&self) -> Result<()> {
+    pub fn set_unprotected_branch(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

@@ -1,4 +1,5 @@
 use super::common;
+use crate::cli::{OutputFormat, Args as CommonArgs};
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
@@ -7,6 +8,8 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use prettytable::{format, row, Row, Table};
 use rayon::prelude::*;
+use serde::Serialize;
+use serde_json::json;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -29,7 +32,7 @@ pub struct StatusArgs {
 }
 
 impl StatusArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
@@ -46,6 +49,11 @@ impl StatusArgs {
                     && status.status.is_behind == 0)
             })
             .collect();
+
+        if let Some(OutputFormat::Json) = common_args.format {
+            println!("{}", json!(statuses));
+            return Ok(());
+        }
 
         let rows = to_rows(&statuses, self.verbose);
         let table = to_table(&rows);
@@ -124,7 +132,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     rows
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 struct RepoStatus {
     name: String,
     branch: String,

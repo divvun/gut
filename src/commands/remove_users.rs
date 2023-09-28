@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::github;
 
@@ -24,14 +25,14 @@ pub struct RemoveUsersArgs {
 }
 
 impl RemoveUsersArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match &self.team_slug {
-            Some(name) => self.remove_users_from_team(name),
-            None => self.remove_users_from_org(),
+            Some(name) => self.remove_users_from_team(name, common_args),
+            None => self.remove_users_from_org(common_args),
         }
     }
 
-    fn remove_users_from_org(&self) -> Result<()> {
+    fn remove_users_from_org(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 
@@ -44,7 +45,7 @@ impl RemoveUsersArgs {
         Ok(())
     }
 
-    fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
+    fn remove_users_from_team(&self, team_name: &str, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

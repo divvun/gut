@@ -6,6 +6,7 @@ use prettytable::{cell, format, row, Cell, Row, Table};
 use crate::git;
 use anyhow::{Context, Error, Result};
 
+use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git::push;
 use crate::git::GitCredential;
@@ -40,7 +41,7 @@ pub struct PushArgs {
 }
 
 impl PushArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

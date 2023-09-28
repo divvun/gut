@@ -1,6 +1,7 @@
 use git2::{Error, Repository, Status, StatusOptions};
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GitStatus {
     pub added: Vec<String>,
     pub new: Vec<String>,

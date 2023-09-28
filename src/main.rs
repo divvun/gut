@@ -21,35 +21,35 @@ fn main() -> Result<()> {
         .filter(Some("gut"), log::LevelFilter::Debug)
         .init();
 
-    let args = Args::parse();
-    log::debug!("Arguments: {:?}", args);
+    let common_args = Args::parse();
+    log::debug!("Arguments: {:?}", common_args);
 
-    match args.command {
-        Commands::Add(args) => args.run(),
-        Commands::Apply(args) => args.run(),
-        Commands::Branch(args) => args.run(),
-        Commands::Checkout(args) => args.run(),
-        Commands::Ci(args) => args.run(),
-        Commands::Clone(args) => args.run(),
-        Commands::Clean(args) => args.run(),
-        Commands::Commit(args) => args.run(),
-        Commands::Create(args) => args.run(),
-        Commands::Fetch(args) => args.run(),
-        Commands::Hook(args) => args.run(),
-        Commands::Init(args) => args.save_config(),
-        Commands::Invite(args) => args.run(),
-        Commands::Merge(args) => args.run(),
-        Commands::Make(args) => args.run(),
-        Commands::Pull(args) => args.run(),
-        Commands::Push(args) => args.run(),
-        Commands::Remove(args) => args.run(),
-        Commands::Rename(args) => args.run(),
-        Commands::Set(args) => args.run(),
-        Commands::Show(args) => args.run(),
-        Commands::Status(args) => args.run(),
-        Commands::Template(args) => args.run(),
-        Commands::Topic(args) => args.run(),
-        Commands::Transfer(args) => args.run(),
-        Commands::Workflow(args) => args.run(),
+    match &common_args.command {
+        Commands::Add(args) => args.run(&common_args),
+        Commands::Apply(args) => args.run(&common_args),
+        Commands::Branch(args) => args.run(&common_args),
+        Commands::Checkout(args) => args.run(&common_args),
+        Commands::Ci(args) => args.run(&common_args),
+        Commands::Clone(args) => args.run(&common_args),
+        Commands::Clean(args) => args.run(&common_args),
+        Commands::Commit(args) => args.run(&common_args),
+        Commands::Create(args) => args.run(&common_args),
+        Commands::Fetch(args) => args.run(&common_args),
+        Commands::Hook(args) => args.run(&common_args),
+        Commands::Init(args) => args.save_config(&common_args),
+        Commands::Invite(args) => args.run(&common_args),
+        Commands::Merge(args) => args.run(&common_args),
+        Commands::Make(args) => args.run(&common_args),
+        Commands::Pull(args) => args.run(&common_args),
+        Commands::Push(args) => args.run(&common_args),
+        Commands::Remove(args) => args.run(&common_args),
+        Commands::Rename(args) => args.run(&common_args),
+        Commands::Set(args) => args.run(&common_args),
+        Commands::Show(args) => args.run(&common_args),
+        Commands::Status(args) => args.run(&common_args),
+        Commands::Template(args) => args.run(&common_args),
+        Commands::Topic(args) => args.run(&common_args),
+        Commands::Transfer(args) => args.run(&common_args),
+        Commands::Workflow(args) => args.run(&common_args),
     }
 }

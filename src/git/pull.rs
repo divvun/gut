@@ -5,9 +5,10 @@ use super::models::GitCredential;
 use super::rebase;
 use anyhow::Result;
 use git2::Repository;
+use serde::Serialize;
 use std::str;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum PullStatus {
     Normal,
     Nothing,
