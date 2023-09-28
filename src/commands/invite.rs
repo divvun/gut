@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::invite_users::*;
 use anyhow::Result;
 use clap::Parser;
@@ -9,8 +10,8 @@ pub struct InviteArgs {
 }
 /// Invite users to an organisation by emails
 impl InviteArgs {
-    pub fn run(&self) -> Result<()> {
-        self.command.run()
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        self.command.run(common_args)
     }
 }
 
@@ -21,9 +22,9 @@ pub enum InviteCommand {
 }
 
 impl InviteCommand {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match self {
-            Self::Users(args) => args.run(),
+            Self::Users(args) => args.run(common_args),
         }
     }
 }

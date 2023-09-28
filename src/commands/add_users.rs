@@ -1,5 +1,6 @@
 use super::common;
 use crate::github;
+use crate::cli::Args as CommonArgs;
 
 use anyhow::Result;
 
@@ -31,7 +32,7 @@ pub struct AddUsersArgs {
 }
 
 impl AddUsersArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         match &self.team_slug {
             Some(name) => self.add_users_to_team(name),
             None => self.add_users_to_org(),

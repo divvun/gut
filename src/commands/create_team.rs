@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::github;
 use crate::github::{CreateTeamResponse, Unauthorized};
@@ -29,7 +30,7 @@ pub struct CreateTeamArgs {
 }
 
 impl CreateTeamArgs {
-    pub fn create_team(&self) -> Result<()> {
+    pub fn create_team(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
 
         match create_team(self, &user_token) {

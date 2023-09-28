@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::topic_add::*;
 use super::topic_apply::*;
 use super::topic_get::*;
@@ -12,8 +13,8 @@ pub struct TopicArgs {
 }
 /// Add, get, set or apply a script by topic
 impl TopicArgs {
-    pub fn run(&self) -> Result<()> {
-        self.command.run()
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        self.command.run(common_args)
     }
 }
 
@@ -30,12 +31,12 @@ pub enum TopicCommand {
 }
 
 impl TopicCommand {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match self {
-            Self::Get(args) => args.run(),
-            Self::Set(args) => args.run(),
-            Self::Add(args) => args.run(),
-            Self::Apply(args) => args.run(),
+            Self::Get(args) => args.run(common_args),
+            Self::Set(args) => args.run(common_args),
+            Self::Add(args) => args.run(common_args),
+            Self::Apply(args) => args.run(common_args),
         }
     }
 }

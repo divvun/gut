@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::github;
 
@@ -29,7 +30,7 @@ pub struct SetTeamPermissionArgs {
 }
 
 impl SetTeamPermissionArgs {
-    pub fn set_permission(&self) -> Result<()> {
+    pub fn set_permission(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

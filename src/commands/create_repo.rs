@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::github::create_org_repo;
 use crate::user::User;
@@ -43,7 +44,7 @@ pub struct CreateRepoArgs {
 }
 
 impl CreateRepoArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;

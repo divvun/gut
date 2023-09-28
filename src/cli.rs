@@ -4,16 +4,26 @@ use crate::commands::{
     RemoveArgs, RenameArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs, TopicArgs, TransferArgs,
     WorkflowArgs,
 };
-use clap::Parser;
+use clap::{Parser, ValueEnum, Subcommand};
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum OutputFormat {
+    /// Output results as an ascii table
+    Table,
+    /// Output results as a json-serialised string
+    Json,
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "gut", about = "git multirepo maintenance tool")]
 pub struct Args {
+    #[arg(long, value_enum, default_value = "table")]
+    pub format: Option<OutputFormat>,
     #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Subcommand)]
 pub enum Commands {
     #[command(name = "add")]
     Add(AddArgs),

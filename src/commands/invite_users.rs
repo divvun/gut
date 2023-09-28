@@ -1,3 +1,4 @@
+use crate::cli::Args as CommonArgs;
 use super::common;
 use crate::github;
 use std::fmt;
@@ -82,7 +83,7 @@ impl fmt::Display for Role {
 }
 
 impl InviteUsersArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

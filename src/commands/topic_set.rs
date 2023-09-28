@@ -1,4 +1,5 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
@@ -21,7 +22,7 @@ pub struct TopicSetArgs {
 }
 
 impl TopicSetArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

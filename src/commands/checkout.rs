@@ -1,4 +1,5 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::git;
 use crate::user::User;
 
@@ -47,7 +48,7 @@ pub struct CheckoutArgs {
 }
 
 impl CheckoutArgs {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

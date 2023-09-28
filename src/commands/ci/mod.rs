@@ -2,6 +2,7 @@ pub mod export;
 pub mod generate;
 pub mod models;
 
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 use export::*;
@@ -14,8 +15,8 @@ pub struct CiArgs {
 }
 /// Generate or export ci configuration
 impl CiArgs {
-    pub fn run(&self) -> Result<()> {
-        self.command.run()
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        self.command.run(common_args)
     }
 }
 
@@ -28,10 +29,10 @@ pub enum CiCommand {
 }
 
 impl CiCommand {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         match self {
-            Self::Export(args) => args.run(),
-            Self::Generate(args) => args.run(),
+            Self::Export(args) => args.run(common_args),
+            Self::Generate(args) => args.run(common_args),
         }
     }
 }
