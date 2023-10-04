@@ -43,7 +43,7 @@ To use the `git`/`ssh` protocol, you need to set up an `ssh` key for GitHub. Fol
 There are some [usage instructions](USAGE.md) under development.
 
 Then there are some use cases with example commands
-[here](https://github.com/divvun/giellalt-svn2git/blob/master/doc/GutUsageExamples.md).
+[here](https://giellalt.github.io/infra/infraremake/HowToMergeUpdatesFromCore.html).
 
 There is also some rudimentary help text. Run `gut --help` to get an overview.
 
