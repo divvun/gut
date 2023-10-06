@@ -21,8 +21,8 @@ pub struct ApplyArgs {
     #[arg(long, short)]
     pub template: ExistDirectory,
     /// Target organisation name
-    #[arg(long, short, default_value = "divvun")]
-    pub organisation: String,
+    #[arg(long, short)]
+    pub organisation: Option<String>,
     /// Optional regex to filter repositories
     #[arg(long, short)]
     pub regex: Option<Filter>,
@@ -48,8 +48,9 @@ impl ApplyArgs {
         }
 
         let root = common::root()?;
+        let organisation = common::organisation(self.organisation.as_deref())?;
         let target_dirs =
-            common::read_dirs_for_org(&self.organisation, &root, self.regex.as_ref())?;
+            common::read_dirs_for_org(organisation.as_str(), &root, self.regex.as_ref())?;
 
         if self.finish {
             // finish apply process
