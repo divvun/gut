@@ -73,7 +73,7 @@ impl ApplyArgs {
             let template_delta =
                 TemplateDelta::get(&self.template.path.join(".gut/template.toml"))?;
 
-            println!("template delta {:?}", template_delta);
+            // println!("template delta {:?}", template_delta);
 
             for dir in target_dirs {
                 match start_apply(&self.template.path, &template_delta, &dir, self.optional) {
@@ -163,7 +163,7 @@ fn start_apply(
     target_dir: &PathBuf,
     optional: bool,
 ) -> Result<()> {
-    println!("Start Applying for {:?}", target_dir);
+    //println!("Start Applying for {:?}", target_dir);
 
     let target_delta = TargetDelta::get(&target_dir.join(".gut/delta.toml"))?;
 
@@ -269,8 +269,10 @@ fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
         .expect("failed to execute process");
 
     log::debug!("Patch result {:?} at {:?}: {:?}", patch_file, dir, output);
-
-    Ok(output)
+    match output.status.success() {
+        true => Ok(output),
+        false => Err(anyhow!("patching failed!"))
+    }
 }
 
 fn clean_git_dir(dir: &PathBuf) -> Result<()> {
