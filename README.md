@@ -8,6 +8,7 @@ Using the `gut apply -s <script>` command, one can in practice run any git comma
 
 We think it's pretty cool.
 
+
 ## Installation
 
 1. get [Rust](https://www.rust-lang.org/learn/get-started)
