@@ -1,0 +1,208 @@
+name: Gut Deploy
+
+on:
+  push:
+    branches: [ master, feature/deploy ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  deploy-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Divvun CI
+      uses: divvun/actions/setup@master
+      with:
+        key: ${{ secrets.DIVVUN_KEY }}
+    
+    - name: Get version
+      id: version
+      uses: divvun/actions/version@master
+      with:
+        cargo: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Install build dependencies
+      uses: divvun/actions/pahkat/init@master
+      with:
+        repo: https://pahkat.uit.no/devtools/
+        channel: nightly
+        packages: pahkat-uploader
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    
+    - name: Build gut
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    
+    - name: Create dist
+      run: |
+        mkdir -p dist/bin
+        mv target/release/gut.exe dist/bin/gut.exe
+    
+    - name: Sign code
+      uses: divvun/actions/codesign@master
+      with:
+        path: dist/bin/gut.exe
+    
+    - name: Create tarball package
+      id: installer
+      uses: divvun/actions/create-txz@master
+      with:
+        path: dist
+    
+    - name: Deploy
+      uses: divvun/actions/deploy@master
+      with:
+        package-id: gut
+        type: TarballPackage
+        platform: windows
+        arch: x86_64
+        version: ${{ steps.version.outputs.version }}
+        payload-path: ${{ steps.installer.outputs['txz-path'] }}
+        repo: https://pahkat.thetc.se/devtools/
+        channel: ${{ steps.version.outputs.channel }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Divvun CI
+      uses: divvun/actions/setup@master
+      with:
+        key: ${{ secrets.DIVVUN_KEY }}
+    
+    - name: Get version
+      id: version
+      uses: divvun/actions/version@master
+      with:
+        cargo: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Install build dependencies
+      uses: divvun/actions/pahkat/init@master
+      with:
+        repo: https://pahkat.uit.no/devtools/
+        channel: nightly
+        packages: pahkat-uploader
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    
+    - name: Build gut
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    
+    - name: Create dist
+      run: |
+        strip target/release/gut
+        mkdir -p dist/bin
+        mv target/release/gut dist/bin/gut
+    
+    - name: Sign code
+      uses: divvun/actions/codesign@master
+      with:
+        path: dist/bin/gut
+    
+    - name: Create tarball package
+      id: installer
+      uses: divvun/actions/create-txz@master
+      with:
+        path: dist
+    
+    - name: Deploy
+      uses: divvun/actions/deploy@master
+      with:
+        package-id: gut
+        type: TarballPackage
+        platform: macos
+        arch: x86_64
+        version: ${{ steps.version.outputs.version }}
+        payload-path: ${{ steps.installer.outputs['txz-path'] }}
+        repo: https://pahkat.thetc.se/devtools/
+        channel: ${{ steps.version.outputs.channel }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Divvun CI
+      uses: divvun/actions/setup@master
+      with:
+        key: ${{ secrets.DIVVUN_KEY }}
+    
+    - name: Get version
+      id: version
+      uses: divvun/actions/version@master
+      with:
+        cargo: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Install build dependencies
+      uses: divvun/actions/pahkat/init@master
+      with:
+        repo: https://pahkat.uit.no/devtools/
+        channel: nightly
+        packages: pahkat-uploader
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    
+    - name: Build gut
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release
+    
+    - name: Create dist
+      run: |
+        strip target/release/gut
+        mkdir -p dist/bin
+        mv target/release/gut dist/bin/gut
+    
+    - name: Create tarball package
+      id: installer
+      uses: divvun/actions/create-txz@master
+      with:
+        path: dist
+    
+    - name: Deploy
+      uses: divvun/actions/deploy@master
+      with:
+        package-id: gut
+        type: TarballPackage
+        platform: linux
+        arch: x86_64
+        version: ${{ steps.version.outputs.version }}
+        payload-path: ${{ steps.installer.outputs['txz-path'] }}
+        repo: https://pahkat.thetc.se/devtools/
+        channel: ${{ steps.version.outputs.channel }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
