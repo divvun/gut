@@ -31,7 +31,7 @@ pub struct InitArgs {
     #[arg(
         long,
         short,
-        default_value = dirs::home_dir().unwrap().into_os_string(),
+        default_value = dirs::home_dir().unwrap().join("gut").into_os_string(),
         value_parser = clap::builder::ValueParser::new(validate_root),
     )]
     /// The root directory. This must be an absolute path.
