@@ -66,7 +66,7 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
         let git_repo = try_from_one(repo.clone(), user, use_https)?;
         if git_repo.local_path.exists() {
             return Err(anyhow!(
-                "Repository {} is already exist at {:?}",
+                "Repository {} already exists at {:?}",
                 repo.name,
                 git_repo.local_path
             ));
