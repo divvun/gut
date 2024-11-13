@@ -3,10 +3,6 @@ use super::models::GitCredential;
 use anyhow::{anyhow, Result};
 use git2::{Branch, BranchType, Error, Repository};
 
-pub trait CreateBranch<'a> {
-    fn create_branch(&self, new_branch: &str, base_branch: &str) -> Result<Branch<'a>, Error>;
-}
-
 pub fn create_branch<'a>(
     repo: &'a Repository,
     new_branch: &str,

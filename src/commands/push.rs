@@ -130,7 +130,7 @@ fn push_branch(
 
         let cred = GitCredential::from(user);
         push::push_branch(&git_repo, branch, remote_name, Some(cred))?;
-        push_status = PushStatus::Success(status.is_ahead);
+        push_status = PushStatus::Success(());
         Ok(())
     };
 
@@ -179,7 +179,7 @@ impl Status {
 
 enum PushStatus {
     No,
-    Success(usize),
+    Success(()),
     Failed(Error),
 }
 

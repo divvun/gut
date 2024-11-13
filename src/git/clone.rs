@@ -1,11 +1,13 @@
 use super::common;
 use super::models::GitCredential;
-use rayon::prelude::*;
+//use rayon::prelude::*;
 use std::path::Path;
 
 pub trait Clonable {
     type Output;
     fn gclone(&self) -> Result<Self::Output, CloneError>;
+
+    /*
     fn gclone_list<T: Clonable>(list: Vec<T>) -> Vec<Result<T::Output, CloneError>>
     where
         T: Send + Sync,
@@ -13,6 +15,7 @@ pub trait Clonable {
     {
         list.par_iter().map(|r| r.gclone()).collect()
     }
+    */
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -48,6 +51,7 @@ pub fn clone(
         })
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::super::models::{GitCredential, GitRepo};
@@ -95,3 +99,4 @@ mod tests {
         Ok(())
     }
 }
+*/

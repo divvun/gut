@@ -84,6 +84,7 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<String> {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct OrgMember {
     pub login: String,
     pub url: String,

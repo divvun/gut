@@ -336,6 +336,7 @@ pub fn get_teams(org: &str, token: &str) -> Result<Vec<Team>> {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct Team {
     pub id: i32,
     pub slug: String,
@@ -497,6 +498,7 @@ struct CreateRepoBody {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct CreateRepoResponse {
     pub full_name: String,
     pub html_url: String,
@@ -742,6 +744,7 @@ struct CreateHookBody {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct CreateHookResponse {
     pub id: usize,
     pub url: String,
@@ -826,6 +829,7 @@ struct WorkflowResponse {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct Workflow {
     pub id: usize,
     pub html_url: String,

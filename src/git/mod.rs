@@ -16,15 +16,13 @@ pub mod status;
 pub mod tree;
 
 pub use branch::*;
-pub use clone::{Clonable, CloneError};
+pub use clone::Clonable;
 pub use commit::*;
-pub use diff::*;
 pub use fetch::*;
 pub use merge::*;
 pub use models::*;
 pub use open::*;
 pub use pull::*;
-pub use push::push_branch;
 pub use rebase::*;
 pub use sha::*;
 pub use stash::*;

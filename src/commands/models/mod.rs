@@ -4,4 +4,3 @@ pub mod template;
 
 pub use exist_directory::*;
 pub use script::*;
-pub use template::*;
