@@ -37,6 +37,14 @@ impl GitStatus {
         self.can_commit() && !self.is_empty()
     }
 
+    pub fn is_dirty(&self) -> bool {
+        !self.added.is_empty()
+            || !self.modified.is_empty()
+            || !self.deleted.is_empty()
+            || !self.renamed.is_empty()
+            || !self.conflicted.is_empty()
+    }
+
     pub fn is_not_dirty(&self) -> bool {
         self.new.is_empty()
             && self.modified.is_empty()

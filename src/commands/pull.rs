@@ -142,7 +142,7 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
 
         let status = git::status(&git_repo, false)?;
 
-        if status.is_empty() {
+        if !status.is_dirty() {
             stash_status = StashStatus::No;
             repo_status = RepoStatus::Clean;
             // pull
