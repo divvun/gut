@@ -11,6 +11,8 @@ We think it's pretty cool.
 
 ## Installation
 
+Download the latest nightly build:
+
 * [Linux  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
 * [macOS  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
 * [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (i686)
