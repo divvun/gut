@@ -11,18 +11,18 @@ We think it's pretty cool.
 
 ## Installation
 
-1. get [Rust](https://www.rust-lang.org/learn/get-started)
-1. clone this repo: `git clone https://github.com/divvun/gut.git`
-2. `cd gut`
-1. `cargo install --path .`
-
-**Alternatively** - download a precompiled binary from nightly builds:
-
 * [Linux  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
 * [macOS  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
 * [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (i686)
 
 Extract the archive, and move the binary to somewhere on your `$PATH`.
+
+### Building from source
+
+1. get [Rust](https://www.rust-lang.org/learn/get-started)
+1. clone this repo: `git clone https://github.com/divvun/gut.git`
+2. `cd gut`
+1. `cargo install --path .`
 
 ## Setup
 
