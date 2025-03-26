@@ -68,7 +68,7 @@ impl Script {
         let output = execute_script(&script_path, name, org)?;
         if output.status.success() {
             let stdout = str::from_utf8(&output.stdout)?;
-            log::info!("Out put of the script: {}", stdout);
+            log::info!("Output of the script: {}", stdout);
             Ok(stdout.to_string())
         } else {
             let err_message = String::from_utf8(output.stderr)
@@ -88,7 +88,7 @@ impl Script {
         let stdout = str::from_utf8(&output.stdout)?;
         if !stdout.is_empty() {
             let stdout = str::from_utf8(&output.stdout)?;
-            log::info!("Out put of the script: {}", stdout);
+            log::info!("Output of the script: {}", stdout);
             Ok(stdout.to_string())
         } else {
             let err_message = String::from_utf8(output.stderr)

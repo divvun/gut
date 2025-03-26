@@ -10,7 +10,7 @@ use crate::filter::Filter;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Delete all web hooks for all repository that match regex
+/// Delete ALL web hooks for all repositories that match given regex
 pub struct DeleteArgs {
     #[arg(long, short)]
     /// Target organisation name
@@ -42,7 +42,7 @@ impl DeleteArgs {
             let result = delete_all_hooks(&repo, &user_token);
 
             match result {
-                Ok(n) => println!("Successful deleted {} hook(s) of repo {}", n, repo.name),
+                Ok(n) => println!("Successfully deleted {} hook(s) of repo {}", n, repo.name),
                 Err(e) => println!(
                     "Failed to delete hook(s) on repo {} because {:?}",
                     repo.name, e
