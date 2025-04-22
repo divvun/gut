@@ -1,5 +1,7 @@
 # gut
 
+Pronounced `gʉːt`.
+
 [![](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/badge.svg)](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/latest)
 
 This is a Git(Hub) multirepo maintenance tool, designed specifically for Divvun. But it should be quite useful to others needing to maintain tens (or hundreds) of similarly structured github repositories.
