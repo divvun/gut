@@ -35,9 +35,9 @@ pub struct ApplyArgs {
     /// Flag to include optional files
     #[arg(long)]
     pub optional: bool,
-    /// Skip CI
+    /// Force CI build -- automatically skips otherwise
     #[arg(long)]
-    pub skip_ci: bool,
+    pub force_ci: bool,
 }
 
 impl ApplyArgs {
@@ -55,7 +55,7 @@ impl ApplyArgs {
         if self.finish {
             // finish apply process
             for dir in target_dirs {
-                match continue_apply(&dir, self.skip_ci) {
+                match continue_apply(&dir, !self.force_ci) {
                     Ok(_) => println!("Apply changes finish successfully"),
                     Err(e) => println!("Apply changes finish failed because {:?}", e),
                 }
