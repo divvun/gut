@@ -7,6 +7,7 @@ use anyhow::Result;
 
 use crate::filter::Filter;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a branch as protected for all local repositories that match a pattern
@@ -32,8 +33,8 @@ impl ProtectedBranchArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
-        for repo in filtered_repos {
-            let result = set_protected_branch(&repo, &self.protected_branch, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = set_protected_branch(repo, &self.protected_branch, &user_token);
             match result {
                 Ok(_) => println!(
                     "Set protected branch {} for repo {} successfully",
@@ -44,7 +45,7 @@ impl ProtectedBranchArgs {
                     self.protected_branch, repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }

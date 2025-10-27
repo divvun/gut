@@ -8,6 +8,7 @@ use crate::github::RemoteRepo;
 use anyhow::{Context, Result};
 use clap::Parser;
 use dryoc::dryocbox::{DryocBox, PublicKey};
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a secret all repositories that match regex
@@ -36,8 +37,8 @@ impl SecretArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
 
-        for repo in filtered_repos {
-            let result = set_secret(&repo, &self.value, &self.name, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = set_secret(repo, &self.value, &self.name, &user_token);
             match result {
                 Ok(_) => println!("Set secret value for repo {} successfully", repo.name),
                 Err(e) => println!(
@@ -45,7 +46,7 @@ impl SecretArgs {
                     repo.name, e
                 ),
             }
-        }
+        });
         Ok(())
     }
 }

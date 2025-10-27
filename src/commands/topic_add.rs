@@ -4,6 +4,7 @@ use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Add topics for all repositories that match a regex
@@ -37,8 +38,8 @@ impl TopicAddArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
-            let result = add_topics(&repo, &self.topics, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = add_topics(repo, &self.topics, &user_token);
             match result {
                 Ok(topics) => {
                     println!("Add topics for repo {} successfully", repo.name);
@@ -49,7 +50,7 @@ impl TopicAddArgs {
                     repo.name, e
                 ),
             }
-        }
+        });
         Ok(())
     }
 }

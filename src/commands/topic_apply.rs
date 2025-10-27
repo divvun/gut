@@ -8,6 +8,7 @@ use crate::github::RemoteRepoWithTopics;
 use crate::user::User;
 use anyhow::Result;
 use clap::Parser;
+use rayon::prelude::*;
 use std::process::Output;
 
 /// Apply a script to all repositories that has a topics that match a pattern
@@ -52,12 +53,12 @@ impl TopicApplyArgs {
 
         println!("repos {:?}", repos);
 
-        for repo in repos {
-            match apply(&repo, script_path, &user, self.use_https) {
+        repos.par_iter().for_each(|repo| {
+            match apply(repo, script_path, &user, self.use_https) {
                 Ok(_) => println!("Apply success"),
                 Err(e) => println!("Apply failed because {:?}", e),
             }
-        }
+        });
 
         Ok(())
     }

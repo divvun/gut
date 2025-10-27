@@ -6,6 +6,7 @@ use crate::github;
 use crate::github::RemoteRepo;
 use anyhow::Result;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Rerun the most recent workflow or send a repository_dispatch event to trigger workflows
@@ -48,9 +49,9 @@ impl WorkflowRunArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
+        filtered_repos.par_iter().for_each(|repo| {
             let status =
-                rerun_workflow(&repo, &user_token, self.workflow.as_deref(), self.dispatch);
+                rerun_workflow(repo, &user_token, self.workflow.as_deref(), self.dispatch);
 
             match status {
                 Ok(s) => match s {
@@ -71,7 +72,7 @@ impl WorkflowRunArgs {
                     repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }

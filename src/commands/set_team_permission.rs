@@ -6,6 +6,7 @@ use anyhow::Result;
 
 use crate::filter::Filter;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 pub struct SetTeamPermissionArgs {
@@ -37,7 +38,7 @@ impl SetTeamPermissionArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
-        for repo in filtered_repos {
+        filtered_repos.par_iter().for_each(|repo| {
             let result = github::set_team_permission(
                 &organisation,
                 &self.team_slug,
@@ -56,7 +57,7 @@ impl SetTeamPermissionArgs {
                     self.team_slug, self.permission, repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }

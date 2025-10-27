@@ -7,6 +7,7 @@ use crate::github::RemoteRepo;
 use anyhow::Result;
 
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a branch as default for all repositories that match a pattern
@@ -31,8 +32,8 @@ impl DefaultBranchArgs {
         let repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &token)?;
 
-        for repo in repos {
-            let result = set_default_branch(&repo, &self.default_branch, &token);
+        repos.par_iter().for_each(|repo| {
+            let result = set_default_branch(repo, &self.default_branch, &token);
             match result {
                 Ok(_) => println!(
                     "Set default branch {} for repo {} successfully",
@@ -43,7 +44,7 @@ impl DefaultBranchArgs {
                     self.default_branch, repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }

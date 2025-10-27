@@ -13,6 +13,7 @@ use git2::BranchType;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Checkout a branch all repositories that their name matches a pattern or
@@ -68,9 +69,9 @@ impl CheckoutArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
+        filtered_repos.par_iter().for_each(|repo| {
             match checkout_branch(
-                &repo,
+                repo,
                 &self.branch,
                 &user,
                 "origin",
@@ -86,7 +87,7 @@ impl CheckoutArgs {
                     &self.branch, repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }
