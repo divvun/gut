@@ -4,6 +4,7 @@ use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex
@@ -34,8 +35,8 @@ impl TopicGetArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
-            let result = github::get_topics(&repo, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = github::get_topics(repo, &user_token);
             match result {
                 Ok(topics) => {
                     println!("List of topics for {} is: {:?}", repo.name, topics);
@@ -45,7 +46,7 @@ impl TopicGetArgs {
                     repo.name, e
                 ),
             }
-        }
+        });
         Ok(())
     }
 }

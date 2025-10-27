@@ -8,6 +8,7 @@ use std::str;
 
 use crate::filter::Filter;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Delete ALL web hooks for all repositories that match given regex
@@ -38,8 +39,8 @@ impl DeleteArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
-            let result = delete_all_hooks(&repo, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = delete_all_hooks(repo, &user_token);
 
             match result {
                 Ok(n) => println!("Successfully deleted {} hook(s) of repo {}", n, repo.name),
@@ -48,7 +49,7 @@ impl DeleteArgs {
                     repo.name, e
                 ),
             }
-        }
+        });
 
         Ok(())
     }

@@ -8,6 +8,7 @@ use anyhow::{Result, anyhow};
 
 use crate::filter::Filter;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set description and/or website for all repositories that match regex
@@ -48,13 +49,13 @@ impl InfoArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
 
-        for repo in filtered_repos {
-            let result = set_info(&repo, self, &user_token);
+        filtered_repos.par_iter().for_each(|repo| {
+            let result = set_info(repo, self, &user_token);
             match result {
                 Ok(_) => println!("Set info for repo {} successfully", repo.name),
                 Err(e) => println!("Failed to set info for repo {} because {:?}", repo.name, e),
             }
-        }
+        });
         Ok(())
     }
 }

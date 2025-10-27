@@ -11,6 +11,7 @@ use std::str;
 
 use crate::filter::Filter;
 use clap::Parser;
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 pub struct CreateArgs {
@@ -91,9 +92,9 @@ impl CreateArgs {
             return Ok(());
         }
 
-        for repo in filtered_repos {
+        filtered_repos.par_iter().for_each(|repo| {
             match create(
-                &repo,
+                repo,
                 self.url.as_deref(),
                 self.script.as_ref(),
                 &self.method,
@@ -103,7 +104,7 @@ impl CreateArgs {
                 Ok(response) => println!("Success with response {:?}", response),
                 Err(e) => println!("Failed because {:?}", e),
             }
-        }
+        });
 
         Ok(())
     }
