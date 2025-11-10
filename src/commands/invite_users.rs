@@ -1,9 +1,9 @@
-use crate::cli::Args as CommonArgs;
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::github;
 use std::fmt;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -29,8 +29,7 @@ pub struct InviteUsersArgs {
     pub teams: Vec<String>,
 }
 
-#[derive(Parser, Clone, Debug)]
-#[derive(Default)]
+#[derive(Parser, Clone, Debug, Default)]
 pub enum Role {
     #[default]
     Member,
@@ -73,8 +72,6 @@ impl FromStr for Role {
         }
     }
 }
-
-
 
 impl fmt::Display for Role {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

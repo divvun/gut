@@ -1,6 +1,6 @@
 use super::fetch;
 use super::models::GitCredential;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use git2::{Branch, BranchType, Error, Repository};
 
 pub fn create_branch<'a>(

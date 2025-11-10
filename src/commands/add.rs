@@ -1,8 +1,8 @@
 use super::add_repos::*;
 use super::add_users::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
-use crate::cli::Args as CommonArgs;
 
 #[derive(Debug, Parser)]
 /// Add users, repos to an organisation/a team.

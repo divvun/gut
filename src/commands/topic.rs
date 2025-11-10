@@ -1,8 +1,8 @@
-use crate::cli::Args as CommonArgs;
 use super::topic_add::*;
 use super::topic_apply::*;
 use super::topic_get::*;
 use super::topic_set::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 

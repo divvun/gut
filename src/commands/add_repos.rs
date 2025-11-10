@@ -3,10 +3,10 @@ use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use clap::Parser;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]

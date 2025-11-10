@@ -31,7 +31,7 @@ pub fn clone(
     cred: Option<GitCredential>,
 ) -> Result<git2::Repository, CloneError> {
     log::debug!("Clone {:?} to {:?}", remote_url, local_path);
-    let remote_callbacks = common::create_remote_callback(&cred).map_err(|s| CloneError {
+    let remote_callbacks = common::create_remote_callback(cred).map_err(|s| CloneError {
         source: s,
         remote_url: remote_url.to_string(),
     })?;

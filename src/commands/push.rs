@@ -1,15 +1,15 @@
 use super::common;
 use crate::user::User;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 
 use crate::git;
 use anyhow::{Context, Error, Result};
 
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
-use crate::git::push;
 use crate::git::GitCredential;
+use crate::git::push;
 use clap::Parser;
 
 use crate::commands::topic_helper;

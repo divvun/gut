@@ -1,12 +1,12 @@
-use crate::cli::Args as CommonArgs;
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use crate::user::User;
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 
 use crate::filter::Filter;
 use crate::git::branch;

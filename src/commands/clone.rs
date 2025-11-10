@@ -1,17 +1,17 @@
 use super::common;
 
-use crate::github::RemoteRepo;
 use crate::cli::Args as CommonArgs;
-use anyhow::{anyhow, Error, Result};
+use crate::github::RemoteRepo;
+use anyhow::{Error, Result, anyhow};
 
 use crate::convert::try_from_one;
 use crate::filter::Filter;
-use crate::git::models::GitRepo;
 use crate::git::Clonable;
+use crate::git::models::GitRepo;
 use crate::user::User;
 use clap::Parser;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]

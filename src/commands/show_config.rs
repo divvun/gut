@@ -15,9 +15,7 @@ pub fn show_config(_common_args: &CommonArgs) -> anyhow::Result<()> {
         "Username: {}\nGithub token: {}\nRoot directory: {}",
         user.username, user.token, root
     );
-    println!(
-        "Default org: {}\nHttps? {}",
-        organisation, use_https);
+    println!("Default org: {}\nHttps? {}", organisation, use_https);
 
     Ok(())
 }

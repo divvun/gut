@@ -1,15 +1,15 @@
 use super::patch_file::*;
 use crate::cli::Args as CommonArgs;
 use crate::commands::common;
-use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
+use crate::commands::models::template::*;
 use crate::filter::Filter;
 use crate::git;
 use crate::path;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Parser;
 use git2::Repository;
-use std::fs::{create_dir_all, write, File};
+use std::fs::{File, create_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str;
@@ -77,8 +77,13 @@ impl ApplyArgs {
 
             for dir in target_dirs {
                 match start_apply(&self.template.path, &template_delta, &dir, self.optional) {
-                    Ok(_) => println!("Applied changes success. Please resolve conflict and use \"git add\" to add all changes before continue."),
-                    Err(e) => println!("Applied changes failed {:?}\n Please use \"--abort\" option to abort the process.", e),
+                    Ok(_) => println!(
+                        "Applied changes success. Please resolve conflict and use \"git add\" to add all changes before continue."
+                    ),
+                    Err(e) => println!(
+                        "Applied changes failed {:?}\n Please use \"--abort\" option to abort the process.",
+                        e
+                    ),
                 }
             }
         }
@@ -173,7 +178,9 @@ fn start_apply(
     let status = git::status(&target_repo, false)?;
 
     if !status.is_empty() {
-        return Err(anyhow!("Target repo is not clean. Please clean or commit new changes before applying changes from template."));
+        return Err(anyhow!(
+            "Target repo is not clean. Please clean or commit new changes before applying changes from template."
+        ));
     }
 
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
@@ -181,7 +188,9 @@ fn start_apply(
 
     // check if status is exist
     if apply_status_path.exists() {
-        return Err(anyhow!("We are in middle of an applying process. Please use \"--abort\" or \"--continue\" option"));
+        return Err(anyhow!(
+            "We are in middle of an applying process. Please use \"--abort\" or \"--continue\" option"
+        ));
     }
 
     // create template_apply dir
@@ -271,7 +280,7 @@ fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
     log::debug!("Patch result {:?} at {:?}: {:?}", patch_file, dir, output);
     match output.status.success() {
         true => Ok(output),
-        false => Err(anyhow!("patching failed!"))
+        false => Err(anyhow!("patching failed!")),
     }
 }
 

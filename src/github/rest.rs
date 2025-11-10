@@ -1,7 +1,7 @@
 use super::models;
 use super::models::RemoteRepo;
 use anyhow::Result;
-use reqwest::{blocking as req, StatusCode};
+use reqwest::{StatusCode, blocking as req};
 use serde::{Deserialize, Serialize};
 
 fn patch<T: Serialize + ?Sized>(

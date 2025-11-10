@@ -1,12 +1,12 @@
 use super::common;
-use crate::cli::{OutputFormat, Args as CommonArgs};
+use crate::cli::{Args as CommonArgs, OutputFormat};
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
 use crate::path::dir_name;
 use anyhow::{Context, Result};
 use clap::Parser;
-use prettytable::{format, row, Row, Table};
+use prettytable::{Row, Table, format, row};
 use rayon::prelude::*;
 use serde::Serialize;
 use serde_json::json;

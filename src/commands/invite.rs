@@ -1,5 +1,5 @@
-use crate::cli::Args as CommonArgs;
 use super::invite_users::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 

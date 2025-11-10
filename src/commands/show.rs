@@ -1,9 +1,9 @@
 use super::show_config::*;
 use super::show_repos::*;
 use super::show_users::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
-use crate::cli::Args as CommonArgs;
 
 #[derive(Debug, Parser)]
 pub struct ShowArgs {

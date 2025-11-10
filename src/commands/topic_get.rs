@@ -1,9 +1,9 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
-use crate::cli::Args as CommonArgs;
 
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex

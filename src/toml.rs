@@ -2,8 +2,8 @@ use std::fs::{read_to_string, write};
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 pub fn from_string<T>(content: &str) -> Result<T>
 where

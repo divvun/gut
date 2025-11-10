@@ -1,7 +1,7 @@
 use super::common;
 
-use crate::filter::Filter;
 use crate::cli::Args as CommonArgs;
+use crate::filter::Filter;
 use clap::Parser;
 
 #[derive(Debug, Parser)]

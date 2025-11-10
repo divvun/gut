@@ -61,8 +61,8 @@ fn encrypt(value: &str, key: &str) -> Result<String> {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
     let bytes = b64.decode(key)?;
-    let public_key = PublicKey::try_from(bytes.as_slice())
-        .context("Invalid public key received from github")?;
+    let public_key =
+        PublicKey::try_from(bytes.as_slice()).context("Invalid public key received from github")?;
 
     let encrypted = DryocBox::seal_to_vecbox(value.as_bytes(), &public_key)?;
     let encrypted = b64.encode(encrypted.to_vec());

@@ -1,12 +1,12 @@
 use super::models::GitCredential;
 use git2::Error;
-use git2_credentials::ui4dialoguer::CredentialUI4Dialoguer;
 use git2_credentials::CredentialHandler;
 use git2_credentials::CredentialUI;
+use git2_credentials::ui4dialoguer::CredentialUI4Dialoguer;
 
-pub fn create_remote_callback(
-    cred: &Option<GitCredential>,
-) -> Result<git2::RemoteCallbacks, Error> {
+pub fn create_remote_callback<'a>(
+    cred: Option<GitCredential>,
+) -> Result<git2::RemoteCallbacks<'a>, Error> {
     let mut cb = git2::RemoteCallbacks::new();
     let git_config = git2::Config::open_default()?;
 

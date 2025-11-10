@@ -1,12 +1,12 @@
-use crate::cli::Args as CommonArgs;
 use super::common;
 use super::models::Script;
+use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::CreateHookResponse;
 use std::{fmt, str::FromStr};
 
 use crate::github::RemoteRepo;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::str;
 
 use crate::filter::Filter;

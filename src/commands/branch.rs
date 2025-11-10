@@ -1,9 +1,9 @@
 use super::branch_default::*;
 use super::branch_protect::*;
 use super::branch_unprotect::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
-use crate::cli::Args as CommonArgs;
 
 #[derive(Debug, Parser)]
 /// Set default, set protected branch

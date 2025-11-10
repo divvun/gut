@@ -1,6 +1,6 @@
 use super::common;
-use crate::github;
 use crate::cli::Args as CommonArgs;
+use crate::github;
 
 use anyhow::Result;
 

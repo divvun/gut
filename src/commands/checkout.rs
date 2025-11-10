@@ -4,7 +4,7 @@ use crate::git;
 use crate::user::User;
 
 use crate::git::GitCredential;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::filter::Filter;
 use clap::Parser;
@@ -109,7 +109,10 @@ fn checkout_branch(
         let cred = GitCredential::from(user);
         git::checkout_remote_branch(&git_repo, branch, remote_name, Some(cred))?;
     } else {
-        return Err(anyhow!("There is no local branch with name: {}.\n You can use `--remote` option to checkout a remote branch.", branch));
+        return Err(anyhow!(
+            "There is no local branch with name: {}.\n You can use `--remote` option to checkout a remote branch.",
+            branch
+        ));
     };
 
     Ok(())

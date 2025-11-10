@@ -10,7 +10,7 @@ pub fn push_branch(
 ) -> Result<(), Error> {
     let mut origin = repo.find_remote(remote_name)?;
 
-    let remote_callbacks = common::create_remote_callback(&cred)?;
+    let remote_callbacks = common::create_remote_callback(cred)?;
 
     let mut po = git2::PushOptions::new();
     po.remote_callbacks(remote_callbacks);
@@ -25,7 +25,7 @@ pub fn push(
     remote: &mut Remote,
     cred: Option<GitCredential>,
 ) -> Result<(), Error> {
-    let remote_callbacks = common::create_remote_callback(&cred)?;
+    let remote_callbacks = common::create_remote_callback(cred)?;
 
     let mut po = git2::PushOptions::new();
     po.remote_callbacks(remote_callbacks);

@@ -1,6 +1,6 @@
 use super::common;
 use super::models::GitCredential;
-use git2::{AnnotatedCommit, AutotagOption, Error, FetchOptions, Repository};
+use git2::{AnnotatedCommit, AutotagOption, Error, FetchOptions, RemoteUpdateFlags, Repository};
 use std::io::{self, Write};
 use std::str;
 
@@ -14,7 +14,7 @@ pub fn fetch_branch<'a>(
     //log::info!("Fetching {} for repo", branch);
     let mut remote = repo.find_remote(remote_name)?;
 
-    let remote_callbacks = common::create_remote_callback(&cred)?;
+    let remote_callbacks = common::create_remote_callback(cred)?;
 
     let mut fo = git2::FetchOptions::new();
     fo.remote_callbacks(remote_callbacks);
@@ -32,7 +32,7 @@ pub fn fetch(
 ) -> Result<(), Error> {
     let mut remote = repo.find_remote(remote_name)?;
 
-    let mut cb = common::create_remote_callback(&cred)?;
+    let mut cb = common::create_remote_callback(cred)?;
 
     //let mut fo = git2::FetchOptions::new();
     //fo.remote_callbacks(remote_callbacks);
@@ -114,7 +114,12 @@ pub fn fetch(
     // commits. This may be needed even if there was no packfile to download,
     // which can happen e.g. when the branches have been changed but all the
     // needed objects are available locally.
-    remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+    remote.update_tips(
+        None,
+        RemoteUpdateFlags::all(),
+        AutotagOption::Unspecified,
+        None,
+    )?;
 
     Ok(())
 }

@@ -1,5 +1,5 @@
-use crate::cli::Args as CommonArgs;
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::{CreateTeamResponse, Unauthorized};
 
@@ -35,15 +35,14 @@ impl CreateTeamArgs {
 
         match create_team(self, &user_token) {
             Ok(r) => println!(
-            "You created a team named: {} successfully with id: {} and link : {}",
-            self.team_name, r.id, r.html_url
-        ),
+                "You created a team named: {} successfully with id: {} and link : {}",
+                self.team_name, r.id, r.html_url
+            ),
             Err(e) => println!(
                 "Failed to create team named: {} because of {}\n. \
                 Please notice that you need to add users to your organisation before adding them to a team.",
-                self.team_name,
-                e
-            )
+                self.team_name, e
+            ),
         }
 
         Ok(())

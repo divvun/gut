@@ -1,5 +1,5 @@
-use crate::cli::Args as CommonArgs;
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::Unauthorized;
 

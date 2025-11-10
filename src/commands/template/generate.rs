@@ -1,7 +1,7 @@
 use crate::cli::Args as CommonArgs;
 use crate::commands::common;
-use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
+use crate::commands::models::template::*;
 use crate::commands::patterns::*;
 use crate::git;
 use crate::path;

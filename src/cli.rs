@@ -4,7 +4,7 @@ use crate::commands::{
     RemoveArgs, RenameArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs, TopicArgs, TransferArgs,
     WorkflowArgs,
 };
-use clap::{Parser, ValueEnum, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum OutputFormat {

@@ -1,12 +1,12 @@
 use super::common;
 use super::models::Script;
-use crate::filter::Filter;
 use crate::cli::Args as CommonArgs;
+use crate::filter::Filter;
 use crate::path;
 use anyhow::{Error, Result};
 use clap::Parser;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 use std::env;
 use std::path::PathBuf;
@@ -40,7 +40,7 @@ impl ApplyArgs {
         // set auth_token to env
         let user_token = common::user_token()?;
         let key = "GUT_TOKEN";
-        env::set_var(key, user_token);
+        unsafe { env::set_var(key, user_token) };
 
         if sub_dirs.is_empty() {
             println!(

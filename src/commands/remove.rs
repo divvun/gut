@@ -1,6 +1,6 @@
-use crate::cli::Args as CommonArgs;
 use super::remove_repos::*;
 use super::remove_users::*;
+use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 

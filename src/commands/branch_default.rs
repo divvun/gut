@@ -1,8 +1,8 @@
 use super::common;
+use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
-use crate::cli::Args as CommonArgs;
 
 use anyhow::Result;
 

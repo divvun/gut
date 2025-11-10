@@ -11,7 +11,7 @@ use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use crate::user::User;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]

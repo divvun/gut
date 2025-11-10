@@ -1,8 +1,8 @@
 use super::models::*;
 use crate::cli::Args as CommonArgs;
 use crate::commands::common;
-use crate::commands::models::template::*;
 use crate::commands::models::ExistDirectory;
+use crate::commands::models::template::*;
 use crate::commands::patterns::*;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;

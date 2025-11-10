@@ -1,10 +1,10 @@
 use super::common;
 use super::models::Script;
-use crate::github;
 use crate::cli::Args as CommonArgs;
+use crate::github;
 
 use crate::github::RemoteRepo;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::filter::Filter;
 use clap::Parser;

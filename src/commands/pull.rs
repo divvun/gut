@@ -1,6 +1,6 @@
 use super::common;
-use crate::filter::Filter;
 use crate::cli::Args as CommonArgs;
+use crate::filter::Filter;
 use crate::git;
 use crate::git::GitCredential;
 use crate::git::PullStatus;
@@ -9,7 +9,7 @@ use crate::user::User;
 use anyhow::{Context, Error, Result};
 use clap::Parser;
 use colored::*;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 use serde::{Serialize, Serializer};
 use serde_json::json;
@@ -100,7 +100,10 @@ fn summarize(statuses: &[Status]) {
     }
 
     if !stashes.is_empty() {
-        let msg = format!("There are {} repos have been stashed that need to use \"stash apply\" to bring the changes back", stashes.len());
+        let msg = format!(
+            "There are {} repos have been stashed that need to use \"stash apply\" to bring the changes back",
+            stashes.len()
+        );
         println!("{}\n", msg.yellow());
     }
 
@@ -183,7 +186,10 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     }
 }
 
-fn serialize_status<S>(status: &Result<PullStatus, Arc<anyhow::Error>>, s: S) -> Result<S::Ok, S::Error>
+fn serialize_status<S>(
+    status: &Result<PullStatus, Arc<anyhow::Error>>,
+    s: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {

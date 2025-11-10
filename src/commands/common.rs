@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::path;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -44,7 +44,9 @@ pub fn organisation(opt: Option<&str>) -> Result<String> {
             let config = Config::from_file()?;
             match config.default_org {
                 Some(o) => Ok(o),
-                None => anyhow::bail!("You need to provide an organisation or set a default organisation with init/set default organisation command."),
+                None => anyhow::bail!(
+                    "You need to provide an organisation or set a default organisation with init/set default organisation command."
+                ),
             }
         }
     }
