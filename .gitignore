@@ -4,3 +4,6 @@ user.toml
 
 Session.vim
 .DS_Store
+
+# Zensical build output
+/docs/site

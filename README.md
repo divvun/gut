@@ -4,11 +4,37 @@ Pronounced `gʉːt`.
 
 [![](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/badge.svg)](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/latest)
 
-This is a Git(Hub) multirepo maintenance tool, designed specifically for Divvun. But it should be quite useful to others needing to maintain tens (or hundreds) of similarly structured github repositories.
+This is a Git(Hub) multirepo maintenance tool, designed specifically for Divvun. But it should be quite useful to others needing to maintain tens (or hundreds) of similarly structured GitHub repositories.
 
 Using the `gut apply -s <script>` command, one can in practice run any git command on all repos (or a suitable subset, regex-selected on the repo names), not only the commands directly provided by `gut`.
 
 We think it's pretty cool.
+
+## Documentation
+
+**📚 [Full Documentation](docs/)** - Complete guides and references
+
+Quick links:
+- [Get Started](docs/docs/get-started.md) - Installation and setup
+- [Common Commands](docs/docs/usage/common-commands.md) - Most frequently used commands
+- [Command Overview](docs/docs/usage/overview.md) - All available commands
+- [Architecture](docs/docs/architecture.md) - Technical details
+- [Contributing](docs/docs/contributing.md) - Development guide
+
+### Viewing Documentation Locally
+
+The documentation is built with [Zensical](https://zensical.org/). To view it locally:
+
+```bash
+# Install Zensical
+pip install zensical
+
+# Serve documentation
+cd docs
+zensical serve
+```
+
+Then open http://localhost:8000 in your browser.
 
 
 ## Installation
