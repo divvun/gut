@@ -12,9 +12,10 @@ where
     toml::from_str(content).with_context(|| format!("Deserialize error {:?}", content))
 }
 
-pub fn write_to_file<T: ?Sized, P: AsRef<Path>>(path: P, t: &T) -> Result<()>
+pub fn write_to_file<T, P>(path: P, t: &T) -> Result<()>
 where
-    T: Serialize,
+    P: AsRef<Path>,
+    T: ?Sized + Serialize,
 {
     let content = toml::to_string(t).context("Serialize error")?;
     write(path, content.as_str()).context("Cannot write to config file.")

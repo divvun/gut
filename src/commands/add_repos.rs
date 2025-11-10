@@ -102,7 +102,7 @@ impl Status {
     }
 
     fn has_error(&self) -> bool {
-        matches!(self.result, Err(_))
+        self.result.is_err()
     }
 
     fn to_error_row(&self) -> Row {

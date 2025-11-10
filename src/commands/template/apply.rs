@@ -161,7 +161,6 @@ fn continue_apply(target_dir: &PathBuf, skip_ci: bool) -> Result<()> {
 /// - write patch file to .git/gut/template_appy/patch.diff
 /// - apply patch command in target repo
 /// - Done.
-
 fn start_apply(
     template_dir: &PathBuf,
     template_delta: &TemplateDelta,
@@ -258,10 +257,10 @@ fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta)
             let object = entry.to_object(template_repo)?;
             let blob = object.peel_to_blob()?;
             let content = str::from_utf8(blob.content())?;
-            if let Ok(delta) = toml::from_str::<TemplateDelta>(content) {
-                if delta.rev_id == target_delta.rev_id {
-                    return Ok(rev.to_string());
-                }
+            if let Ok(delta) = toml::from_str::<TemplateDelta>(content)
+                && delta.rev_id == target_delta.rev_id
+            {
+                return Ok(rev.to_string());
             }
         }
     }

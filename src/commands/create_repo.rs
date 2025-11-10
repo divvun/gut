@@ -147,7 +147,6 @@ fn clone_repo(
 /// Create a new repository in organization {org}
 /// Set the new created repository as remote {remote}
 /// Push all to remote {remote}
-
 fn create_repo(
     org: &str,
     dir: &PathBuf,

@@ -16,11 +16,11 @@ pub fn diff_to_patch(diff: &Diff) -> Result<Vec<PatchFile>> {
                 .entry(new_file.to_string())
                 .or_insert_with(|| PatchFile::new(old_file, new_file));
 
-            if let Some(file) = file_map.get(new_file) {
-                if let Some(patch_line) = diff_line_to_patch_line(&line) {
-                    let new_path_file = file.add_line(&patch_line);
-                    file_map.insert(old_file.to_string(), new_path_file);
-                }
+            if let Some(file) = file_map.get(new_file)
+                && let Some(patch_line) = diff_line_to_patch_line(&line)
+            {
+                let new_path_file = file.add_line(&patch_line);
+                file_map.insert(old_file.to_string(), new_path_file);
             }
         }
         true

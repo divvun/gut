@@ -101,13 +101,13 @@ pub fn all_files(dir: &PathBuf) -> Vec<String> {
         //.filter_entry(|de| de.file_type().is_file())
         .filter_map(|e| e.ok())
     {
-        if entry.file_type().is_file() {
-            if let Some(str) = entry.into_path().to_str() {
-                let (_a, b) = str.split_at(len);
-                if !b.starts_with(".git/") {
-                    //println!("File: {}", b);
-                    files.push(b.to_string());
-                }
+        if entry.file_type().is_file()
+            && let Some(str) = entry.into_path().to_str()
+        {
+            let (_a, b) = str.split_at(len);
+            if !b.starts_with(".git/") {
+                //println!("File: {}", b);
+                files.push(b.to_string());
             }
         }
     }

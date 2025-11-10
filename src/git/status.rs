@@ -115,15 +115,14 @@ pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStat
             if let Some(path) = entry.path() {
                 conflicted.push(path.to_string());
             }
-        } else if Status::is_index_new(status)
+        } else if (Status::is_index_new(status)
             || Status::is_index_modified(status)
             || Status::is_index_deleted(status)
             || Status::is_index_renamed(status)
-            || Status::is_index_typechange(status)
+            || Status::is_index_typechange(status))
+            && let Some(path) = entry.path()
         {
-            if let Some(path) = entry.path() {
-                added.push(path.to_string());
-            }
+            added.push(path.to_string());
         }
     }
 
