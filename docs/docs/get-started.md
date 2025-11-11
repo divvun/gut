@@ -49,10 +49,7 @@ gut needs a personal access token to interact with GitHub's API:
    - `admin:org` (Full control of orgs and teams) - if managing organizations
    - `delete_repo` (Delete repositories) - if you need this capability
 5. Click "Generate token"
-6. **Copy the token** and store it securely - you won't be able to see it again!
-
-!!! warning "Token Security"
-    Your GitHub token is equivalent to your password. Never commit it to a repository or share it publicly. gut stores it securely in your system's config directory.
+6. **Copy the token** - you won't be able to see it again!
 
 ### 2. Initialize gut Configuration
 

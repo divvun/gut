@@ -425,14 +425,6 @@ When adding new GitHub API functionality:
 - **Git operations**: libgit2 is faster than shelling out to git
 - **Incremental operations**: Only process repos that match filters
 
-## Security
-
-- Tokens stored in OS-specific secure locations
-- Never log tokens or secrets
-- Encrypt secrets before sending to GitHub API
-- Validate user input, especially regex patterns
-- Use HTTPS by default for cloning
-
 ## Future Architecture Considerations
 
 Potential improvements:
