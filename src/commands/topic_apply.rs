@@ -53,12 +53,12 @@ impl TopicApplyArgs {
 
         println!("repos {:?}", repos);
 
-        repos.par_iter().for_each(|repo| {
-            match apply(repo, script_path, &user, self.use_https) {
+        repos.par_iter().for_each(
+            |repo| match apply(repo, script_path, &user, self.use_https) {
                 Ok(_) => println!("Apply success"),
                 Err(e) => println!("Apply failed because {:?}", e),
-            }
-        });
+            },
+        );
 
         Ok(())
     }

@@ -9,8 +9,8 @@ use crate::path;
 use anyhow::{Result, anyhow};
 use clap::Parser;
 use git2::Repository;
-use std::fs::{File, create_dir_all, write};
 use rayon::prelude::*;
+use std::fs::{File, create_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str;
@@ -55,20 +55,20 @@ impl ApplyArgs {
 
         if self.finish {
             // finish apply process
-            target_dirs.par_iter().for_each(|dir| {
-                match continue_apply(dir, !self.force_ci) {
+            target_dirs
+                .par_iter()
+                .for_each(|dir| match continue_apply(dir, !self.force_ci) {
                     Ok(_) => println!("Apply changes finish successfully"),
                     Err(e) => println!("Apply changes finish failed because {:?}", e),
-                }
-            });
+                });
         } else if self.abort {
             // finish apply process
-            target_dirs.par_iter().for_each(|dir| {
-                match abort_apply(dir) {
+            target_dirs
+                .par_iter()
+                .for_each(|dir| match abort_apply(dir) {
                     Ok(_) => println!("Abort Apply process success"),
                     Err(e) => println!("Abort Apply failed because {:?}", e),
-                }
-            });
+                });
         } else {
             // start apply process
             let template_delta =
