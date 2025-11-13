@@ -1,4 +1,5 @@
 pub mod branch;
+pub mod clean;
 pub mod clone;
 pub mod commit;
 pub mod common;
@@ -10,12 +11,14 @@ pub mod open;
 pub mod pull;
 pub mod push;
 pub mod rebase;
+pub mod reset;
 pub mod sha;
 pub mod stash;
 pub mod status;
 pub mod tree;
 
 pub use branch::*;
+pub use clean::*;
 pub use clone::Clonable;
 pub use commit::*;
 pub use fetch::*;
@@ -24,6 +27,7 @@ pub use models::*;
 pub use open::*;
 pub use pull::*;
 pub use rebase::*;
+pub use reset::*;
 pub use sha::*;
 pub use stash::*;
 pub use status::*;
