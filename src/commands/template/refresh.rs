@@ -135,7 +135,7 @@ fn process_file(
     dry_run: bool,
 ) -> Result<bool> {
     // Skip if not a text file (binary files would be corrupted)
-    if !is_text_file(file_path)? {
+    if !is_processable_file(file_path)? {
         return Ok(false);
     }
 
@@ -219,40 +219,80 @@ fn file_matches_pattern(file: &str, pattern: &str) -> bool {
     file == pattern || file.ends_with(pattern)
 }
 
-fn is_text_file(path: &PathBuf) -> Result<bool> {
-    // Check if file extension suggests it's a text file
+/// Determines if a file should be processed for placeholder substitutions.
+/// 
+/// This function uses file extensions and known filenames to identify text-based
+/// files that are safe to process. It's designed to be conservative - when in doubt,
+/// it returns false to avoid corrupting binary files.
+/// 
+/// The list of supported extensions focuses on common source code, configuration,
+/// and documentation files typically found in software repositories.
+fn is_processable_file(path: &PathBuf) -> Result<bool> {
+    // Check by file extension first (most common case)
     if let Some(ext) = path.extension() {
         let ext = ext.to_string_lossy().to_lowercase();
-        let text_extensions = vec![
-            "txt", "md", "rs", "toml", "yaml", "yml", "json", "xml", "html", "css", "js", "ts",
-            "py", "sh", "bash", "zsh", "fish", "c", "h", "cpp", "hpp", "java", "kt", "swift",
-            "go", "rb", "php", "pl", "r", "tex", "bib", "gitignore", "gitattributes", "config",
-            "cfg", "ini", "conf", "dockerfile", "makefile", "cmake", "editorconfig",
+        
+        // Source code files
+        let source_extensions = [
+            "rs", "py", "js", "ts", "java", "kt", "swift", "go", "rb", "php", 
+            "c", "h", "cpp", "hpp", "cc", "cxx", "cs", "fs", "scala", "clj",
+            "hs", "elm", "dart", "lua", "perl", "pl", "r", "jl", "nim",
         ];
-
-        if text_extensions.contains(&ext.as_ref()) {
+        
+        // Configuration and data files
+        let config_extensions = [
+            "toml", "yaml", "yml", "json", "xml", "ini", "conf", "config", "cfg",
+            "properties", "env", "dotenv", "gitignore", "gitattributes", "editorconfig",
+        ];
+        
+        // Documentation and markup files
+        let doc_extensions = [
+            "md", "txt", "rst", "adoc", "org", "tex", "bib", "rtf",
+        ];
+        
+        // Web and style files
+        let web_extensions = [
+            "html", "htm", "css", "scss", "sass", "less", "vue", "svelte",
+        ];
+        
+        // Script files
+        let script_extensions = [
+            "sh", "bash", "zsh", "fish", "ps1", "bat", "cmd",
+        ];
+        
+        // Build and project files
+        let build_extensions = [
+            "dockerfile", "makefile", "cmake", "gradle", "sbt", "cabal", "stack",
+            "package", "lock", "sum", "mod",
+        ];
+        
+        if source_extensions.contains(&ext.as_ref()) ||
+           config_extensions.contains(&ext.as_ref()) ||
+           doc_extensions.contains(&ext.as_ref()) ||
+           web_extensions.contains(&ext.as_ref()) ||
+           script_extensions.contains(&ext.as_ref()) ||
+           build_extensions.contains(&ext.as_ref()) {
             return Ok(true);
         }
     }
 
-    // Files without extension that are typically text
+    // Check files without extensions that are typically text
     if let Some(name) = path.file_name() {
         let name = name.to_string_lossy().to_lowercase();
-        let text_names = vec![
-            "readme",
-            "license",
-            "changelog",
-            "makefile",
-            "dockerfile",
-            "gitignore",
-            "gitattributes",
+        let processable_names = [
+            "readme", "license", "licence", "changelog", "changes", "news",
+            "authors", "contributors", "copying", "install", "todo",
+            "makefile", "dockerfile", "rakefile", "gemfile", "procfile",
+            "gitignore", "gitattributes", "gitmodules", "gitkeep",
+            "dockerignore", "npmignore", "eslintrc", "prettierrc",
+            "babelrc", "browserslistrc", "stylelintrc",
         ];
 
-        if text_names.contains(&name.as_ref()) {
+        if processable_names.contains(&name.as_ref()) {
             return Ok(true);
         }
     }
 
-    // Default to false for unknown types to avoid corrupting binary files
+    // Conservative default: don't process unknown file types to avoid corrupting binary files
     Ok(false)
 }
