@@ -23,6 +23,8 @@ pub enum OutputFormat {
 pub struct Args {
     #[arg(long, value_enum, default_value = "table")]
     pub format: Option<OutputFormat>,
+    #[arg(short = 'A', long = "all-orgs", help = "Run command against all organizations, not just the default one")]
+    pub all_orgs: bool,
     #[command(subcommand)]
     pub command: Commands,
 }
