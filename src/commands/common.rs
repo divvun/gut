@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
+
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -10,6 +11,70 @@ use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 
 use crate::filter::{Filter, Filterable};
 use crate::user::User;
+
+#[derive(Debug, Clone)]
+pub struct OrgResult {
+    pub org_name: String,
+    pub total_repos: usize,
+    pub successful_repos: usize,
+    pub failed_repos: usize,
+}
+
+impl OrgResult {
+    pub fn new(org_name: String) -> Self {
+        OrgResult {
+            org_name,
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+        }
+    }
+
+    pub fn add_success(&mut self) {
+        self.total_repos += 1;
+        self.successful_repos += 1;
+    }
+
+    pub fn add_failure(&mut self) {
+        self.total_repos += 1;
+        self.failed_repos += 1;
+    }
+}
+
+#[derive(Debug)]
+pub struct AllOrgsResult {
+    pub org_results: Vec<OrgResult>,
+}
+
+impl AllOrgsResult {
+    pub fn new() -> Self {
+        AllOrgsResult {
+            org_results: Vec::new(),
+        }
+    }
+
+    pub fn add_org_result(&mut self, result: OrgResult) {
+        self.org_results.push(result);
+    }
+
+    pub fn print_summary(&self) {
+        println!("\n=== SUMMARY FOR ALL ORGANIZATIONS ===");
+        for result in &self.org_results {
+            println!(
+                "Organization '{}': {} repos processed, {} successful, {} failed",
+                result.org_name, result.total_repos, result.successful_repos, result.failed_repos
+            );
+        }
+        
+        let total_orgs = self.org_results.len();
+        let total_repos: usize = self.org_results.iter().map(|r| r.total_repos).sum();
+        let total_successful: usize = self.org_results.iter().map(|r| r.successful_repos).sum();
+        let total_failed: usize = self.org_results.iter().map(|r| r.failed_repos).sum();
+        
+        println!("\nGRAND TOTAL: {} organizations, {} repos processed, {} successful, {} failed", 
+                 total_orgs, total_repos, total_successful, total_failed);
+    }
+}
 
 pub fn query_and_filter_repositories(
     org: &str,
@@ -110,6 +175,80 @@ fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
         .filter(|x| x.is_dir())
         .collect();
     Ok(dirs)
+}
+
+/// Find all organizations by scanning the local filesystem root directory
+pub fn get_all_organizations() -> Result<Vec<String>> {
+    let root = root()?;
+    let root_path = Path::new(&root);
+    
+    if !root_path.exists() {
+        return Ok(Vec::new());
+    }
+    
+    let mut organizations = Vec::new();
+    
+    for entry in std::fs::read_dir(root_path)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        // Only consider directories
+        if path.is_dir() {
+            if let Some(org_name) = path.file_name().and_then(|n| n.to_str()) {
+                // Skip hidden directories and common non-org directories
+                if !org_name.starts_with('.') && 
+                   org_name != "target" && 
+                   org_name != "node_modules" &&
+                   org_name != ".git" {
+                    organizations.push(org_name.to_string());
+                }
+            }
+        }
+    }
+    
+    organizations.sort();
+    Ok(organizations)
+}
+
+/// Execute a function for each organization when --all-orgs is enabled
+/// or just for the specified/default organization otherwise
+pub fn execute_for_organizations<F, T>(
+    common_args: &crate::cli::Args,
+    org_arg: Option<&str>,
+    mut execute_fn: F,
+) -> Result<()>
+where
+    F: FnMut(&str) -> Result<T>,
+{
+    if common_args.all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+        
+        let mut all_orgs_result = AllOrgsResult::new();
+        
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+            
+            match execute_fn(org) {
+                Ok(_) => {
+                    // Success is handled by the individual command's reporting
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                }
+            }
+        }
+        
+        println!("\n=== Completed processing all organizations ===");
+    } else {
+        let organisation = organisation(org_arg)?;
+        execute_fn(&organisation)?;
+    }
+    
+    Ok(())
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {

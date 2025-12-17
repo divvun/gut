@@ -33,10 +33,15 @@ pub struct StatusArgs {
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::execute_for_organizations(common_args, self.organisation.as_deref(), |org| {
+            self.run_for_organization(common_args, org)
+        })
+    }
+    
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
         let statuses: Vec<_> = statuses?;

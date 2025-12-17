@@ -43,11 +43,16 @@ pub struct PullArgs {
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::execute_for_organizations(common_args, self.organisation.as_deref(), |org| {
+            self.run_for_organization(common_args, org)
+        })
+    }
+    
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
