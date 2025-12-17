@@ -33,18 +33,27 @@ pub struct StatusArgs {
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        common::execute_for_organizations(common_args, self.organisation.as_deref(), |org| {
+        common::execute_status_for_organizations(common_args, self.organisation.as_deref(), |org| {
             self.run_for_organization(common_args, org)
         })
     }
     
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::StatusOrgResult> {
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
-        let statuses: Vec<_> = statuses?;
+        let mut org_result = common::StatusOrgResult::new(organisation.to_string());
+        
+        let statuses: Vec<_> = match statuses {
+            Ok(s) => s,
+            Err(e) => {
+                org_result.mark_error();
+                return Err(e);
+            }
+        };
+        
         let statuses: Vec<_> = statuses
             .into_iter()
             .filter(|status| {
@@ -55,16 +64,29 @@ impl StatusArgs {
             })
             .collect();
 
-        if let Some(OutputFormat::Json) = common_args.format {
-            println!("{}", json!(statuses));
-            return Ok(());
+        // Collect detailed statistics for each repo
+        for status in &statuses {
+            org_result.add_repo_status(&status.status);
         }
 
-        let rows = to_rows(&statuses, self.verbose);
-        let table = to_table(&rows);
+        if let Some(OutputFormat::Json) = common_args.format {
+            println!("{}", json!(statuses));
+        } else {
+            let rows = to_rows(&statuses, self.verbose);
+            let table = to_table(&rows);
+            table.printstd();
+        }
 
-        table.printstd();
-        Ok(())
+        // Count repos with changes for simple summary
+        let dirty_repos = statuses.iter().filter(|s| 
+            !s.status.is_empty() || s.status.is_ahead > 0 || s.status.is_behind > 0
+        ).count();
+        let clean_repos = org_result.total_repos - dirty_repos;
+        
+        println!("Organization '{}': {} repos with changes, {} clean repos", 
+                 organisation, dirty_repos, clean_repos);
+        
+        Ok(org_result)
     }
 }
 
