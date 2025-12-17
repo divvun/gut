@@ -20,6 +20,19 @@ pub struct OrgResult {
     pub failed_repos: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct StatusOrgResult {
+    pub org_name: String,
+    pub total_repos: usize,
+    pub had_error: bool,
+    pub repos_with_origin_changes: usize, // ±origin
+    pub unstaged_files: usize,           // U
+    pub deleted_files: usize,            // D  
+    pub modified_files: usize,           // M
+    pub conflicted_files: usize,         // C
+    pub added_files: usize,              // A
+}
+
 impl OrgResult {
     pub fn new(org_name: String) -> Self {
         OrgResult {
@@ -38,6 +51,42 @@ impl OrgResult {
     pub fn add_failure(&mut self) {
         self.total_repos += 1;
         self.failed_repos += 1;
+    }
+}
+
+impl StatusOrgResult {
+    pub fn new(org_name: String) -> Self {
+        StatusOrgResult {
+            org_name,
+            total_repos: 0,
+            had_error: false,
+            repos_with_origin_changes: 0,
+            unstaged_files: 0,
+            deleted_files: 0,
+            modified_files: 0,
+            conflicted_files: 0,
+            added_files: 0,
+        }
+    }
+
+    pub fn mark_error(&mut self) {
+        self.had_error = true;
+    }
+
+    pub fn add_repo_status(&mut self, git_status: &crate::git::GitStatus) {
+        self.total_repos += 1;
+        
+        // Count origin changes (ahead or behind)
+        if git_status.is_ahead > 0 || git_status.is_behind > 0 {
+            self.repos_with_origin_changes += 1;
+        }
+        
+        // Count file changes - note: these are file counts, not repo counts
+        self.unstaged_files += git_status.new.len();
+        self.deleted_files += git_status.deleted.len();
+        self.modified_files += git_status.modified.len();
+        self.conflicted_files += git_status.conflicted.len();
+        self.added_files += git_status.added.len();
     }
 }
 
@@ -60,10 +109,17 @@ impl AllOrgsResult {
     pub fn print_summary(&self) {
         println!("\n=== SUMMARY FOR ALL ORGANIZATIONS ===");
         for result in &self.org_results {
-            println!(
-                "Organization '{}': {} repos processed, {} successful, {} failed",
-                result.org_name, result.total_repos, result.successful_repos, result.failed_repos
-            );
+            if result.failed_repos > 0 {
+                println!(
+                    "Organization '{}': {} repos processed, {} successful, {} failed",
+                    result.org_name, result.total_repos, result.successful_repos, result.failed_repos
+                );
+            } else {
+                println!(
+                    "Organization '{}': {} repos processed successfully",
+                    result.org_name, result.total_repos
+                );
+            }
         }
         
         let total_orgs = self.org_results.len();
@@ -74,6 +130,55 @@ impl AllOrgsResult {
         println!("\nGRAND TOTAL: {} organizations, {} repos processed, {} successful, {} failed", 
                  total_orgs, total_repos, total_successful, total_failed);
     }
+}
+
+pub fn print_status_summary(results: &[StatusOrgResult]) {
+    use prettytable::{Table, Row, Cell, format};
+    
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BOX_CHARS);
+    
+    // Header row
+    table.add_row(Row::new(vec![
+        Cell::new("Organisation"),
+        Cell::new("#repos"),
+        Cell::new("±origin"),
+        Cell::new("U"),
+        Cell::new("D"), 
+        Cell::new("M"),
+        Cell::new("C"),
+        Cell::new("A"),
+    ]));
+    
+    for result in results {
+        let row = if result.had_error {
+            Row::new(vec![
+                Cell::new(&result.org_name),
+                Cell::new("-error-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+            ])
+        } else {
+            Row::new(vec![
+                Cell::new(&result.org_name),
+                Cell::new(&result.total_repos.to_string()),
+                Cell::new(&result.repos_with_origin_changes.to_string()),
+                Cell::new(&result.unstaged_files.to_string()),
+                Cell::new(&result.deleted_files.to_string()),
+                Cell::new(&result.modified_files.to_string()),
+                Cell::new(&result.conflicted_files.to_string()),
+                Cell::new(&result.added_files.to_string()),
+            ])
+        };
+        table.add_row(row);
+    }
+    
+    println!("\n=== All org summary ===");
+    table.printstd();
 }
 
 pub fn query_and_filter_repositories(
@@ -212,13 +317,13 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
 
 /// Execute a function for each organization when --all-orgs is enabled
 /// or just for the specified/default organization otherwise
-pub fn execute_for_organizations<F, T>(
+pub fn execute_for_organizations<F>(
     common_args: &crate::cli::Args,
     org_arg: Option<&str>,
     mut execute_fn: F,
 ) -> Result<()>
 where
-    F: FnMut(&str) -> Result<T>,
+    F: FnMut(&str) -> Result<OrgResult>,
 {
     if common_args.all_orgs {
         let organizations = get_all_organizations()?;
@@ -233,16 +338,63 @@ where
             println!("\n=== Processing organization: {} ===", org);
             
             match execute_fn(org) {
-                Ok(_) => {
-                    // Success is handled by the individual command's reporting
+                Ok(result) => {
+                    all_orgs_result.add_org_result(result);
                 }
                 Err(e) => {
                     println!("Failed to process organization '{}': {:?}", org, e);
+                    let mut failed_result = OrgResult::new(org.to_string());
+                    failed_result.add_failure();
+                    all_orgs_result.add_org_result(failed_result);
                 }
             }
         }
         
-        println!("\n=== Completed processing all organizations ===");
+        all_orgs_result.print_summary();
+    } else {
+        let organisation = organisation(org_arg)?;
+        let _result = execute_fn(&organisation)?;
+        // No summary needed for single organization
+    }
+    
+    Ok(())
+}
+
+/// Execute status command for each organization and collect detailed statistics  
+pub fn execute_status_for_organizations<F>(
+    common_args: &crate::cli::Args,
+    org_arg: Option<&str>,
+    mut execute_fn: F,
+) -> Result<()>
+where
+    F: FnMut(&str) -> Result<StatusOrgResult>,
+{
+    if common_args.all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+        
+        let mut results = Vec::new();
+        
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+            
+            match execute_fn(org) {
+                Ok(result) => {
+                    results.push(result);
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                    let mut error_result = StatusOrgResult::new(org.clone());
+                    error_result.mark_error();
+                    results.push(error_result);
+                }
+            }
+        }
+        
+        print_status_summary(&results);
     } else {
         let organisation = organisation(org_arg)?;
         execute_fn(&organisation)?;

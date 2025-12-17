@@ -48,9 +48,10 @@ impl PullArgs {
         })
     }
     
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
+        let mut org_result = common::OrgResult::new(organisation.to_string());
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
@@ -59,7 +60,7 @@ impl PullArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(org_result);
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -67,12 +68,29 @@ impl PullArgs {
             .map(|d| pull(d, &user, self.stash, self.merge))
             .collect();
 
+        // Count successful vs failed pulls
+        let mut successful_pulls = 0;
+        let mut failed_pulls = 0;
+        
+        for status in &statuses {
+            if status.has_error() {
+                failed_pulls += 1;
+                org_result.add_failure();
+            } else {
+                successful_pulls += 1;
+                org_result.add_success();
+            }
+        }
+
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };
 
-        Ok(())
+        println!("Organization '{}': {} successful pulls, {} failed pulls", 
+                 organisation, successful_pulls, failed_pulls);
+
+        Ok(org_result)
     }
 }
 
