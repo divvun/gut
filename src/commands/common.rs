@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
+
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -10,6 +11,200 @@ use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 
 use crate::filter::{Filter, Filterable};
 use crate::user::User;
+
+#[derive(Debug, Clone)]
+pub struct OrgResult {
+    pub org_name: String,
+    pub total_repos: usize,
+    pub successful_repos: usize,
+    pub failed_repos: usize,
+    pub dirty_repos: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct StatusOrgResult {
+    pub org_name: String,
+    pub total_repos: usize,
+    pub had_error: bool,
+    pub repos_with_origin_changes: usize, // ±origin
+    pub unstaged_files: usize,           // U
+    pub deleted_files: usize,            // D  
+    pub modified_files: usize,           // M
+    pub conflicted_files: usize,         // C
+    pub added_files: usize,              // A
+}
+
+#[derive(Debug, Clone)]
+pub struct OrgSummary {
+    pub name: String,
+    pub total_repos: usize,
+    pub unpushed_repo_count: usize,
+    pub uncommited_repo_count: usize,
+    pub total_unadded: usize,
+    pub total_deleted: usize,
+    pub total_modified: usize,
+    pub total_conflicted: usize,
+    pub total_added: usize,
+}
+
+impl OrgResult {
+    pub fn new(org_name: String) -> Self {
+        Self {
+            org_name,
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+            dirty_repos: 0,
+        }
+    }
+    
+    pub fn new_for_pull(org_name: String) -> Self {
+        OrgResult {
+            org_name,
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+            dirty_repos: 0,
+        }
+    }
+
+    pub fn add_success(&mut self) {
+        self.total_repos += 1;
+        self.successful_repos += 1;
+    }
+
+    pub fn add_failure(&mut self) {
+        self.total_repos += 1;
+        self.failed_repos += 1;
+    }
+}
+
+impl StatusOrgResult {
+    pub fn new(org_name: String) -> Self {
+        StatusOrgResult {
+            org_name,
+            total_repos: 0,
+            had_error: false,
+            repos_with_origin_changes: 0,
+            unstaged_files: 0,
+            deleted_files: 0,
+            modified_files: 0,
+            conflicted_files: 0,
+            added_files: 0,
+        }
+    }
+
+    pub fn mark_error(&mut self) {
+        self.had_error = true;
+    }
+
+    pub fn add_repo_status(&mut self, git_status: &crate::git::GitStatus) {
+        self.total_repos += 1;
+        
+        // Count origin changes (ahead or behind)
+        if git_status.is_ahead > 0 || git_status.is_behind > 0 {
+            self.repos_with_origin_changes += 1;
+        }
+        
+        // Count file changes - note: these are file counts, not repo counts
+        self.unstaged_files += git_status.new.len();
+        self.deleted_files += git_status.deleted.len();
+        self.modified_files += git_status.modified.len();
+        self.conflicted_files += git_status.conflicted.len();
+        self.added_files += git_status.added.len();
+    }
+}
+
+#[derive(Debug)]
+pub struct AllOrgsResult {
+    pub org_results: Vec<OrgResult>,
+}
+
+impl AllOrgsResult {
+    pub fn new() -> Self {
+        AllOrgsResult {
+            org_results: Vec::new(),
+        }
+    }
+
+    pub fn add_org_result(&mut self, result: OrgResult) {
+        self.org_results.push(result);
+    }
+
+    pub fn print_summary(&self) {
+        println!("\n=== SUMMARY FOR ALL ORGANIZATIONS ===");
+        for result in &self.org_results {
+            if result.failed_repos > 0 {
+                println!(
+                    "Organization '{}': {} repos processed, {} successful, {} failed",
+                    result.org_name, result.total_repos, result.successful_repos, result.failed_repos
+                );
+            } else {
+                println!(
+                    "Organization '{}': {} repos processed successfully",
+                    result.org_name, result.total_repos
+                );
+            }
+        }
+        
+        let total_orgs = self.org_results.len();
+        let total_repos: usize = self.org_results.iter().map(|r| r.total_repos).sum();
+        let total_successful: usize = self.org_results.iter().map(|r| r.successful_repos).sum();
+        let total_failed: usize = self.org_results.iter().map(|r| r.failed_repos).sum();
+        
+        println!("\nGRAND TOTAL: {} organizations, {} repos processed, {} successful, {} failed", 
+                 total_orgs, total_repos, total_successful, total_failed);
+    }
+}
+
+pub fn print_status_summary(results: &[StatusOrgResult]) {
+    use prettytable::{Table, Row, Cell, format};
+    
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BOX_CHARS);
+    
+    // Header row
+    table.add_row(Row::new(vec![
+        Cell::new("Organisation"),
+        Cell::new("#repos"),
+        Cell::new("±origin"),
+        Cell::new("U"),
+        Cell::new("D"), 
+        Cell::new("M"),
+        Cell::new("C"),
+        Cell::new("A"),
+    ]));
+    
+    for result in results {
+        let row = if result.had_error {
+            Row::new(vec![
+                Cell::new(&result.org_name),
+                Cell::new("-error-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+                Cell::new("-"),
+            ])
+        } else {
+            Row::new(vec![
+                Cell::new(&result.org_name),
+                Cell::new(&result.total_repos.to_string()),
+                Cell::new(&result.repos_with_origin_changes.to_string()),
+                Cell::new(&result.unstaged_files.to_string()),
+                Cell::new(&result.deleted_files.to_string()),
+                Cell::new(&result.modified_files.to_string()),
+                Cell::new(&result.conflicted_files.to_string()),
+                Cell::new(&result.added_files.to_string()),
+            ])
+        };
+        table.add_row(row);
+    }
+    
+    println!("\n=== All org summary ===");
+    table.printstd();
+}
 
 pub fn query_and_filter_repositories(
     org: &str,
@@ -110,6 +305,39 @@ fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
         .filter(|x| x.is_dir())
         .collect();
     Ok(dirs)
+}
+
+/// Find all organizations by scanning the local filesystem root directory
+pub fn get_all_organizations() -> Result<Vec<String>> {
+    let root = root()?;
+    let root_path = Path::new(&root);
+    
+    if !root_path.exists() {
+        return Ok(Vec::new());
+    }
+    
+    let mut organizations = Vec::new();
+    
+    for entry in std::fs::read_dir(root_path)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        // Only consider directories
+        if path.is_dir() {
+            if let Some(org_name) = path.file_name().and_then(|n| n.to_str()) {
+                // Skip hidden directories and common non-org directories
+                if !org_name.starts_with('.') && 
+                   org_name != "target" && 
+                   org_name != "node_modules" &&
+                   org_name != ".git" {
+                    organizations.push(org_name.to_string());
+                }
+            }
+        }
+    }
+    
+    organizations.sort();
+    Ok(organizations)
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {

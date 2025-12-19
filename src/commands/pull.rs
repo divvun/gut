@@ -39,22 +39,57 @@ pub struct PullArgs {
     #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(common_args, org) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_pull_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(common_args, &organisation)?;
+            Ok(())
+        }
+    }
+    
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
                 "There is no local repositories in organisation {} matches pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(common::OrgResult::new_for_pull(organisation.to_string()));
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -62,12 +97,23 @@ impl PullArgs {
             .map(|d| pull(d, &user, self.stash, self.merge))
             .collect();
 
+        // Count successful vs failed pulls
+        let successful_pulls = statuses.iter().filter(|s| s.was_updated()).count();
+        let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
+        let dirty_repos = statuses.iter().filter(|s| s.is_dirty()).count();
+
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };
 
-        Ok(())
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: sub_dirs.len(),
+            successful_repos: successful_pulls,
+            failed_repos: failed_pulls,
+            dirty_repos,
+        })
     }
 }
 
@@ -230,6 +276,18 @@ impl Status {
             && (self.stash_status.is_success() || matches!(self.stash_status, StashStatus::No))
     }
 
+    fn was_updated(&self) -> bool {
+        if let Ok(pull_status) = &self.status {
+            !matches!(pull_status, PullStatus::Nothing)
+        } else {
+            false
+        }
+    }
+
+    fn is_dirty(&self) -> bool {
+        matches!(self.repo_status, RepoStatus::Dirty | RepoStatus::Conflict)
+    }
+
     fn has_error(&self) -> bool {
         self.status.is_err() || matches!(self.stash_status, StashStatus::Failed(_))
     }
@@ -310,4 +368,27 @@ impl RepoStatus {
     fn is_conflict(&self) -> bool {
         matches!(self, RepoStatus::Conflict)
     }
+}
+
+fn print_pull_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Updated", "Failed", "Dirty"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos,
+            r -> summary.dirty_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

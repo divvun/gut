@@ -15,6 +15,9 @@ pub struct ShowReposArgs {
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl ShowReposArgs {

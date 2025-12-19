@@ -20,6 +20,9 @@ pub struct TopicAddArgs {
     #[arg(long, short)]
     /// All topics will be added
     pub topics: Vec<String>,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl TopicAddArgs {
