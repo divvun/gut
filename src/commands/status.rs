@@ -363,7 +363,7 @@ impl StatusRow {
 }
 
 pub fn print_org_summary(summaries: &[common::OrgSummary]) {
-    let mut rows = vec![StatusRow::TitleSeperation, StatusRow::OrgSummarizeTitle];
+    let mut rows = vec![];
     
     for summary in summaries {
         let org_row = StatusRow::OrgSummarize {
