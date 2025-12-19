@@ -98,9 +98,9 @@ impl PullArgs {
             .collect();
 
         // Count successful vs failed pulls
-        let successful_pulls = statuses.iter().filter(|s| s.is_success()).count();
+        let successful_pulls = statuses.iter().filter(|s| s.was_updated()).count();
         let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
-        let dirty_repos = statuses.iter().filter(|s| s.repo_status.is_conflict()).count();
+        let dirty_repos = statuses.iter().filter(|s| s.is_dirty()).count();
 
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
@@ -274,6 +274,18 @@ impl Status {
     fn is_success(&self) -> bool {
         self.status.is_ok()
             && (self.stash_status.is_success() || matches!(self.stash_status, StashStatus::No))
+    }
+
+    fn was_updated(&self) -> bool {
+        if let Ok(pull_status) = &self.status {
+            !matches!(pull_status, PullStatus::Nothing)
+        } else {
+            false
+        }
+    }
+
+    fn is_dirty(&self) -> bool {
+        matches!(self.repo_status, RepoStatus::Dirty | RepoStatus::Conflict)
     }
 
     fn has_error(&self) -> bool {
