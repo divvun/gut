@@ -39,7 +39,7 @@ pub struct PullArgs {
     #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
-    #[arg(short = 'A', long = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }

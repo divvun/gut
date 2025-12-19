@@ -23,7 +23,7 @@ pub struct DefaultBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub default_branch: String,
-    #[arg(short = 'A', long = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }
