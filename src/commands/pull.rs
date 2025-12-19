@@ -53,25 +53,32 @@ impl PullArgs {
                 return Ok(());
             }
             
+            let mut summaries = Vec::new();
+            
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
                 
                 match self.run_for_organization(common_args, org) {
-                    Ok(_) => {},
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
             
+            print_pull_summary(&summaries);
+            
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
-            self.run_for_organization(common_args, &organisation)
+            self.run_for_organization(common_args, &organisation)?;
+            Ok(())
         }
     }
     
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
@@ -82,7 +89,7 @@ impl PullArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(common::OrgResult::new_for_pull(organisation.to_string()));
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -91,20 +98,22 @@ impl PullArgs {
             .collect();
 
         // Count successful vs failed pulls
-        let successful_pulls = statuses.iter().filter(|s| !s.has_error()).count();
+        let successful_pulls = statuses.iter().filter(|s| s.is_success()).count();
         let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
+        let dirty_repos = statuses.iter().filter(|s| s.repo_status.is_conflict()).count();
 
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };
 
-        if self.all_orgs {
-            println!("Organization '{}': {} successful pulls, {} failed pulls", 
-                     organisation, successful_pulls, failed_pulls);
-        }
-
-        Ok(())
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: sub_dirs.len(),
+            successful_repos: successful_pulls,
+            failed_repos: failed_pulls,
+            dirty_repos,
+        })
     }
 }
 
@@ -347,4 +356,27 @@ impl RepoStatus {
     fn is_conflict(&self) -> bool {
         matches!(self, RepoStatus::Conflict)
     }
+}
+
+fn print_pull_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Updated", "Failed", "Dirty"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos,
+            r -> summary.dirty_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }
