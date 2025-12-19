@@ -39,19 +39,41 @@ pub struct PullArgs {
     #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
+    #[arg(short = 'A', long = "all-orgs")]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        common::execute_for_organizations(common_args, self.organisation.as_deref(), |org| {
-            self.run_for_organization(common_args, org)
-        })
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(common_args, org) {
+                    Ok(_) => {},
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(common_args, &organisation)
+        }
     }
     
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgResult> {
+    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<()> {
         let user = common::user()?;
         let root = common::root()?;
-        let mut org_result = common::OrgResult::new(organisation.to_string());
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
@@ -60,7 +82,7 @@ impl PullArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(org_result);
+            return Ok(());
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -69,28 +91,20 @@ impl PullArgs {
             .collect();
 
         // Count successful vs failed pulls
-        let mut successful_pulls = 0;
-        let mut failed_pulls = 0;
-        
-        for status in &statuses {
-            if status.has_error() {
-                failed_pulls += 1;
-                org_result.add_failure();
-            } else {
-                successful_pulls += 1;
-                org_result.add_success();
-            }
-        }
+        let successful_pulls = statuses.iter().filter(|s| !s.has_error()).count();
+        let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
 
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };
 
-        println!("Organization '{}': {} successful pulls, {} failed pulls", 
-                 organisation, successful_pulls, failed_pulls);
+        if self.all_orgs {
+            println!("Organization '{}': {} successful pulls, {} failed pulls", 
+                     organisation, successful_pulls, failed_pulls);
+        }
 
-        Ok(org_result)
+        Ok(())
     }
 }
 

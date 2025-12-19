@@ -32,6 +32,9 @@ pub struct TopicApplyArgs {
     /// use https to clone repositories if needed
     #[arg(long, short)]
     pub use_https: bool,
+    #[arg(short = 'A', long = "all-orgs")]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl TopicApplyArgs {

@@ -29,30 +29,63 @@ pub struct StatusArgs {
     #[arg(long, short)]
     /// Option to omit repositories without changes
     pub quiet: bool,
+    #[arg(short = 'A', long = "all-orgs")]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        common::execute_status_for_organizations(common_args, self.organisation.as_deref(), |org| {
-            self.run_for_organization(common_args, org)
-        })
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut org_summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_single_org(common_args, org) {
+                    Ok(summary) => {
+                        org_summaries.push(summary);
+                    }
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                        // Create error entry with zero values
+                        let error_summary = common::OrgSummary {
+                            name: org.clone(),
+                            total_repos: 0,
+                            unpushed_repo_count: 0,
+                            uncommited_repo_count: 0,
+                            total_unadded: 0,
+                            total_deleted: 0,
+                            total_modified: 0,
+                            total_conflicted: 0,
+                            total_added: 0,
+                        };
+                        org_summaries.push(error_summary);
+                    }
+                }
+            }
+            
+            print_org_summary(&org_summaries);
+            Ok(())
+        } else {
+            self.run_single_org(common_args, &common::organisation(self.organisation.as_deref())?)
+                .map(|_| ())
+        }
     }
     
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::StatusOrgResult> {
+    fn run_single_org(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgSummary> {
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
-        let mut org_result = common::StatusOrgResult::new(organisation.to_string());
-        
-        let statuses: Vec<_> = match statuses {
-            Ok(s) => s,
-            Err(e) => {
-                org_result.mark_error();
-                return Err(e);
-            }
-        };
+        let statuses = statuses?;
         
         let statuses: Vec<_> = statuses
             .into_iter()
@@ -64,11 +97,6 @@ impl StatusArgs {
             })
             .collect();
 
-        // Collect detailed statistics for each repo
-        for status in &statuses {
-            org_result.add_repo_status(&status.status);
-        }
-
         if let Some(OutputFormat::Json) = common_args.format {
             println!("{}", json!(statuses));
         } else {
@@ -77,16 +105,40 @@ impl StatusArgs {
             table.printstd();
         }
 
-        // Count repos with changes for simple summary
-        let dirty_repos = statuses.iter().filter(|s| 
-            !s.status.is_empty() || s.status.is_ahead > 0 || s.status.is_behind > 0
-        ).count();
-        let clean_repos = org_result.total_repos - dirty_repos;
+        // Lag organizasjon-sammandrag med same statistikk som summarize
+        let mut unpushed_repo_count = 0;
+        let mut uncommited_repo_count = 0;
+        let mut total_unadded = 0;
+        let mut total_deleted = 0;
+        let mut total_modified = 0;
+        let mut total_conflicted = 0;
+        let mut total_added = 0;
+
+        for status in &statuses {
+            if !status.status.is_empty() {
+                uncommited_repo_count += 1;
+            }
+            if status.status.is_ahead > 0 || status.status.is_behind > 0 {
+                unpushed_repo_count += 1;
+            }
+            total_added += status.status.added.len();
+            total_conflicted += status.status.conflicted.len();
+            total_modified += status.status.modified.len();
+            total_unadded += status.status.new.len();
+            total_deleted += status.status.deleted.len();
+        }
         
-        println!("Organization '{}': {} repos with changes, {} clean repos", 
-                 organisation, dirty_repos, clean_repos);
-        
-        Ok(org_result)
+        Ok(common::OrgSummary {
+            name: organisation.to_string(),
+            total_repos: statuses.len(),
+            unpushed_repo_count,
+            uncommited_repo_count,
+            total_unadded,
+            total_deleted,
+            total_modified,
+            total_conflicted,
+            total_added,
+        })
     }
 }
 
@@ -240,9 +292,21 @@ enum StatusRow {
         total_conflicted: String,
         total_added: String,
     },
+    OrgSummarize {
+        org_name: String,
+        total_repos: String,
+        unpushed_repo_count: String,
+        uncommited_repo_count: String,
+        total_unadded: String,
+        total_deleted: String,
+        total_modified: String,
+        total_conflicted: String,
+        total_added: String,
+    },
     RepoSeperation,
     TitleSeperation,
     SummarizeTitle,
+    OrgSummarizeTitle,
 }
 
 impl StatusRow {
@@ -278,6 +342,45 @@ impl StatusRow {
             StatusRow::SummarizeTitle => {
                 row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
             }
+            StatusRow::OrgSummarizeTitle => {
+                row!["Organisation", "#repos", "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
+            }
+            StatusRow::OrgSummarize {
+                org_name,
+                total_repos,
+                unpushed_repo_count,
+                uncommited_repo_count: _,
+                total_unadded,
+                total_deleted,
+                total_modified,
+                total_conflicted,
+                total_added,
+            } => {
+                row![org_name, total_repos, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
+            }
         }
     }
+}
+
+pub fn print_org_summary(summaries: &[common::OrgSummary]) {
+    let mut rows = vec![StatusRow::TitleSeperation, StatusRow::OrgSummarizeTitle];
+    
+    for summary in summaries {
+        let org_row = StatusRow::OrgSummarize {
+            org_name: summary.name.clone(),
+            total_repos: summary.total_repos.to_string(),
+            unpushed_repo_count: summary.unpushed_repo_count.to_string(),
+            uncommited_repo_count: summary.uncommited_repo_count.to_string(),
+            total_unadded: summary.total_unadded.to_string(),
+            total_deleted: summary.total_deleted.to_string(),
+            total_modified: summary.total_modified.to_string(),
+            total_conflicted: summary.total_conflicted.to_string(),
+            total_added: summary.total_added.to_string(),
+        };
+        rows.push(org_row);
+    }
+    
+    let table = to_table(&rows);
+    println!("\n=== All org summary ===");
+    table.printstd();
 }
