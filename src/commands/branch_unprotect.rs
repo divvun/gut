@@ -23,7 +23,7 @@ pub struct UnprotectedBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub branch: String,
-    #[arg(short = 'A', long = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }

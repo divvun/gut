@@ -29,7 +29,7 @@ pub struct ApplyArgs {
     #[arg(long, short)]
     /// The location of a script
     pub script: Script,
-    #[arg(short = 'A', long = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }

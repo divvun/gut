@@ -24,7 +24,7 @@ pub struct MergeArgs {
     #[arg(long, short)]
     /// Option to abort merging process if there is a conflict
     pub abort_if_conflict: bool,
-    #[arg(short = 'A', long = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }
