@@ -33,6 +33,19 @@ pub struct StatusOrgResult {
     pub added_files: usize,              // A
 }
 
+#[derive(Debug, Clone)]
+pub struct OrgSummary {
+    pub name: String,
+    pub total_repos: usize,
+    pub unpushed_repo_count: usize,
+    pub uncommited_repo_count: usize,
+    pub total_unadded: usize,
+    pub total_deleted: usize,
+    pub total_modified: usize,
+    pub total_conflicted: usize,
+    pub total_added: usize,
+}
+
 impl OrgResult {
     pub fn new(org_name: String) -> Self {
         OrgResult {
@@ -313,94 +326,6 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
     
     organizations.sort();
     Ok(organizations)
-}
-
-/// Execute a function for each organization when --all-orgs is enabled
-/// or just for the specified/default organization otherwise
-pub fn execute_for_organizations<F>(
-    common_args: &crate::cli::Args,
-    org_arg: Option<&str>,
-    mut execute_fn: F,
-) -> Result<()>
-where
-    F: FnMut(&str) -> Result<OrgResult>,
-{
-    if common_args.all_orgs {
-        let organizations = get_all_organizations()?;
-        if organizations.is_empty() {
-            println!("No organizations found in root directory");
-            return Ok(());
-        }
-        
-        let mut all_orgs_result = AllOrgsResult::new();
-        
-        for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
-            
-            match execute_fn(org) {
-                Ok(result) => {
-                    all_orgs_result.add_org_result(result);
-                }
-                Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
-                    let mut failed_result = OrgResult::new(org.to_string());
-                    failed_result.add_failure();
-                    all_orgs_result.add_org_result(failed_result);
-                }
-            }
-        }
-        
-        all_orgs_result.print_summary();
-    } else {
-        let organisation = organisation(org_arg)?;
-        let _result = execute_fn(&organisation)?;
-        // No summary needed for single organization
-    }
-    
-    Ok(())
-}
-
-/// Execute status command for each organization and collect detailed statistics  
-pub fn execute_status_for_organizations<F>(
-    common_args: &crate::cli::Args,
-    org_arg: Option<&str>,
-    mut execute_fn: F,
-) -> Result<()>
-where
-    F: FnMut(&str) -> Result<StatusOrgResult>,
-{
-    if common_args.all_orgs {
-        let organizations = get_all_organizations()?;
-        if organizations.is_empty() {
-            println!("No organizations found in root directory");
-            return Ok(());
-        }
-        
-        let mut results = Vec::new();
-        
-        for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
-            
-            match execute_fn(org) {
-                Ok(result) => {
-                    results.push(result);
-                }
-                Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
-                    let mut error_result = StatusOrgResult::new(org.clone());
-                    error_result.mark_error();
-                    results.push(error_result);
-                }
-            }
-        }
-        
-        print_status_summary(&results);
-    } else {
-        let organisation = organisation(org_arg)?;
-        execute_fn(&organisation)?;
-    }
-    
-    Ok(())
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {
