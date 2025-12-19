@@ -18,6 +18,7 @@ pub struct OrgResult {
     pub total_repos: usize,
     pub successful_repos: usize,
     pub failed_repos: usize,
+    pub dirty_repos: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -48,11 +49,22 @@ pub struct OrgSummary {
 
 impl OrgResult {
     pub fn new(org_name: String) -> Self {
+        Self {
+            org_name,
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+            dirty_repos: 0,
+        }
+    }
+    
+    pub fn new_for_pull(org_name: String) -> Self {
         OrgResult {
             org_name,
             total_repos: 0,
             successful_repos: 0,
             failed_repos: 0,
+            dirty_repos: 0,
         }
     }
 
