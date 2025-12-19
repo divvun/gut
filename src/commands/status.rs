@@ -380,7 +380,17 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
         rows.push(org_row);
     }
     
-    let table = to_table(&rows);
+    let table = to_org_summary_table(&rows);
     println!("\n=== All org summary ===");
     table.printstd();
+}
+
+fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(
+        row!["Organisation", "#repos", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+    );
+    table
 }
