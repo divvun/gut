@@ -80,13 +80,13 @@ This creates a configuration file in your system's config directory (e.g., `~/.c
 To avoid specifying `-o <organization>` with every command, set a default:
 
 ```bash
-gut set organisation <org-name>
+gut set organisation -o <org-name>
 ```
 
 For example:
 
 ```bash
-gut set organisation divvun
+gut set organisation -o divvun
 ```
 
 ## SSH Access (Optional)
