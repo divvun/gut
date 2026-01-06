@@ -44,7 +44,7 @@ impl ApplyArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} that matches pattern {:?}",
+                "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());

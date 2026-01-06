@@ -51,7 +51,7 @@ impl CommitArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There is no repositories in organisation {} that matches pattern {:?} or topic {:?}",
+                "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
             return Ok(());

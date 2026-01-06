@@ -34,7 +34,7 @@ impl TransferArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There is no repositories in organisation {} that matches pattern {:?}",
+                "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());

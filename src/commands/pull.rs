@@ -51,7 +51,7 @@ impl PullArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} matches pattern {:?}",
+                "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());
