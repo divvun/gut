@@ -84,11 +84,25 @@ pub enum PatchLine {
 impl PatchLine {
     pub fn to_content(&self) -> String {
         match self {
-            PatchLine::Add { content, .. } => format!("+{}", content),
-            PatchLine::Move { content, .. } => format!(" {}", content),
-            PatchLine::Delete { content, .. } => format!("-{}", content),
-            PatchLine::Hunk { content } => content.to_string(),
-            PatchLine::Info { content } => content.to_string(),
+            PatchLine::Add { content, .. } => format!("+{}\n", content.trim_end_matches('\n')),
+            PatchLine::Move { content, .. } => format!(" {}\n", content.trim_end_matches('\n')),
+            PatchLine::Delete { content, .. } => format!("-{}\n", content.trim_end_matches('\n')),
+            PatchLine::Hunk { content } => {
+                // Hunk headers should end with newline
+                if content.ends_with('\n') {
+                    content.to_string()
+                } else {
+                    format!("{}\n", content)
+                }
+            }
+            PatchLine::Info { content } => {
+                // Info lines (like diff headers) should end with newline
+                if content.ends_with('\n') {
+                    content.to_string()
+                } else {
+                    format!("{}\n", content)
+                }
+            }
         }
     }
 
@@ -170,7 +184,10 @@ impl PatchFile {
 
 pub fn to_content(files: &[PatchFile]) -> String {
     let contents: Vec<String> = files.iter().map(|f| f.to_content()).collect();
-    contents.join("")
+    let result = contents.join("");
+
+    // Remove any trailing empty lines while preserving the final newline
+    result.trim_end_matches('\n').to_string() + "\n"
 }
 
 #[cfg(test)]
