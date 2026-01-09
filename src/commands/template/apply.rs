@@ -271,6 +271,7 @@ fn previous_template_sha(template_repo: &Repository, target_delta: &TargetDelta)
 fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
     let output = Command::new("patch")
         .arg("-p1")
+        .arg("-f")
         .arg("-i")
         .arg(patch_file)
         .current_dir(dir)
