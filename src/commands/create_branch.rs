@@ -87,8 +87,8 @@ impl CreateBranchArgs {
 }
 
 /// We need to do following steps
-/// 1. Check if the repository is already exist
-/// 2. if it is not exist we need to clone it
+/// 1. Check if the repository already exists
+/// 2. if it does not exist we need to clone it
 /// 3. Check out the base branch
 /// 4. Create new_branch
 /// 5. Push it to origin if needed

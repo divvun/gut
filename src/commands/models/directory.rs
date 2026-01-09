@@ -17,7 +17,7 @@ impl FromStr for ExistDirectory1 {
 pub enum DirError1 {
     #[error("{path} is not a dir")]
     NotADir { path: String },
-    #[error("{path} is not exist")]
+    #[error("{path} does not exist")]
     NotExist { path: String },
 }
 

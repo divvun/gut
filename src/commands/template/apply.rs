@@ -113,7 +113,7 @@ fn continue_apply(target_dir: &PathBuf, skip_ci: bool) -> Result<()> {
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
 
-    // check if status is exist
+    // check if status exists
     if !apply_status_path.exists() {
         return Err(anyhow!("There is no on going template apply changes."));
     }
@@ -186,7 +186,7 @@ fn start_apply(
     let template_apply_dir = &target_dir.join(".git/gut/template_apply/");
     let apply_status_path = &template_apply_dir.join("APPLYING");
 
-    // check if status is exist
+    // check if status exists
     if apply_status_path.exists() {
         return Err(anyhow!(
             "We are in middle of an applying process. Please use \"--abort\" or \"--continue\" option"

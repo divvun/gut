@@ -20,7 +20,7 @@ impl FromStr for Script {
 pub enum ScriptError {
     #[error("{path} is not a dir")]
     NotAFile { path: String },
-    #[error("{path} is not exist")]
+    #[error("{path} does not exist")]
     NotExist { path: String },
     #[error("Cannot create root directory for path: {path} with error: {source}")]
     CannotCreateAbsPath {
