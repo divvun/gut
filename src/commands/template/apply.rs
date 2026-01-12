@@ -115,7 +115,7 @@ fn continue_apply(target_dir: &PathBuf, skip_ci: bool) -> Result<()> {
 
     // check if status exists
     if !apply_status_path.exists() {
-        return Err(anyhow!("There is no on going template apply changes."));
+        return Err(anyhow!("There are no ongoing template apply changes."));
     }
 
     // check if repo is clean
