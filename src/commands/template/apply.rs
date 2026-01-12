@@ -189,7 +189,7 @@ fn start_apply(
     // check if status exists
     if apply_status_path.exists() {
         return Err(anyhow!(
-            "We are in middle of an applying process. Please use \"--abort\" or \"--continue\" option"
+            "We are in the middle of an apply process. Please use the \"--abort\" or \"--continue\" option"
         ));
     }
 
