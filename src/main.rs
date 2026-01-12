@@ -24,7 +24,21 @@ fn main() -> Result<()> {
     let common_args = Args::parse();
     log::debug!("Arguments: {:?}", common_args);
 
-    match &common_args.command {
+    // Handle --version flag
+    if common_args.version {
+        println!("gut version {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    // Require a subcommand if --version wasn't specified
+    let Some(command) = &common_args.command else {
+        eprintln!("Error: a subcommand is required\n");
+        eprintln!("Usage: gut [OPTIONS] <COMMAND>\n");
+        eprintln!("For more information, try '--help'.");
+        std::process::exit(1);
+    };
+
+    match command {
         Commands::Add(args) => args.run(&common_args),
         Commands::Apply(args) => args.run(&common_args),
         Commands::Branch(args) => args.run(&common_args),

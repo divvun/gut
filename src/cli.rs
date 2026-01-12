@@ -17,10 +17,12 @@ pub enum OutputFormat {
 #[derive(Debug, Parser)]
 #[command(name = "gut", about = "git multirepo maintenance tool")]
 pub struct Args {
+    #[arg(long, short, help = "Print version information")]
+    pub version: bool,
     #[arg(long, value_enum, default_value = "table")]
     pub format: Option<OutputFormat>,
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 #[derive(Debug, Subcommand)]
