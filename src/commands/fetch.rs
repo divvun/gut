@@ -120,6 +120,10 @@ fn print_fetch_summary(summaries: &[common::OrgResult]) {
     table.set_format(*prettytable::format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(prettytable::row!["Organisation", "#repos", "Fetched", "Failed"]);
 
+    let mut total_repos = 0;
+    let mut total_fetched = 0;
+    let mut total_failed = 0;
+
     for summary in summaries {
         table.add_row(prettytable::row![
             summary.org_name,
@@ -127,7 +131,17 @@ fn print_fetch_summary(summaries: &[common::OrgResult]) {
             r -> summary.successful_repos,
             r -> summary.failed_repos
         ]);
+        total_repos += summary.total_repos;
+        total_fetched += summary.successful_repos;
+        total_failed += summary.failed_repos;
     }
+
+    table.add_row(prettytable::row![
+        "TOTAL",
+        r -> total_repos,
+        r -> total_fetched,
+        r -> total_failed
+    ]);
 
     println!("\n=== All org summary ===");
     table.printstd();

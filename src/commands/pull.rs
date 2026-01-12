@@ -379,6 +379,11 @@ fn print_pull_summary(summaries: &[common::OrgResult]) {
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Organisation", "#repos", "Updated", "Failed", "Dirty"]);
 
+    let mut total_repos = 0;
+    let mut total_updated = 0;
+    let mut total_failed = 0;
+    let mut total_dirty = 0;
+
     for summary in summaries {
         table.add_row(row![
             summary.org_name,
@@ -387,7 +392,19 @@ fn print_pull_summary(summaries: &[common::OrgResult]) {
             r -> summary.failed_repos,
             r -> summary.dirty_repos
         ]);
+        total_repos += summary.total_repos;
+        total_updated += summary.successful_repos;
+        total_failed += summary.failed_repos;
+        total_dirty += summary.dirty_repos;
     }
+
+    table.add_row(row![
+        "TOTAL",
+        r -> total_repos,
+        r -> total_updated,
+        r -> total_failed,
+        r -> total_dirty
+    ]);
 
     println!("\n=== All org summary ===");
     table.printstd();

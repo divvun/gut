@@ -365,6 +365,15 @@ impl StatusRow {
 pub fn print_org_summary(summaries: &[common::OrgSummary]) {
     let mut rows = vec![];
     
+    let mut total_repos = 0;
+    let mut total_unpushed = 0;
+    let mut total_uncommited = 0;
+    let mut total_unadded = 0;
+    let mut total_deleted = 0;
+    let mut total_modified = 0;
+    let mut total_conflicted = 0;
+    let mut total_added = 0;
+    
     for summary in summaries {
         let org_row = StatusRow::OrgSummarize {
             org_name: summary.name.clone(),
@@ -378,7 +387,30 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
             total_added: summary.total_added.to_string(),
         };
         rows.push(org_row);
+        
+        total_repos += summary.total_repos;
+        total_unpushed += summary.unpushed_repo_count;
+        total_uncommited += summary.uncommited_repo_count;
+        total_unadded += summary.total_unadded;
+        total_deleted += summary.total_deleted;
+        total_modified += summary.total_modified;
+        total_conflicted += summary.total_conflicted;
+        total_added += summary.total_added;
     }
+    
+    // Add total row
+    let total_row = StatusRow::OrgSummarize {
+        org_name: "TOTAL".to_string(),
+        total_repos: total_repos.to_string(),
+        unpushed_repo_count: total_unpushed.to_string(),
+        uncommited_repo_count: total_uncommited.to_string(),
+        total_unadded: total_unadded.to_string(),
+        total_deleted: total_deleted.to_string(),
+        total_modified: total_modified.to_string(),
+        total_conflicted: total_conflicted.to_string(),
+        total_added: total_added.to_string(),
+    };
+    rows.push(total_row);
     
     let table = to_org_summary_table(&rows);
     println!("\n=== All org summary ===");
