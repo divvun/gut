@@ -398,6 +398,8 @@ fn print_pull_summary(summaries: &[common::OrgResult]) {
         total_dirty += summary.dirty_repos;
     }
 
+    table.add_empty_row();
+
     table.add_row(row![
         "TOTAL",
         r -> total_repos,

@@ -125,7 +125,7 @@ fn print_topic_get_summary(summaries: &[common::OrgResult]) {
         total_retrieved += summary.successful_repos;
         total_failed += summary.failed_repos;
     }
-
+    table.add_empty_row();
     table.add_row(row![
         "TOTAL",
         r -> total_repos,

@@ -136,6 +136,8 @@ fn print_fetch_summary(summaries: &[common::OrgResult]) {
         total_failed += summary.failed_repos;
     }
 
+    table.add_empty_row();
+
     table.add_row(prettytable::row![
         "TOTAL",
         r -> total_repos,

@@ -307,6 +307,7 @@ enum StatusRow {
     TitleSeperation,
     SummarizeTitle,
     OrgSummarizeTitle,
+    Empty,
 }
 
 impl StatusRow {
@@ -314,6 +315,7 @@ impl StatusRow {
         match self {
             StatusRow::RepoSeperation => row!["--------------"],
             StatusRow::TitleSeperation => row!["================"],
+            StatusRow::Empty => row![""],
             StatusRow::FileDetail { status, path } => row![r => status, path],
             StatusRow::SummarizeAll {
                 total,
@@ -397,6 +399,9 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
         total_conflicted += summary.total_conflicted;
         total_added += summary.total_added;
     }
+    
+    // Add separator row
+    rows.push(StatusRow::Empty);
     
     // Add total row
     let total_row = StatusRow::OrgSummarize {
