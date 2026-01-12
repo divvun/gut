@@ -100,6 +100,7 @@ impl TopicSetArgs {
             total_repos: results.len(),
             successful_repos: successful,
             failed_repos: failed,
+            dirty_repos: 0,
         })
     }
 }

@@ -109,8 +109,7 @@ impl TopicApplyArgs {
             org_name: organisation.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
-            failed_repos: failed,
-        })
+            failed_repos: failed,            dirty_repos: 0,        })
     }
 }
 

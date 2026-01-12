@@ -71,7 +71,7 @@ impl TopicAddArgs {
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation));
+            return Ok(common::OrgResult::new(organisation.to_string()));
         }
 
         let results: Vec<_> = filtered_repos.par_iter().map(|repo| {
@@ -100,6 +100,7 @@ impl TopicAddArgs {
             total_repos: results.len(),
             successful_repos: successful,
             failed_repos: failed,
+            dirty_repos: 0,
         })
     }
 }
