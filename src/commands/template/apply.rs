@@ -229,10 +229,12 @@ fn start_apply(
 
     let diff_path = &template_apply_dir.join("patch.diff");
     write(diff_path, to_content(&target_patch_files?))?;
-    execute_patch(diff_path.to_str().unwrap(), target_dir)?;
 
+    // Create temp_target_delta.toml BEFORE patching, so it exists even if patching fails
     let update_target_delta = target_delta.update(template_delta.rev_id, temp_current_sha.as_str());
     update_target_delta.save(&template_apply_dir.join("temp_target_delta.toml"))?;
+
+    execute_patch(diff_path.to_str().unwrap(), target_dir)?;
 
     Ok(())
 }
