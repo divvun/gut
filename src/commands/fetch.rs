@@ -29,16 +29,72 @@ pub struct FetchArgs {
 
 impl FetchArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_fetch_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation)?;
+            Ok(())
+        }
+    }
+    
+    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
-
-        for dir in sub_dirs {
-            fetch(&dir, &user)?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        
+        if sub_dirs.is_empty() {
+            println!(
+                "There is no local repositories in organisation {} matches pattern {:?}",
+                organisation, self.regex
+            );
+            return Ok(common::OrgResult::new(organisation.to_string()));
         }
-        Ok(())
+
+        let mut successful = 0;
+        let mut failed = 0;
+        
+        for dir in &sub_dirs {
+            match fetch(dir, &user) {
+                Ok(_) => successful += 1,
+                Err(e) => {
+                    println!("Error fetching: {:?}", e);
+                    failed += 1;
+                }
+            }
+        }
+        
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: sub_dirs.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -53,4 +109,26 @@ fn fetch(dir: &PathBuf, user: &User) -> Result<()> {
 
     println!("===============");
     Ok(())
+}
+
+fn print_fetch_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = prettytable::Table::new();
+    table.set_format(*prettytable::format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(prettytable::row!["Organisation", "#repos", "Fetched", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(prettytable::row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

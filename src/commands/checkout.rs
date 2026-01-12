@@ -14,6 +14,7 @@ use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
 use rayon::prelude::*;
+use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Checkout a branch all repositories that their name matches a pattern or
@@ -52,11 +53,43 @@ pub struct CheckoutArgs {
 }
 
 impl CheckoutArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org, common_args) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_checkout_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation, common_args)?;
+            Ok(())
+        }
+    }
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
+        let user = common::user()?;
+
+        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -69,10 +102,17 @@ impl CheckoutArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(());
+            return Ok(common::OrgResult {
+                org_name: organisation.to_string(),
+                total_repos: 0,
+                successful_repos: 0,
+                failed_repos: 0,
+                dirty_repos: 0,
+            });
         }
 
-        filtered_repos.par_iter().for_each(|repo| {
+        let total_count = filtered_repos.len();
+        let results: Vec<_> = filtered_repos.par_iter().map(|repo| {
             match checkout_branch(
                 repo,
                 &self.branch,
@@ -81,18 +121,33 @@ impl CheckoutArgs {
                 self.remote,
                 self.use_https,
             ) {
-                Ok(_) => println!(
-                    "Checkout branch {} of repo {:?} successfully",
-                    &self.branch, repo.name
-                ),
-                Err(e) => println!(
-                    "Failed to checkout branch {} of repo {:?} because {:?}",
-                    &self.branch, repo.name, e
-                ),
+                Ok(_) => {
+                    println!(
+                        "Checkout branch {} of repo {:?} successfully",
+                        &self.branch, repo.name
+                    );
+                    true
+                },
+                Err(e) => {
+                    println!(
+                        "Failed to checkout branch {} of repo {:?} because {:?}",
+                        &self.branch, repo.name, e
+                    );
+                    false
+                }
             }
-        });
+        }).collect();
 
-        Ok(())
+        let success_count = results.iter().filter(|&&r| r).count();
+        let fail_count = results.iter().filter(|&&r| !r).count();
+
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -120,4 +175,26 @@ fn checkout_branch(
     };
 
     Ok(())
+}
+
+fn print_checkout_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Checked out", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

@@ -6,6 +6,7 @@ use crate::git::MergeStatus;
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::PathBuf;
+use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Merge a branch to the current branch for all repositories that match a pattern
@@ -30,33 +31,80 @@ pub struct MergeArgs {
 }
 
 impl MergeArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org, common_args) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_merge_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation, common_args)?;
+            Ok(())
+        }
+    }
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+
+        let total_count = sub_dirs.len();
+        let mut success_count = 0;
+        let mut fail_count = 0;
 
         for dir in sub_dirs {
             match merge(&dir, &self.branch, self.abort_if_conflict) {
-                Ok(status) => match status {
-                    MergeStatus::FastForward => println!("Merge fast forward"),
-                    MergeStatus::NormalMerge => println!("Merge made by the 'recursive' strategy"),
-                    MergeStatus::MergeWithConflict => {
-                        println!("Auto merge failed. Fix conflicts and then commit the results.")
-                    }
-                    MergeStatus::Nothing => println!("Already up to date"),
-                    MergeStatus::SkipByConflict => {
-                        println!("There are conflict(s), and we skipped")
+                Ok(status) => {
+                    success_count += 1;
+                    match status {
+                        MergeStatus::FastForward => println!("Merge fast forward"),
+                        MergeStatus::NormalMerge => println!("Merge made by the 'recursive' strategy"),
+                        MergeStatus::MergeWithConflict => {
+                            println!("Auto merge failed. Fix conflicts and then commit the results.")
+                        }
+                        MergeStatus::Nothing => println!("Already up to date"),
+                        MergeStatus::SkipByConflict => {
+                            println!("There are conflict(s), and we skipped")
+                        }
                     }
                 },
-                Err(e) => println!(
-                    "Failed to merge branch {} for dir {:?} because {:?}",
-                    self.branch, dir, e
-                ),
+                Err(e) => {
+                    fail_count += 1;
+                    println!(
+                        "Failed to merge branch {} for dir {:?} because {:?}",
+                        self.branch, dir, e
+                    );
+                }
             }
         }
 
-        Ok(())
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -65,4 +113,26 @@ fn merge(dir: &PathBuf, target: &str, abort: bool) -> Result<git::MergeStatus> {
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
     let merge_status = git::merge_local(&git_repo, target, abort)?;
     Ok(merge_status)
+}
+
+fn print_merge_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Merged", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

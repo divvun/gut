@@ -8,6 +8,7 @@ use anyhow::Result;
 use crate::filter::Filter;
 use clap::Parser;
 use rayon::prelude::*;
+use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Remove branch protection for all local repositories that match a pattern
@@ -30,30 +31,92 @@ pub struct UnprotectedBranchArgs {
 
 impl UnprotectedBranchArgs {
     pub fn set_unprotected_branch(&self, _common_args: &CommonArgs) -> Result<()> {
-        let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-
-        let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
-
-        filtered_repos.par_iter().for_each(|repo| {
-            let result = set_unprotected_branch(repo, &self.branch, &user_token);
-            match result {
-                Ok(_) => println!(
-                    "Removed protection on branch {} for repo {} successfully",
-                    self.branch, repo.name
-                ),
-                Err(e) => println!(
-                    "Could not remove protection on branch {} for repo {} because of {}",
-                    self.branch, repo.name, e
-                ),
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
             }
-        });
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_unprotect_branch_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation)?;
+            Ok(())
+        }
+    }
 
-        Ok(())
+    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+        let user_token = common::user_token()?;
+        let filtered_repos =
+            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
+
+        let mut result = common::OrgResult::new(organisation.to_string());
+
+        // Process repos and track results
+        for repo in filtered_repos.iter() {
+            let unprotect_result = set_unprotected_branch(repo, &self.branch, &user_token);
+            match unprotect_result {
+                Ok(_) => {
+                    println!(
+                        "Removed protection on branch {} for repo {} successfully",
+                        self.branch, repo.name
+                    );
+                    result.add_success();
+                },
+                Err(e) => {
+                    println!(
+                        "Could not remove protection on branch {} for repo {} because of {}",
+                        self.branch, repo.name, e
+                    );
+                    result.add_failure();
+                },
+            }
+        }
+
+        Ok(result)
     }
 }
 
 fn set_unprotected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Result<()> {
     github::set_unprotected_branch(repo, branch, token)
+}
+
+fn print_unprotect_branch_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Unprotected", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

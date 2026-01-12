@@ -6,6 +6,7 @@ use crate::path;
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::PathBuf;
+use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Do git clean -f for all local repositories that match a pattern
@@ -24,17 +25,64 @@ pub struct CleanArgs {
 }
 
 impl CleanArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org, common_args) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_clean_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation, common_args)?;
+            Ok(())
+        }
+    }
+
+    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+
+        let total_count = sub_dirs.len();
+        let mut success_count = 0;
+        let mut fail_count = 0;
 
         for dir in sub_dirs {
-            if let Err(e) = clean(&dir) {
-                println!("Failed to clean dir {:?} because {:?}", dir, e);
+            match clean(&dir) {
+                Ok(_) => success_count += 1,
+                Err(e) => {
+                    fail_count += 1;
+                    println!("Failed to clean dir {:?} because {:?}", dir, e);
+                }
             }
         }
-        Ok(())
+
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -57,4 +105,26 @@ fn clean(dir: &PathBuf) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn print_clean_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Cleaned", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

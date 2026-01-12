@@ -35,10 +35,42 @@ pub struct ApplyArgs {
 }
 
 impl ApplyArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org, common_args) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_apply_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation, common_args)?;
+            Ok(())
+        }
+    }
+
+    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         // set auth_token to env
         let user_token = common::user_token()?;
@@ -50,7 +82,13 @@ impl ApplyArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(common::OrgResult {
+                org_name: organisation.to_string(),
+                total_repos: 0,
+                successful_repos: 0,
+                failed_repos: 0,
+                dirty_repos: 0,
+            });
         }
 
         let script_path = self
@@ -66,7 +104,17 @@ impl ApplyArgs {
 
         summarize(&statuses);
 
-        Ok(())
+        let total_count = statuses.len();
+        let success_count = statuses.iter().filter(|s| !s.has_error()).count();
+        let fail_count = statuses.iter().filter(|s| s.has_error()).count();
+
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -185,4 +233,26 @@ fn summarize(statuses: &[Status]) {
         }
         error_table.printstd();
     }
+}
+
+fn print_apply_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Applied", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

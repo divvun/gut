@@ -41,10 +41,42 @@ pub struct CommitArgs {
 
 impl CommitArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_commit_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation)?;
+            Ok(())
+        }
+    }
+    
+    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -57,7 +89,7 @@ impl CommitArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(());
+            return Ok(common::OrgResult::new(organisation.to_string()));
         }
 
         let statuses: Vec<_> = filtered_repos
@@ -66,8 +98,17 @@ impl CommitArgs {
             .collect();
 
         summarize(&statuses);
+        
+        let successful = statuses.iter().filter(|s| s.is_success()).count();
+        let failed = statuses.iter().filter(|s| s.has_error()).count();
 
-        Ok(())
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: filtered_repos.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -144,6 +185,10 @@ impl Status {
     fn has_error(&self) -> bool {
         self.result.is_err()
     }
+    
+    fn is_success(&self) -> bool {
+        matches!(&self.result, Ok(CommitResult::Success))
+    }
 
     fn to_error_row(&self) -> Row {
         let e = if let Err(e) = &self.result {
@@ -198,4 +243,26 @@ fn summarize(statuses: &[Status]) {
         }
         error_table.printstd();
     }
+}
+
+fn print_commit_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Committed", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

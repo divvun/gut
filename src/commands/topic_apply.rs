@@ -8,6 +8,7 @@ use crate::github::RemoteRepoWithTopics;
 use crate::user::User;
 use anyhow::Result;
 use clap::Parser;
+use prettytable::{Table, format, row};
 use rayon::prelude::*;
 use std::process::Output;
 
@@ -39,7 +40,40 @@ pub struct TopicApplyArgs {
 
 impl TopicApplyArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        println!("Topic apply {:?}", self);
+        if self.all_orgs {
+            let organizations = common::get_all_organizations()?;
+            if organizations.is_empty() {
+                println!("No organizations found in root directory");
+                return Ok(());
+            }
+            
+            let mut summaries = Vec::new();
+            
+            for org in &organizations {
+                println!("\n=== Processing organization: {} ===", org);
+                
+                match self.run_for_organization(org) {
+                    Ok(summary) => {
+                        summaries.push(summary);
+                    },
+                    Err(e) => {
+                        println!("Failed to process organization '{}': {:?}", org, e);
+                    }
+                }
+            }
+            
+            print_topic_apply_summary(&summaries);
+            
+            Ok(())
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.run_for_organization(&organisation)?;
+            Ok(())
+        }
+    }
+
+    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+        println!("Topic apply for organization: {}", organisation);
 
         let script_path = self
             .script
@@ -48,22 +82,35 @@ impl TopicApplyArgs {
             .expect("gut only supports UTF-8 paths now!");
 
         let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+        let repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
         let repos =
             topic_helper::filter_repos_by_topics(&repos, self.topic.as_ref(), self.regex.as_ref());
 
         println!("repos {:?}", repos);
 
-        repos.par_iter().for_each(
+        let results: Vec<_> = repos.par_iter().map(
             |repo| match apply(repo, script_path, &user, self.use_https) {
-                Ok(_) => println!("Apply success"),
-                Err(e) => println!("Apply failed because {:?}", e),
+                Ok(_) => {
+                    println!("Apply success for repo {}", repo.repo.name);
+                    true
+                }
+                Err(e) => {
+                    println!("Apply failed for repo {} because {:?}", repo.repo.name, e);
+                    false
+                }
             },
-        );
+        ).collect();
 
-        Ok(())
+        let successful = results.iter().filter(|&&success| success).count();
+        let failed = results.len() - successful;
+
+        Ok(common::OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: results.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+        })
     }
 }
 
@@ -79,4 +126,26 @@ fn apply(
     log::debug!("Cloned repo: {:?}", cloned_repo.path());
 
     common::apply_script(&git_repo.local_path, script_path)
+}
+
+fn print_topic_apply_summary(summaries: &[common::OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Topics Applied", "Failed"]);
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+    }
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }
