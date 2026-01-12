@@ -25,8 +25,9 @@ pub fn read_file<P: AsRef<Path>, T>(path: P) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    //TODO change error message
-    let content = read_to_string(path).context("Cannot read from the config file")?;
+    let path_ref = path.as_ref();
+    let content = read_to_string(path_ref)
+        .with_context(|| format!("Cannot read the config file: {:?}", path_ref))?;
     from_string(&content)
 }
 
