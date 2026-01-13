@@ -320,14 +320,14 @@ impl StatusRow {
                 org_name,
                 total_repos,
                 unpushed_repo_count,
-                uncommitted_repo_count: _,
+                uncommitted_repo_count,
                 total_unadded,
                 total_deleted,
                 total_modified,
                 total_conflicted,
                 total_added,
             } => {
-                row![org_name, total_repos, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
+                row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
             }
         }
     }
@@ -396,7 +396,7 @@ fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(
-        row!["Organisation", "#repos", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+        row!["Organisation", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
     );
     table
 }
