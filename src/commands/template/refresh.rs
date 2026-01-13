@@ -4,7 +4,7 @@ use crate::commands::models::template::*;
 use crate::commands::patterns::*;
 use crate::filter::Filter;
 use crate::path;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use std::fs::{read_to_string, write};
 use std::path::PathBuf;
@@ -59,11 +59,7 @@ impl RefreshArgs {
                             count
                         );
                     } else {
-                        println!(
-                            "✓ {:?}: Refreshed {} file(s)",
-                            path::dir_name(&dir)?,
-                            count
-                        );
+                        println!("✓ {:?}: Refreshed {} file(s)", path::dir_name(&dir)?, count);
                     }
                 }
                 Err(e) => println!("✗ {:?}: Failed - {:?}", path::dir_name(&dir), e),
@@ -140,8 +136,8 @@ fn process_file(
     }
 
     // Read file content
-    let content = read_to_string(file_path)
-        .with_context(|| format!("Failed to read file: {}", file_name))?;
+    let content =
+        read_to_string(file_path).with_context(|| format!("Failed to read file: {}", file_name))?;
 
     // Apply replacements
     let new_content = generate_string(replacements, &content)
@@ -220,58 +216,77 @@ fn file_matches_pattern(file: &str, pattern: &str) -> bool {
 }
 
 /// Determines if a file should be processed for placeholder substitutions.
-/// 
+///
 /// This function uses file extensions and known filenames to identify text-based
 /// files that are safe to process. It's designed to be conservative - when in doubt,
 /// it returns false to avoid corrupting binary files.
-/// 
+///
 /// The list of supported extensions focuses on common source code, configuration,
 /// and documentation files typically found in software repositories.
 fn is_processable_file(path: &PathBuf) -> Result<bool> {
     // Check by file extension first (most common case)
     if let Some(ext) = path.extension() {
         let ext = ext.to_string_lossy().to_lowercase();
-        
+
         // Source code files
         let source_extensions = [
-            "rs", "py", "js", "ts", "java", "kt", "swift", "go", "rb", "php", 
-            "c", "h", "cpp", "hpp", "cc", "cxx", "cs", "fs", "scala", "clj",
-            "hs", "elm", "dart", "lua", "perl", "pl", "r", "jl", "nim",
+            "rs", "py", "js", "ts", "java", "kt", "swift", "go", "rb", "php", "c", "h", "cpp",
+            "hpp", "cc", "cxx", "cs", "fs", "scala", "clj", "hs", "elm", "dart", "lua", "perl",
+            "pl", "r", "jl", "nim",
         ];
-        
+
         // Configuration and data files
         let config_extensions = [
-            "toml", "yaml", "yml", "json", "xml", "ini", "conf", "config", "cfg",
-            "properties", "env", "dotenv", "gitignore", "gitattributes", "editorconfig",
+            "toml",
+            "yaml",
+            "yml",
+            "json",
+            "xml",
+            "ini",
+            "conf",
+            "config",
+            "cfg",
+            "properties",
+            "env",
+            "dotenv",
+            "gitignore",
+            "gitattributes",
+            "editorconfig",
         ];
-        
+
         // Documentation and markup files
-        let doc_extensions = [
-            "md", "txt", "rst", "adoc", "org", "tex", "bib", "rtf",
-        ];
-        
+        let doc_extensions = ["md", "txt", "rst", "adoc", "org", "tex", "bib", "rtf"];
+
         // Web and style files
         let web_extensions = [
             "html", "htm", "css", "scss", "sass", "less", "vue", "svelte",
         ];
-        
+
         // Script files
-        let script_extensions = [
-            "sh", "bash", "zsh", "fish", "ps1", "bat", "cmd",
-        ];
-        
+        let script_extensions = ["sh", "bash", "zsh", "fish", "ps1", "bat", "cmd"];
+
         // Build and project files
         let build_extensions = [
-            "dockerfile", "makefile", "cmake", "gradle", "sbt", "cabal", "stack",
-            "package", "lock", "sum", "mod",
+            "dockerfile",
+            "makefile",
+            "cmake",
+            "gradle",
+            "sbt",
+            "cabal",
+            "stack",
+            "package",
+            "lock",
+            "sum",
+            "mod",
         ];
-        
-        if source_extensions.contains(&ext.as_ref()) ||
-           config_extensions.contains(&ext.as_ref()) ||
-           doc_extensions.contains(&ext.as_ref()) ||
-           web_extensions.contains(&ext.as_ref()) ||
-           script_extensions.contains(&ext.as_ref()) ||
-           build_extensions.contains(&ext.as_ref()) {
+
+        if source_extensions.contains(&ext.as_ref())
+            || config_extensions.contains(&ext.as_ref())
+            || doc_extensions.contains(&ext.as_ref())
+            || web_extensions.contains(&ext.as_ref())
+            || script_extensions.contains(&ext.as_ref())
+            || build_extensions.contains(&ext.as_ref())
+        {
             return Ok(true);
         }
     }
@@ -280,12 +295,33 @@ fn is_processable_file(path: &PathBuf) -> Result<bool> {
     if let Some(name) = path.file_name() {
         let name = name.to_string_lossy().to_lowercase();
         let processable_names = [
-            "readme", "license", "licence", "changelog", "changes", "news",
-            "authors", "contributors", "copying", "install", "todo",
-            "makefile", "dockerfile", "rakefile", "gemfile", "procfile",
-            "gitignore", "gitattributes", "gitmodules", "gitkeep",
-            "dockerignore", "npmignore", "eslintrc", "prettierrc",
-            "babelrc", "browserslistrc", "stylelintrc",
+            "readme",
+            "license",
+            "licence",
+            "changelog",
+            "changes",
+            "news",
+            "authors",
+            "contributors",
+            "copying",
+            "install",
+            "todo",
+            "makefile",
+            "dockerfile",
+            "rakefile",
+            "gemfile",
+            "procfile",
+            "gitignore",
+            "gitattributes",
+            "gitmodules",
+            "gitkeep",
+            "dockerignore",
+            "npmignore",
+            "eslintrc",
+            "prettierrc",
+            "babelrc",
+            "browserslistrc",
+            "stylelintrc",
         ];
 
         if processable_names.contains(&name.as_ref()) {
