@@ -99,7 +99,7 @@ fn clean(dir: &PathBuf) -> Result<()> {
     if status.new.is_empty() {
         println!("Nothing to clean!\n");
     } else {
-        println!("Files/directories get removed: ");
+        println!("Files/directories removed: ");
         for f in status.new {
             let rf = dir.join(f);
             path::remove_path(&rf).with_context(|| format!("Cannot remove {:?}", rf))?;
