@@ -76,7 +76,7 @@ impl StatusArgs {
 
         // Lag organizasjon-sammandrag med same statistikk som summarize
         let mut unpushed_repo_count = 0;
-        let mut uncommited_repo_count = 0;
+        let mut uncommitted_repo_count = 0;
         let mut total_unadded = 0;
         let mut total_deleted = 0;
         let mut total_modified = 0;
@@ -85,7 +85,7 @@ impl StatusArgs {
 
         for status in &statuses {
             if !status.status.is_empty() {
-                uncommited_repo_count += 1;
+                uncommitted_repo_count += 1;
             }
             if status.status.is_ahead > 0 || status.status.is_behind > 0 {
                 unpushed_repo_count += 1;
@@ -101,7 +101,7 @@ impl StatusArgs {
             name: organisation.to_string(),
             total_repos: statuses.len(),
             unpushed_repo_count,
-            uncommited_repo_count,
+            uncommitted_repo_count,
             total_unadded,
             total_deleted,
             total_modified,
@@ -145,7 +145,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     let mut rows = vec![StatusRow::TitleSeperation, StatusRow::SummarizeTitle];
     let total = statuses.len().to_string();
     let mut unpushed_repo_count: usize = 0;
-    let mut uncommited_repo_count: usize = 0;
+    let mut uncommitted_repo_count: usize = 0;
     let mut total_unadded: usize = 0;
     let mut total_deleted: usize = 0;
     let mut total_modified: usize = 0;
@@ -154,7 +154,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
 
     for status in statuses {
         if !status.status.is_empty() {
-            uncommited_repo_count += 1;
+            uncommitted_repo_count += 1;
         }
         if status.status.is_ahead > 0 || status.status.is_behind > 0 {
             unpushed_repo_count += 1;
@@ -169,7 +169,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     let summarize_row = StatusRow::SummarizeAll {
         total,
         unpushed_repo_count: unpushed_repo_count.to_string(),
-        uncommited_repo_count: uncommited_repo_count.to_string(),
+        uncommitted_repo_count: uncommitted_repo_count.to_string(),
         total_unadded: total_unadded.to_string(),
         total_deleted: total_deleted.to_string(),
         total_modified: total_modified.to_string(),
@@ -254,7 +254,7 @@ enum StatusRow {
     SummarizeAll {
         total: String,
         unpushed_repo_count: String,
-        uncommited_repo_count: String,
+        uncommitted_repo_count: String,
         total_unadded: String,
         total_deleted: String,
         total_modified: String,
@@ -265,7 +265,7 @@ enum StatusRow {
         org_name: String,
         total_repos: String,
         unpushed_repo_count: String,
-        uncommited_repo_count: String,
+        uncommitted_repo_count: String,
         total_unadded: String,
         total_deleted: String,
         total_modified: String,
@@ -289,14 +289,14 @@ impl StatusRow {
             StatusRow::SummarizeAll {
                 total,
                 unpushed_repo_count,
-                uncommited_repo_count,
+                uncommitted_repo_count,
                 total_unadded,
                 total_deleted,
                 total_modified,
                 total_conflicted,
                 total_added,
             } => {
-                row![total, uncommited_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
+                row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
             }
             StatusRow::RepoSummarize {
                 name,
@@ -320,7 +320,7 @@ impl StatusRow {
                 org_name,
                 total_repos,
                 unpushed_repo_count,
-                uncommited_repo_count: _,
+                uncommitted_repo_count: _,
                 total_unadded,
                 total_deleted,
                 total_modified,
@@ -350,7 +350,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
             org_name: summary.name.clone(),
             total_repos: summary.total_repos.to_string(),
             unpushed_repo_count: summary.unpushed_repo_count.to_string(),
-            uncommited_repo_count: summary.uncommited_repo_count.to_string(),
+            uncommitted_repo_count: summary.uncommitted_repo_count.to_string(),
             total_unadded: summary.total_unadded.to_string(),
             total_deleted: summary.total_deleted.to_string(),
             total_modified: summary.total_modified.to_string(),
@@ -361,7 +361,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
 
         total_repos += summary.total_repos;
         total_unpushed += summary.unpushed_repo_count;
-        total_uncommited += summary.uncommited_repo_count;
+        total_uncommited += summary.uncommitted_repo_count;
         total_unadded += summary.total_unadded;
         total_deleted += summary.total_deleted;
         total_modified += summary.total_modified;
@@ -377,7 +377,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
         org_name: "TOTAL".to_string(),
         total_repos: total_repos.to_string(),
         unpushed_repo_count: total_unpushed.to_string(),
-        uncommited_repo_count: total_uncommited.to_string(),
+        uncommitted_repo_count: total_uncommited.to_string(),
         total_unadded: total_unadded.to_string(),
         total_deleted: total_deleted.to_string(),
         total_modified: total_modified.to_string(),
