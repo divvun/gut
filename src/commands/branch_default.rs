@@ -8,7 +8,6 @@ use anyhow::Result;
 
 use clap::Parser;
 use prettytable::{Table, format, row};
-use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a branch as default for all repositories that match a pattern

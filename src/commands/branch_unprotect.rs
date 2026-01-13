@@ -8,7 +8,6 @@ use anyhow::Result;
 use crate::filter::Filter;
 use clap::Parser;
 use prettytable::{Table, format, row};
-use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Remove branch protection for all local repositories that match a pattern
