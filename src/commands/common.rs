@@ -12,6 +12,11 @@ use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 use crate::filter::{Filter, Filterable};
 use crate::user::User;
 
+/// Trait for types that can create error placeholders for failed organizations
+pub trait ErrorPlaceholder {
+    fn error_placeholder(org_name: &str) -> Self;
+}
+
 #[derive(Debug, Clone)]
 pub struct OrgResult {
     pub org_name: String,
@@ -45,6 +50,34 @@ pub struct OrgSummary {
     pub total_modified: usize,
     pub total_conflicted: usize,
     pub total_added: usize,
+}
+
+impl ErrorPlaceholder for OrgSummary {
+    fn error_placeholder(org_name: &str) -> Self {
+        Self {
+            name: org_name.to_string(),
+            total_repos: 0,
+            unpushed_repo_count: 0,
+            uncommited_repo_count: 0,
+            total_unadded: 0,
+            total_deleted: 0,
+            total_modified: 0,
+            total_conflicted: 0,
+            total_added: 0,
+        }
+    }
+}
+
+impl ErrorPlaceholder for OrgResult {
+    fn error_placeholder(org_name: &str) -> Self {
+        Self {
+            org_name: org_name.to_string(),
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+            dirty_repos: 0,
+        }
+    }
 }
 
 impl OrgResult {
@@ -220,6 +253,7 @@ pub fn run_for_orgs_or_single<F, R>(
 ) -> Result<()>
 where
     F: Fn(&str) -> Result<R>,
+    R: ErrorPlaceholder,
 {
     if all_orgs {
         let organizations = get_all_organizations()?;
@@ -239,6 +273,7 @@ where
                 }
                 Err(e) => {
                     println!("Failed to process organization '{}': {:?}", org, e);
+                    summaries.push(R::error_placeholder(org));
                 }
             }
         }
