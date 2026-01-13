@@ -91,16 +91,6 @@ impl OrgResult {
         }
     }
 
-    pub fn new_for_pull(org_name: String) -> Self {
-        OrgResult {
-            org_name,
-            total_repos: 0,
-            successful_repos: 0,
-            failed_repos: 0,
-            dirty_repos: 0,
-        }
-    }
-
     pub fn add_success(&mut self) {
         self.total_repos += 1;
         self.successful_repos += 1;

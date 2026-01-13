@@ -69,7 +69,7 @@ impl PullArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new_for_pull(organisation.to_string()));
+            return Ok(common::OrgResult::new(organisation.to_string()));
         }
 
         let statuses: Vec<_> = sub_dirs
