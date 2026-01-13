@@ -46,36 +46,12 @@ pub struct PullArgs {
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        if self.all_orgs {
-            let organizations = common::get_all_organizations()?;
-            if organizations.is_empty() {
-                println!("No organizations found in root directory");
-                return Ok(());
-            }
-
-            let mut summaries = Vec::new();
-
-            for org in &organizations {
-                println!("\n=== Processing organization: {} ===", org);
-
-                match self.run_for_organization(common_args, org) {
-                    Ok(summary) => {
-                        summaries.push(summary);
-                    }
-                    Err(e) => {
-                        println!("Failed to process organization '{}': {:?}", org, e);
-                    }
-                }
-            }
-
-            print_pull_summary(&summaries);
-
-            Ok(())
-        } else {
-            let organisation = common::organisation(self.organisation.as_deref())?;
-            self.run_for_organization(common_args, &organisation)?;
-            Ok(())
-        }
+        common::run_for_orgs_or_single(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(common_args, org),
+            Some(print_pull_summary),
+        )
     }
 
     pub fn run_for_organization(

@@ -211,6 +211,50 @@ pub fn print_status_summary(results: &[StatusOrgResult]) {
     table.printstd();
 }
 
+/// Generic function to run a command against all organizations or a single one
+pub fn run_for_orgs_or_single<F, R>(
+    all_orgs: bool,
+    organisation_opt: Option<&str>,
+    run_fn: F,
+    print_summary_fn: Option<fn(&[R])>,
+) -> Result<()>
+where
+    F: Fn(&str) -> Result<R>,
+{
+    if all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+
+        let mut summaries = Vec::new();
+
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+
+            match run_fn(org) {
+                Ok(summary) => {
+                    summaries.push(summary);
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                }
+            }
+        }
+
+        if let Some(print_fn) = print_summary_fn {
+            print_fn(&summaries);
+        }
+
+        Ok(())
+    } else {
+        let org = organisation(organisation_opt)?;
+        run_fn(&org)?;
+        Ok(())
+    }
+}
+
 pub fn query_and_filter_repositories(
     org: &str,
     regex: Option<&Filter>,

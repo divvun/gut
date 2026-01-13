@@ -54,36 +54,12 @@ pub struct CheckoutArgs {
 
 impl CheckoutArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        if self.all_orgs {
-            let organizations = common::get_all_organizations()?;
-            if organizations.is_empty() {
-                println!("No organizations found in root directory");
-                return Ok(());
-            }
-
-            let mut summaries = Vec::new();
-
-            for org in &organizations {
-                println!("\n=== Processing organization: {} ===", org);
-
-                match self.run_for_organization(org, common_args) {
-                    Ok(summary) => {
-                        summaries.push(summary);
-                    }
-                    Err(e) => {
-                        println!("Failed to process organization '{}': {:?}", org, e);
-                    }
-                }
-            }
-
-            print_checkout_summary(&summaries);
-
-            Ok(())
-        } else {
-            let organisation = common::organisation(self.organisation.as_deref())?;
-            self.run_for_organization(&organisation, common_args)?;
-            Ok(())
-        }
+        common::run_for_orgs_or_single(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org, common_args),
+            Some(print_checkout_summary),
+        )
     }
 
     fn run_for_organization(

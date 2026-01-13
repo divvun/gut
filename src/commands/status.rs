@@ -36,50 +36,12 @@ pub struct StatusArgs {
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        if self.all_orgs {
-            let organizations = common::get_all_organizations()?;
-            if organizations.is_empty() {
-                println!("No organizations found in root directory");
-                return Ok(());
-            }
-
-            let mut org_summaries = Vec::new();
-
-            for org in &organizations {
-                println!("\n=== Processing organization: {} ===", org);
-
-                match self.run_single_org(common_args, org) {
-                    Ok(summary) => {
-                        org_summaries.push(summary);
-                    }
-                    Err(e) => {
-                        println!("Failed to process organization '{}': {:?}", org, e);
-                        // Create error entry with zero values
-                        let error_summary = common::OrgSummary {
-                            name: org.clone(),
-                            total_repos: 0,
-                            unpushed_repo_count: 0,
-                            uncommited_repo_count: 0,
-                            total_unadded: 0,
-                            total_deleted: 0,
-                            total_modified: 0,
-                            total_conflicted: 0,
-                            total_added: 0,
-                        };
-                        org_summaries.push(error_summary);
-                    }
-                }
-            }
-
-            print_org_summary(&org_summaries);
-            Ok(())
-        } else {
-            self.run_single_org(
-                common_args,
-                &common::organisation(self.organisation.as_deref())?,
-            )
-            .map(|_| ())
-        }
+        common::run_for_orgs_or_single(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_single_org(common_args, org),
+            Some(print_org_summary),
+        )
     }
 
     fn run_single_org(
