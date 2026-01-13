@@ -42,12 +42,12 @@ impl StatusArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut org_summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_single_org(common_args, org) {
                     Ok(summary) => {
                         org_summaries.push(summary);
@@ -70,23 +70,30 @@ impl StatusArgs {
                     }
                 }
             }
-            
+
             print_org_summary(&org_summaries);
             Ok(())
         } else {
-            self.run_single_org(common_args, &common::organisation(self.organisation.as_deref())?)
-                .map(|_| ())
+            self.run_single_org(
+                common_args,
+                &common::organisation(self.organisation.as_deref())?,
+            )
+            .map(|_| ())
         }
     }
-    
-    fn run_single_org(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgSummary> {
+
+    fn run_single_org(
+        &self,
+        common_args: &CommonArgs,
+        organisation: &str,
+    ) -> Result<common::OrgSummary> {
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
         let statuses = statuses?;
-        
+
         let statuses: Vec<_> = statuses
             .into_iter()
             .filter(|status| {
@@ -127,7 +134,7 @@ impl StatusArgs {
             total_unadded += status.status.new.len();
             total_deleted += status.status.deleted.len();
         }
-        
+
         Ok(common::OrgSummary {
             name: organisation.to_string(),
             total_repos: statuses.len(),
@@ -366,7 +373,7 @@ impl StatusRow {
 
 pub fn print_org_summary(summaries: &[common::OrgSummary]) {
     let mut rows = vec![];
-    
+
     let mut total_repos = 0;
     let mut total_unpushed = 0;
     let mut total_uncommited = 0;
@@ -375,7 +382,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
     let mut total_modified = 0;
     let mut total_conflicted = 0;
     let mut total_added = 0;
-    
+
     for summary in summaries {
         let org_row = StatusRow::OrgSummarize {
             org_name: summary.name.clone(),
@@ -389,7 +396,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
             total_added: summary.total_added.to_string(),
         };
         rows.push(org_row);
-        
+
         total_repos += summary.total_repos;
         total_unpushed += summary.unpushed_repo_count;
         total_uncommited += summary.uncommited_repo_count;
@@ -399,10 +406,10 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
         total_conflicted += summary.total_conflicted;
         total_added += summary.total_added;
     }
-    
+
     // Add separator row
     rows.push(StatusRow::Empty);
-    
+
     // Add total row
     let total_row = StatusRow::OrgSummarize {
         org_name: "TOTAL".to_string(),
@@ -416,7 +423,7 @@ pub fn print_org_summary(summaries: &[common::OrgSummary]) {
         total_added: total_added.to_string(),
     };
     rows.push(total_row);
-    
+
     let table = to_org_summary_table(&rows);
     println!("\n=== All org summary ===");
     table.printstd();

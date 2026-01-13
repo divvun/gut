@@ -47,24 +47,24 @@ impl CommitArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_commit_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -72,7 +72,7 @@ impl CommitArgs {
             Ok(())
         }
     }
-    
+
     fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
 
@@ -98,7 +98,7 @@ impl CommitArgs {
             .collect();
 
         summarize(&statuses);
-        
+
         let successful = statuses.iter().filter(|s| s.is_success()).count();
         let failed = statuses.iter().filter(|s| s.has_error()).count();
 
@@ -185,7 +185,7 @@ impl Status {
     fn has_error(&self) -> bool {
         self.result.is_err()
     }
-    
+
     fn is_success(&self) -> bool {
         matches!(&self.result, Ok(CommitResult::Success))
     }

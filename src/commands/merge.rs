@@ -5,8 +5,8 @@ use crate::git;
 use crate::git::MergeStatus;
 use anyhow::{Context, Result};
 use clap::Parser;
-use std::path::PathBuf;
 use prettytable::{Table, format, row};
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 /// Merge a branch to the current branch for all repositories that match a pattern
@@ -38,24 +38,24 @@ impl MergeArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org, common_args) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_merge_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -64,7 +64,11 @@ impl MergeArgs {
         }
     }
 
-    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<common::OrgResult> {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
@@ -78,16 +82,20 @@ impl MergeArgs {
                     success_count += 1;
                     match status {
                         MergeStatus::FastForward => println!("Merge fast forward"),
-                        MergeStatus::NormalMerge => println!("Merge made by the 'recursive' strategy"),
+                        MergeStatus::NormalMerge => {
+                            println!("Merge made by the 'recursive' strategy")
+                        }
                         MergeStatus::MergeWithConflict => {
-                            println!("Auto merge failed. Fix conflicts and then commit the results.")
+                            println!(
+                                "Auto merge failed. Fix conflicts and then commit the results."
+                            )
                         }
                         MergeStatus::Nothing => println!("Already up to date"),
                         MergeStatus::SkipByConflict => {
                             println!("There are conflict(s), and we skipped")
                         }
                     }
-                },
+                }
                 Err(e) => {
                     fail_count += 1;
                     println!(

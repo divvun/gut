@@ -7,8 +7,8 @@ use crate::github::RemoteRepo;
 use anyhow::Result;
 
 use clap::Parser;
-use rayon::prelude::*;
 use prettytable::{Table, format, row};
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a branch as default for all repositories that match a pattern
@@ -37,24 +37,24 @@ impl DefaultBranchArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_default_branch_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -80,14 +80,14 @@ impl DefaultBranchArgs {
                         self.default_branch, repo.name
                     );
                     result.add_success();
-                },
+                }
                 Err(e) => {
                     println!(
                         "Could not set default branch {} for repo {} because {}",
                         self.default_branch, repo.name, e
                     );
                     result.add_failure();
-                },
+                }
             }
         }
 

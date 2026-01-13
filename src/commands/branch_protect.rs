@@ -7,8 +7,8 @@ use anyhow::Result;
 
 use crate::filter::Filter;
 use clap::Parser;
-use rayon::prelude::*;
 use prettytable::{Table, format, row};
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Set a branch as protected for all local repositories that match a pattern
@@ -37,24 +37,24 @@ impl ProtectedBranchArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_protect_branch_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -80,14 +80,14 @@ impl ProtectedBranchArgs {
                         self.protected_branch, repo.name
                     );
                     result.add_success();
-                },
+                }
                 Err(e) => {
                     println!(
                         "Could not set protected branch {} for repo {} because of {}",
                         self.protected_branch, repo.name, e
                     );
                     result.add_failure();
-                },
+                }
             }
         }
 

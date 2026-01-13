@@ -52,24 +52,24 @@ impl PullArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(common_args, org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_pull_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -77,8 +77,12 @@ impl PullArgs {
             Ok(())
         }
     }
-    
-    pub fn run_for_organization(&self, common_args: &CommonArgs, organisation: &str) -> Result<common::OrgResult> {
+
+    pub fn run_for_organization(
+        &self,
+        common_args: &CommonArgs,
+        organisation: &str,
+    ) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 

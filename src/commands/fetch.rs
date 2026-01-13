@@ -35,24 +35,24 @@ impl FetchArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_fetch_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -60,13 +60,13 @@ impl FetchArgs {
             Ok(())
         }
     }
-    
+
     fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
-        
+
         if sub_dirs.is_empty() {
             println!(
                 "There is no local repositories in organisation {} matches pattern {:?}",
@@ -77,7 +77,7 @@ impl FetchArgs {
 
         let mut successful = 0;
         let mut failed = 0;
-        
+
         for dir in &sub_dirs {
             match fetch(dir, &user) {
                 Ok(_) => successful += 1,
@@ -87,7 +87,7 @@ impl FetchArgs {
                 }
             }
         }
-        
+
         Ok(common::OrgResult {
             org_name: organisation.to_string(),
             total_repos: sub_dirs.len(),
@@ -118,7 +118,12 @@ fn print_fetch_summary(summaries: &[common::OrgResult]) {
 
     let mut table = prettytable::Table::new();
     table.set_format(*prettytable::format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(prettytable::row!["Organisation", "#repos", "Fetched", "Failed"]);
+    table.set_titles(prettytable::row![
+        "Organisation",
+        "#repos",
+        "Fetched",
+        "Failed"
+    ]);
 
     let mut total_repos = 0;
     let mut total_fetched = 0;

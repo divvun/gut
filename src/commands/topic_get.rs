@@ -31,24 +31,24 @@ impl TopicGetArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_topic_get_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -71,22 +71,25 @@ impl TopicGetArgs {
             return Ok(common::OrgResult::new(organisation.to_string()));
         }
 
-        let results: Vec<_> = filtered_repos.par_iter().map(|repo| {
-            let result = github::get_topics(repo, &user_token);
-            match result {
-                Ok(topics) => {
-                    println!("List of topics for {} is: {:?}", repo.name, topics);
-                    true
+        let results: Vec<_> = filtered_repos
+            .par_iter()
+            .map(|repo| {
+                let result = github::get_topics(repo, &user_token);
+                match result {
+                    Ok(topics) => {
+                        println!("List of topics for {} is: {:?}", repo.name, topics);
+                        true
+                    }
+                    Err(e) => {
+                        println!(
+                            "Failed to get topics for repo {} because {:?}",
+                            repo.name, e
+                        );
+                        false
+                    }
                 }
-                Err(e) => {
-                    println!(
-                        "Failed to get topics for repo {} because {:?}",
-                        repo.name, e
-                    );
-                    false
-                }
-            }
-        }).collect();
+            })
+            .collect();
 
         let successful = results.iter().filter(|&&success| success).count();
         let failed = results.len() - successful;

@@ -46,24 +46,24 @@ impl TopicApplyArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_topic_apply_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -89,18 +89,21 @@ impl TopicApplyArgs {
 
         println!("repos {:?}", repos);
 
-        let results: Vec<_> = repos.par_iter().map(
-            |repo| match apply(repo, script_path, &user, self.use_https) {
-                Ok(_) => {
-                    println!("Apply success for repo {}", repo.repo.name);
-                    true
-                }
-                Err(e) => {
-                    println!("Apply failed for repo {} because {:?}", repo.repo.name, e);
-                    false
-                }
-            },
-        ).collect();
+        let results: Vec<_> = repos
+            .par_iter()
+            .map(
+                |repo| match apply(repo, script_path, &user, self.use_https) {
+                    Ok(_) => {
+                        println!("Apply success for repo {}", repo.repo.name);
+                        true
+                    }
+                    Err(e) => {
+                        println!("Apply failed for repo {} because {:?}", repo.repo.name, e);
+                        false
+                    }
+                },
+            )
+            .collect();
 
         let successful = results.iter().filter(|&&success| success).count();
         let failed = results.len() - successful;
@@ -109,7 +112,9 @@ impl TopicApplyArgs {
             org_name: organisation.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
-            failed_repos: failed,            dirty_repos: 0,        })
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 

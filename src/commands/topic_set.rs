@@ -34,24 +34,24 @@ impl TopicSetArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_topic_set_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -74,23 +74,26 @@ impl TopicSetArgs {
             return Ok(common::OrgResult::new(organisation));
         }
 
-        let results: Vec<_> = filtered_repos.par_iter().map(|repo| {
-            let result = github::set_topics(repo, &self.topics, &user_token);
-            match result {
-                Ok(topics) => {
-                    println!("Set topics for repo {} successfully", repo.name);
-                    println!("List of topics for {} is: {:?}", repo.name, topics);
-                    true
+        let results: Vec<_> = filtered_repos
+            .par_iter()
+            .map(|repo| {
+                let result = github::set_topics(repo, &self.topics, &user_token);
+                match result {
+                    Ok(topics) => {
+                        println!("Set topics for repo {} successfully", repo.name);
+                        println!("List of topics for {} is: {:?}", repo.name, topics);
+                        true
+                    }
+                    Err(e) => {
+                        println!(
+                            "Failed to set topics for repo {} because {:?}",
+                            repo.name, e
+                        );
+                        false
+                    }
                 }
-                Err(e) => {
-                    println!(
-                        "Failed to set topics for repo {} because {:?}",
-                        repo.name, e
-                    );
-                    false
-                }
-            }
-        }).collect();
+            })
+            .collect();
 
         let successful = results.iter().filter(|&&success| success).count();
         let failed = results.len() - successful;

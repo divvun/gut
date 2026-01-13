@@ -13,8 +13,8 @@ use git2::BranchType;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
-use rayon::prelude::*;
 use prettytable::{Table, format, row};
+use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Checkout a branch all repositories that their name matches a pattern or
@@ -60,24 +60,24 @@ impl CheckoutArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org, common_args) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_checkout_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -86,7 +86,11 @@ impl CheckoutArgs {
         }
     }
 
-    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<common::OrgResult> {
         let user = common::user()?;
 
         let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
@@ -112,31 +116,34 @@ impl CheckoutArgs {
         }
 
         let total_count = filtered_repos.len();
-        let results: Vec<_> = filtered_repos.par_iter().map(|repo| {
-            match checkout_branch(
-                repo,
-                &self.branch,
-                &user,
-                "origin",
-                self.remote,
-                self.use_https,
-            ) {
-                Ok(_) => {
-                    println!(
-                        "Checkout branch {} of repo {:?} successfully",
-                        &self.branch, repo.name
-                    );
-                    true
-                },
-                Err(e) => {
-                    println!(
-                        "Failed to checkout branch {} of repo {:?} because {:?}",
-                        &self.branch, repo.name, e
-                    );
-                    false
+        let results: Vec<_> = filtered_repos
+            .par_iter()
+            .map(|repo| {
+                match checkout_branch(
+                    repo,
+                    &self.branch,
+                    &user,
+                    "origin",
+                    self.remote,
+                    self.use_https,
+                ) {
+                    Ok(_) => {
+                        println!(
+                            "Checkout branch {} of repo {:?} successfully",
+                            &self.branch, repo.name
+                        );
+                        true
+                    }
+                    Err(e) => {
+                        println!(
+                            "Failed to checkout branch {} of repo {:?} because {:?}",
+                            &self.branch, repo.name, e
+                        );
+                        false
+                    }
                 }
-            }
-        }).collect();
+            })
+            .collect();
 
         let success_count = results.iter().filter(|&&r| r).count();
         let fail_count = results.iter().filter(|&&r| !r).count();

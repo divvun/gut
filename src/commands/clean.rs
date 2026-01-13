@@ -5,8 +5,8 @@ use crate::git;
 use crate::path;
 use anyhow::{Context, Result};
 use clap::Parser;
-use std::path::PathBuf;
 use prettytable::{Table, format, row};
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 /// Do git clean -f for all local repositories that match a pattern
@@ -32,24 +32,24 @@ impl CleanArgs {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            
+
             let mut summaries = Vec::new();
-            
+
             for org in &organizations {
                 println!("\n=== Processing organization: {} ===", org);
-                
+
                 match self.run_for_organization(org, common_args) {
                     Ok(summary) => {
                         summaries.push(summary);
-                    },
+                    }
                     Err(e) => {
                         println!("Failed to process organization '{}': {:?}", org, e);
                     }
                 }
             }
-            
+
             print_clean_summary(&summaries);
-            
+
             Ok(())
         } else {
             let organisation = common::organisation(self.organisation.as_deref())?;
@@ -58,7 +58,11 @@ impl CleanArgs {
         }
     }
 
-    fn run_for_organization(&self, organisation: &str, _common_args: &CommonArgs) -> Result<common::OrgResult> {
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<common::OrgResult> {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 

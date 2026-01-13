@@ -27,11 +27,11 @@ pub struct StatusOrgResult {
     pub total_repos: usize,
     pub had_error: bool,
     pub repos_with_origin_changes: usize, // ±origin
-    pub unstaged_files: usize,           // U
-    pub deleted_files: usize,            // D  
-    pub modified_files: usize,           // M
-    pub conflicted_files: usize,         // C
-    pub added_files: usize,              // A
+    pub unstaged_files: usize,            // U
+    pub deleted_files: usize,             // D
+    pub modified_files: usize,            // M
+    pub conflicted_files: usize,          // C
+    pub added_files: usize,               // A
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +57,7 @@ impl OrgResult {
             dirty_repos: 0,
         }
     }
-    
+
     pub fn new_for_pull(org_name: String) -> Self {
         OrgResult {
             org_name,
@@ -100,12 +100,12 @@ impl StatusOrgResult {
 
     pub fn add_repo_status(&mut self, git_status: &crate::git::GitStatus) {
         self.total_repos += 1;
-        
+
         // Count origin changes (ahead or behind)
         if git_status.is_ahead > 0 || git_status.is_behind > 0 {
             self.repos_with_origin_changes += 1;
         }
-        
+
         // Count file changes - note: these are file counts, not repo counts
         self.unstaged_files += git_status.new.len();
         self.deleted_files += git_status.deleted.len();
@@ -137,7 +137,10 @@ impl AllOrgsResult {
             if result.failed_repos > 0 {
                 println!(
                     "Organization '{}': {} repos processed, {} successful, {} failed",
-                    result.org_name, result.total_repos, result.successful_repos, result.failed_repos
+                    result.org_name,
+                    result.total_repos,
+                    result.successful_repos,
+                    result.failed_repos
                 );
             } else {
                 println!(
@@ -146,35 +149,37 @@ impl AllOrgsResult {
                 );
             }
         }
-        
+
         let total_orgs = self.org_results.len();
         let total_repos: usize = self.org_results.iter().map(|r| r.total_repos).sum();
         let total_successful: usize = self.org_results.iter().map(|r| r.successful_repos).sum();
         let total_failed: usize = self.org_results.iter().map(|r| r.failed_repos).sum();
-        
-        println!("\nGRAND TOTAL: {} organizations, {} repos processed, {} successful, {} failed", 
-                 total_orgs, total_repos, total_successful, total_failed);
+
+        println!(
+            "\nGRAND TOTAL: {} organizations, {} repos processed, {} successful, {} failed",
+            total_orgs, total_repos, total_successful, total_failed
+        );
     }
 }
 
 pub fn print_status_summary(results: &[StatusOrgResult]) {
-    use prettytable::{Table, Row, Cell, format};
-    
+    use prettytable::{Cell, Row, Table, format};
+
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BOX_CHARS);
-    
+
     // Header row
     table.add_row(Row::new(vec![
         Cell::new("Organisation"),
         Cell::new("#repos"),
         Cell::new("±origin"),
         Cell::new("U"),
-        Cell::new("D"), 
+        Cell::new("D"),
         Cell::new("M"),
         Cell::new("C"),
         Cell::new("A"),
     ]));
-    
+
     for result in results {
         let row = if result.had_error {
             Row::new(vec![
@@ -201,7 +206,7 @@ pub fn print_status_summary(results: &[StatusOrgResult]) {
         };
         table.add_row(row);
     }
-    
+
     println!("\n=== All org summary ===");
     table.printstd();
 }
@@ -311,31 +316,32 @@ fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
 pub fn get_all_organizations() -> Result<Vec<String>> {
     let root = root()?;
     let root_path = Path::new(&root);
-    
+
     if !root_path.exists() {
         return Ok(Vec::new());
     }
-    
+
     let mut organizations = Vec::new();
-    
+
     for entry in std::fs::read_dir(root_path)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         // Only consider directories
         if path.is_dir() {
             if let Some(org_name) = path.file_name().and_then(|n| n.to_str()) {
                 // Skip hidden directories and common non-org directories
-                if !org_name.starts_with('.') && 
-                   org_name != "target" && 
-                   org_name != "node_modules" &&
-                   org_name != ".git" {
+                if !org_name.starts_with('.')
+                    && org_name != "target"
+                    && org_name != "node_modules"
+                    && org_name != ".git"
+                {
                     organizations.push(org_name.to_string());
                 }
             }
         }
     }
-    
+
     organizations.sort();
     Ok(organizations)
 }
