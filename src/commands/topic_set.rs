@@ -71,7 +71,7 @@ impl TopicSetArgs {
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 &organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation));
+            return Ok(common::OrgResult::new(organisation.to_string()));
         }
 
         let results: Vec<_> = filtered_repos
