@@ -36,7 +36,7 @@ pub struct CreateRepoArgs {
     /// Option to clone the new created repositories right after it is being created.
     pub clone: bool,
     #[arg(long, short)]
-    /// Option to use https instead of ssh when clone repositories
+    /// Option to use https instead of ssh when cloning repositories
     pub use_https: bool,
     #[arg(long)]
     /// Option to overrrite the exist remote origin
