@@ -275,7 +275,6 @@ enum StatusRow {
     RepoSeperation,
     TitleSeperation,
     SummarizeTitle,
-    OrgSummarizeTitle,
     Empty,
 }
 
@@ -312,9 +311,6 @@ impl StatusRow {
             }
             StatusRow::SummarizeTitle => {
                 row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
-            }
-            StatusRow::OrgSummarizeTitle => {
-                row!["Organisation", "#repos", "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
             }
             StatusRow::OrgSummarize {
                 org_name,
