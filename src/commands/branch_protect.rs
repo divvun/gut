@@ -30,7 +30,7 @@ pub struct ProtectedBranchArgs {
 
 impl ProtectedBranchArgs {
     pub fn set_protected_branch(&self, _common_args: &CommonArgs) -> Result<()> {
-        common::run_for_orgs_or_single(
+        common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org),

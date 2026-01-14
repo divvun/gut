@@ -36,7 +36,7 @@ pub struct StatusArgs {
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        common::run_for_orgs_or_single(
+        common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_single_org(common_args, org),

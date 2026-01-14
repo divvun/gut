@@ -90,7 +90,7 @@ impl OrgResult {
 }
 
 /// Generic function to run a command against all organizations or a single one
-pub fn run_for_orgs_or_single<F, R>(
+pub fn run_for_orgs<F, R>(
     all_orgs: bool,
     organisation_opt: Option<&str>,
     run_fn: F,
