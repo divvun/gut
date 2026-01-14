@@ -40,7 +40,7 @@ impl ApplyArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org, common_args),
-            Some(print_apply_summary),
+            "Applied",
         )
     }
 
@@ -207,42 +207,4 @@ fn summarize(statuses: &[Status]) {
         }
         error_table.printstd();
     }
-}
-
-fn print_apply_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Applied", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_applied = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_applied += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_applied,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

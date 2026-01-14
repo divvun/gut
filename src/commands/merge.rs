@@ -5,7 +5,6 @@ use crate::git;
 use crate::git::MergeStatus;
 use anyhow::{Context, Result};
 use clap::Parser;
-use prettytable::{Table, format, row};
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -36,7 +35,7 @@ impl MergeArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org, common_args),
-            Some(print_merge_summary),
+            "Merged",
         )
     }
 
@@ -97,42 +96,4 @@ fn merge(dir: &PathBuf, target: &str, abort: bool) -> Result<git::MergeStatus> {
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
     let merge_status = git::merge_local(&git_repo, target, abort)?;
     Ok(merge_status)
-}
-
-fn print_merge_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Merged", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_merged = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_merged += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_merged,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

@@ -46,11 +46,11 @@ pub struct PullArgs {
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        common::run_for_orgs(
+        common::run_for_orgs_with_summary(
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(common_args, org),
-            Some(print_pull_summary),
+            print_pull_summary,
         )
     }
 

@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
+use prettytable::{Table, format, row};
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -89,12 +90,93 @@ impl OrgResult {
     }
 }
 
-/// Generic function to run a command against all organizations or a single one
-pub fn run_for_orgs<F, R>(
+/// Print a summary table for OrgResult slices with a customizable success column label
+pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &str) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row![
+        "Organisation",
+        "#repos",
+        success_column_label,
+        "Failed"
+    ]);
+
+    let mut total_repos = 0;
+    let mut total_success = 0;
+    let mut total_failed = 0;
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+        total_repos += summary.total_repos;
+        total_success += summary.successful_repos;
+        total_failed += summary.failed_repos;
+    }
+
+    table.add_empty_row();
+    table.add_row(row!["TOTAL", r -> total_repos, r -> total_success, r -> total_failed]);
+
+    println!("\n=== All org summary ===");
+    table.printstd();
+}
+
+/// Run a command against all organizations or a single one, printing OrgResult summary with custom label
+pub fn run_for_orgs<F>(
     all_orgs: bool,
     organisation_opt: Option<&str>,
     run_fn: F,
-    print_summary_fn: Option<fn(&[R])>,
+    success_column_label: &str,
+) -> Result<()>
+where
+    F: Fn(&str) -> Result<OrgResult>,
+{
+    if all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+
+        let mut summaries = Vec::new();
+
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+
+            match run_fn(org) {
+                Ok(summary) => {
+                    summaries.push(summary);
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                    summaries.push(OrgResult::error_placeholder(org));
+                }
+            }
+        }
+
+        print_org_result_summary(&summaries, success_column_label);
+
+        Ok(())
+    } else {
+        let org = organisation(organisation_opt)?;
+        run_fn(&org)?;
+        Ok(())
+    }
+}
+
+/// Run a command against all organizations or a single one with custom summary printer
+pub fn run_for_orgs_with_summary<F, R>(
+    all_orgs: bool,
+    organisation_opt: Option<&str>,
+    run_fn: F,
+    print_summary_fn: fn(&[R]),
 ) -> Result<()>
 where
     F: Fn(&str) -> Result<R>,
@@ -123,9 +205,7 @@ where
             }
         }
 
-        if let Some(print_fn) = print_summary_fn {
-            print_fn(&summaries);
-        }
+        print_summary_fn(&summaries);
 
         Ok(())
     } else {

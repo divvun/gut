@@ -7,7 +7,6 @@ use anyhow::Result;
 
 use crate::filter::Filter;
 use clap::Parser;
-use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Set a branch as protected for all local repositories that match a pattern
@@ -34,7 +33,7 @@ impl ProtectedBranchArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org),
-            Some(print_protect_branch_summary),
+            "Protected",
         )
     }
 
@@ -72,42 +71,4 @@ impl ProtectedBranchArgs {
 
 fn set_protected_branch(repo: &RemoteRepo, protected_branch: &str, token: &str) -> Result<()> {
     github::set_protected_branch(repo, protected_branch, token)
-}
-
-fn print_protect_branch_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Protected", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_protected = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_protected += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_protected,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

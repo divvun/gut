@@ -7,7 +7,6 @@ use anyhow::Result;
 
 use crate::filter::Filter;
 use clap::Parser;
-use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Remove branch protection for all local repositories that match a pattern
@@ -34,7 +33,7 @@ impl UnprotectedBranchArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org),
-            Some(print_unprotect_branch_summary),
+            "Unprotected",
         )
     }
 
@@ -72,42 +71,4 @@ impl UnprotectedBranchArgs {
 
 fn set_unprotected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Result<()> {
     github::set_unprotected_branch(repo, branch, token)
-}
-
-fn print_unprotect_branch_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Unprotected", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_unprotected = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_unprotected += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_unprotected,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

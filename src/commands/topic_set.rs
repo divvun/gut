@@ -4,7 +4,6 @@ use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
-use prettytable::{Table, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
@@ -32,7 +31,7 @@ impl TopicSetArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org),
-            Some(print_topic_set_summary),
+            "Topics Set",
         )
     }
 
@@ -82,40 +81,4 @@ impl TopicSetArgs {
             dirty_repos: 0,
         })
     }
-}
-
-fn print_topic_set_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Topics Set", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_set = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_set += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-    table.add_empty_row();
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_set,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

@@ -33,7 +33,7 @@ impl FetchArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org),
-            Some(print_fetch_summary),
+            "Fetched",
         )
     }
 
@@ -85,47 +85,4 @@ fn fetch(dir: &PathBuf, user: &User) -> Result<()> {
 
     println!("===============");
     Ok(())
-}
-
-fn print_fetch_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = prettytable::Table::new();
-    table.set_format(*prettytable::format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(prettytable::row![
-        "Organisation",
-        "#repos",
-        "Fetched",
-        "Failed"
-    ]);
-
-    let mut total_repos = 0;
-    let mut total_fetched = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(prettytable::row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_fetched += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(prettytable::row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_fetched,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }

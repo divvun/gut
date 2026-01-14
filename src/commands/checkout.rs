@@ -13,7 +13,6 @@ use git2::BranchType;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
-use prettytable::{Table, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
@@ -58,7 +57,7 @@ impl CheckoutArgs {
             self.all_orgs,
             self.organisation.as_deref(),
             |org| self.run_for_organization(org, common_args),
-            Some(print_checkout_summary),
+            "Checked out",
         )
     }
 
@@ -152,42 +151,4 @@ fn checkout_branch(
     };
 
     Ok(())
-}
-
-fn print_checkout_summary(summaries: &[OrgResult]) {
-    if summaries.is_empty() {
-        return;
-    }
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Organisation", "#repos", "Checked out", "Failed"]);
-
-    let mut total_repos = 0;
-    let mut total_checked_out = 0;
-    let mut total_failed = 0;
-
-    for summary in summaries {
-        table.add_row(row![
-            summary.org_name,
-            r -> summary.total_repos,
-            r -> summary.successful_repos,
-            r -> summary.failed_repos
-        ]);
-        total_repos += summary.total_repos;
-        total_checked_out += summary.successful_repos;
-        total_failed += summary.failed_repos;
-    }
-
-    table.add_empty_row();
-
-    table.add_row(row![
-        "TOTAL",
-        r -> total_repos,
-        r -> total_checked_out,
-        r -> total_failed
-    ]);
-
-    println!("\n=== All org summary ===");
-    table.printstd();
 }
