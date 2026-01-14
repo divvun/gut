@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -58,7 +58,7 @@ impl PullArgs {
         &self,
         common_args: &CommonArgs,
         organisation: &str,
-    ) -> Result<common::OrgResult> {
+    ) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
@@ -69,7 +69,7 @@ impl PullArgs {
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -87,7 +87,7 @@ impl PullArgs {
             OutputFormat::Table => summarize(&statuses),
         };
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: sub_dirs.len(),
             successful_repos: successful_pulls,
@@ -350,7 +350,7 @@ impl RepoStatus {
     }
 }
 
-fn print_pull_summary(summaries: &[common::OrgResult]) {
+fn print_pull_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

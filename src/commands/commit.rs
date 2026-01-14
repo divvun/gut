@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -49,7 +49,7 @@ impl CommitArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
 
         let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
@@ -65,7 +65,7 @@ impl CommitArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(common::OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let statuses: Vec<_> = filtered_repos
@@ -78,7 +78,7 @@ impl CommitArgs {
         let successful = statuses.iter().filter(|s| s.is_success()).count();
         let failed = statuses.iter().filter(|s| s.has_error()).count();
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: filtered_repos.len(),
             successful_repos: successful,
@@ -221,7 +221,7 @@ fn summarize(statuses: &[Status]) {
     }
 }
 
-fn print_commit_summary(summaries: &[common::OrgResult]) {
+fn print_commit_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

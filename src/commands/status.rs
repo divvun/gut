@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgSummary};
 use crate::cli::{Args as CommonArgs, OutputFormat};
 use crate::filter::Filter;
 use crate::git;
@@ -44,11 +44,7 @@ impl StatusArgs {
         )
     }
 
-    fn run_single_org(
-        &self,
-        common_args: &CommonArgs,
-        organisation: &str,
-    ) -> Result<common::OrgSummary> {
+    fn run_single_org(&self, common_args: &CommonArgs, organisation: &str) -> Result<OrgSummary> {
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
@@ -97,7 +93,7 @@ impl StatusArgs {
             total_deleted += status.status.deleted.len();
         }
 
-        Ok(common::OrgSummary {
+        Ok(OrgSummary {
             name: organisation.to_string(),
             total_repos: statuses.len(),
             unpushed_repo_count,
@@ -329,7 +325,7 @@ impl StatusRow {
     }
 }
 
-pub fn print_org_summary(summaries: &[common::OrgSummary]) {
+pub fn print_org_summary(summaries: &[OrgSummary]) {
     let mut rows = vec![];
 
     let mut total_repos = 0;

@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
@@ -33,7 +33,7 @@ impl TopicGetArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user_token = common::user_token()?;
 
         let filtered_repos =
@@ -44,7 +44,7 @@ impl TopicGetArgs {
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let results: Vec<_> = filtered_repos
@@ -70,7 +70,7 @@ impl TopicGetArgs {
         let successful = results.iter().filter(|&&success| success).count();
         let failed = results.len() - successful;
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
@@ -80,7 +80,7 @@ impl TopicGetArgs {
     }
 }
 
-fn print_topic_get_summary(summaries: &[common::OrgResult]) {
+fn print_topic_get_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::user::User;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
@@ -53,7 +53,7 @@ impl PushArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
 
         let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
@@ -69,7 +69,7 @@ impl PushArgs {
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let statuses: Vec<_> = filtered_repos
@@ -82,7 +82,7 @@ impl PushArgs {
         let successful = statuses.iter().filter(|s| s.success()).count();
         let failed = statuses.iter().filter(|s| s.has_error()).count();
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: filtered_repos.len(),
             successful_repos: successful,
@@ -221,7 +221,7 @@ fn to_table(statuses: &[Status]) -> Table {
     table
 }
 
-fn print_push_summary(summaries: &[common::OrgResult]) {
+fn print_push_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::git;
 use crate::user::User;
@@ -66,7 +66,7 @@ impl CheckoutArgs {
         &self,
         organisation: &str,
         _common_args: &CommonArgs,
-    ) -> Result<common::OrgResult> {
+    ) -> Result<OrgResult> {
         let user = common::user()?;
 
         let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
@@ -82,13 +82,7 @@ impl CheckoutArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(common::OrgResult {
-                org_name: organisation.to_string(),
-                total_repos: 0,
-                successful_repos: 0,
-                failed_repos: 0,
-                dirty_repos: 0,
-            });
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let total_count = filtered_repos.len();
@@ -124,7 +118,7 @@ impl CheckoutArgs {
         let success_count = results.iter().filter(|&&r| r).count();
         let fail_count = results.iter().filter(|&&r| !r).count();
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
@@ -160,7 +154,7 @@ fn checkout_branch(
     Ok(())
 }
 
-fn print_checkout_summary(summaries: &[common::OrgResult]) {
+fn print_checkout_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

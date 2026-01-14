@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -38,7 +38,7 @@ impl CleanArgs {
         &self,
         organisation: &str,
         _common_args: &CommonArgs,
-    ) -> Result<common::OrgResult> {
+    ) -> Result<OrgResult> {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
@@ -56,7 +56,7 @@ impl CleanArgs {
             }
         }
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
@@ -87,7 +87,7 @@ fn clean(dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn print_clean_summary(summaries: &[common::OrgResult]) {
+fn print_clean_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

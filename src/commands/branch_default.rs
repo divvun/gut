@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
@@ -38,12 +38,12 @@ impl DefaultBranchArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let token = common::user_token()?;
         let repos =
             common::query_and_filter_repositories(organisation, self.regex.as_ref(), &token)?;
 
-        let mut result = common::OrgResult::new(organisation.to_string());
+        let mut result = OrgResult::new(organisation.to_string());
 
         // Process repos and track results
         for repo in repos.iter() {
@@ -74,7 +74,7 @@ fn set_default_branch(repo: &RemoteRepo, default_branch: &str, token: &str) -> R
     github::set_default_branch(repo, default_branch, token)
 }
 
-fn print_default_branch_summary(summaries: &[common::OrgResult]) {
+fn print_default_branch_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

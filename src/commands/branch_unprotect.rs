@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::RemoteRepo;
@@ -38,12 +38,12 @@ impl UnprotectedBranchArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user_token = common::user_token()?;
         let filtered_repos =
             common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
 
-        let mut result = common::OrgResult::new(organisation.to_string());
+        let mut result = OrgResult::new(organisation.to_string());
 
         // Process repos and track results
         for repo in filtered_repos.iter() {
@@ -74,7 +74,7 @@ fn set_unprotected_branch(repo: &RemoteRepo, branch: &str, token: &str) -> Resul
     github::set_unprotected_branch(repo, branch, token)
 }
 
-fn print_unprotect_branch_summary(summaries: &[common::OrgResult]) {
+fn print_unprotect_branch_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use super::models::Script;
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
@@ -48,7 +48,7 @@ impl ApplyArgs {
         &self,
         organisation: &str,
         _common_args: &CommonArgs,
-    ) -> Result<common::OrgResult> {
+    ) -> Result<OrgResult> {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
@@ -62,13 +62,7 @@ impl ApplyArgs {
                 "There are no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult {
-                org_name: organisation.to_string(),
-                total_repos: 0,
-                successful_repos: 0,
-                failed_repos: 0,
-                dirty_repos: 0,
-            });
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let script_path = self
@@ -88,7 +82,7 @@ impl ApplyArgs {
         let success_count = statuses.iter().filter(|s| !s.has_error()).count();
         let fail_count = statuses.iter().filter(|s| s.has_error()).count();
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
@@ -215,7 +209,7 @@ fn summarize(statuses: &[Status]) {
     }
 }
 
-fn print_apply_summary(summaries: &[common::OrgResult]) {
+fn print_apply_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

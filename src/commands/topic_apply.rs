@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use super::models::Script;
 use super::topic_helper;
 use crate::cli::Args as CommonArgs;
@@ -48,7 +48,7 @@ impl TopicApplyArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         println!("Topic apply for organization: {}", organisation);
 
         let script_path = self
@@ -84,7 +84,7 @@ impl TopicApplyArgs {
         let successful = results.iter().filter(|&&success| success).count();
         let failed = results.len() - successful;
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
@@ -108,7 +108,7 @@ fn apply(
     common::apply_script(&git_repo.local_path, script_path)
 }
 
-fn print_topic_apply_summary(summaries: &[common::OrgResult]) {
+fn print_topic_apply_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }

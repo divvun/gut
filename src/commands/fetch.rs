@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -37,7 +37,7 @@ impl FetchArgs {
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<common::OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
@@ -48,7 +48,7 @@ impl FetchArgs {
                 "There is no local repositories in organisation {} matches pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(common::OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation.to_string()));
         }
 
         let mut successful = 0;
@@ -64,7 +64,7 @@ impl FetchArgs {
             }
         }
 
-        Ok(common::OrgResult {
+        Ok(OrgResult {
             org_name: organisation.to_string(),
             total_repos: sub_dirs.len(),
             successful_repos: successful,
@@ -87,7 +87,7 @@ fn fetch(dir: &PathBuf, user: &User) -> Result<()> {
     Ok(())
 }
 
-fn print_fetch_summary(summaries: &[common::OrgResult]) {
+fn print_fetch_summary(summaries: &[OrgResult]) {
     if summaries.is_empty() {
         return;
     }
