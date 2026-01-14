@@ -316,7 +316,18 @@ fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
     Ok(dirs)
 }
 
-/// Find all organizations by scanning the local filesystem root directory
+/// Checks if a directory contains at least one git repository
+fn contains_git_repos(path: &Path) -> bool {
+    let Ok(entries) = std::fs::read_dir(path) else {
+        return false;
+    };
+
+    entries.filter_map(|e| e.ok()).any(|entry| {
+        entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+            && entry.path().join(".git").is_dir()
+    })
+}
+
 pub fn get_all_organizations() -> Result<Vec<String>> {
     let root = root()?;
     let root_path = Path::new(&root);
@@ -325,23 +336,21 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
         return Ok(Vec::new());
     }
 
-    let mut organizations = Vec::new();
+    let mut organizations: Vec<String> = std::fs::read_dir(root_path)?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false))
+        .filter_map(|entry| {
+            let name = entry.file_name();
+            let name_str = name.to_str()?;
 
-    for entry in std::fs::read_dir(root_path)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        // Only consider directories
-        if path.is_dir() {
-            if let Some(org_name) = path.file_name().and_then(|n| n.to_str()) {
-                // Skip hidden directories and common non-org directories
-                if !org_name.starts_with('.') && org_name != "target" && org_name != "node_modules"
-                {
-                    organizations.push(org_name.to_string());
-                }
+            // Skip hidden directories and validate it contains git repos
+            if !name_str.starts_with('.') && contains_git_repos(&entry.path()) {
+                Some(name_str.to_string())
+            } else {
+                None
             }
-        }
-    }
+        })
+        .collect();
 
     organizations.sort();
     Ok(organizations)
