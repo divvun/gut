@@ -335,10 +335,7 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
         if path.is_dir() {
             if let Some(org_name) = path.file_name().and_then(|n| n.to_str()) {
                 // Skip hidden directories and common non-org directories
-                if !org_name.starts_with('.')
-                    && org_name != "target"
-                    && org_name != "node_modules"
-                    && org_name != ".git"
+                if !org_name.starts_with('.') && org_name != "target" && org_name != "node_modules"
                 {
                     organizations.push(org_name.to_string());
                 }
