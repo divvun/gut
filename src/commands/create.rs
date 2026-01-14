@@ -7,11 +7,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Create team, discussion, repo to an organisation or create a branch for repositories
 pub struct CreateArgs {
     #[command(subcommand)]
     command: CreateCommand,
 }
-/// Create team, discussion, repo to an organisation or create a branch for repositories
+
 impl CreateArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

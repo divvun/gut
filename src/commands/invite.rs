@@ -4,11 +4,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Invite users to an organisation by emails
 pub struct InviteArgs {
     #[command(subcommand)]
     command: InviteCommand,
 }
-/// Invite users to an organisation by emails
+
 impl InviteArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

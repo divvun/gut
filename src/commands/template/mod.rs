@@ -12,11 +12,12 @@ use refresh::*;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Apply changes or generate new template
 pub struct TemplateArgs {
     #[command(subcommand)]
     command: TemplateCommand,
 }
-/// Apply changes or generate new template
+
 impl TemplateArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

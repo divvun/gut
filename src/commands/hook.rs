@@ -5,11 +5,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Create, delete hooks for all repositories that match a pattern
 pub struct HookArgs {
     #[command(subcommand)]
     command: HookCommand,
 }
-/// Create, delete hooks for all repositories that match a pattern
+
 impl HookArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

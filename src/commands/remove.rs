@@ -5,11 +5,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Remove users, repos from an organisation/a team
 pub struct RemoveArgs {
     #[command(subcommand)]
     command: RemoveCommand,
 }
-/// Remove users, repos from an organisation/a team.
+
 impl RemoveArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

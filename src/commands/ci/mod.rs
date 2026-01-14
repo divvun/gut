@@ -9,11 +9,12 @@ use export::*;
 use generate::*;
 
 #[derive(Debug, Parser)]
+/// Generate or export ci configuration
 pub struct CiArgs {
     #[command(subcommand)]
     command: CiCommand,
 }
-/// Generate or export ci configuration
+
 impl CiArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

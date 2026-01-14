@@ -7,11 +7,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Add, get, set or apply a script by topic
 pub struct TopicArgs {
     #[command(subcommand)]
     command: TopicCommand,
 }
-/// Add, get, set or apply a script by topic
+
 impl TopicArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

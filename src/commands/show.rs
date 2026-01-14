@@ -6,11 +6,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Show config, list of repositories or users
 pub struct ShowArgs {
     #[command(subcommand)]
     command: ShowCommand,
 }
-/// Show config, list of repositories or users
+
 impl ShowArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)
@@ -19,8 +20,8 @@ impl ShowArgs {
 
 #[derive(Debug, Parser)]
 pub enum ShowCommand {
+    /// Show current configuration
     #[command(name = "config")]
-    // Show current configuration
     Config,
     #[command(name = "repositories", aliases = &["repos"])]
     Repos(ShowReposArgs),

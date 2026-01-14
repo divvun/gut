@@ -5,7 +5,7 @@ use crate::filter::Filter;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-// Show all repositories that match a pattern
+/// Show all repositories that match a pattern
 pub struct ShowReposArgs {
     #[arg(long, short)]
     /// Target organisation name

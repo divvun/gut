@@ -7,11 +7,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Set information, secret for repositories or permission for a team
 pub struct SetArgs {
     #[command(subcommand)]
     command: SetCommand,
 }
-/// Set information, secret for repositories or permission for a team
+
 impl SetArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)

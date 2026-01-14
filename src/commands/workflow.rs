@@ -4,11 +4,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Run a workflow
 pub struct WorkflowArgs {
     #[command(subcommand)]
     command: WorkflowCommand,
 }
-/// Run a workflow
+
 impl WorkflowArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
         self.command.run(common_args)
