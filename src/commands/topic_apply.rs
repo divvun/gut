@@ -16,7 +16,7 @@ use std::process::Output;
 /// Or to all repositories that has a specific topic
 #[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

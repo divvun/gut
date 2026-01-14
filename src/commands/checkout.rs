@@ -24,7 +24,7 @@ use rayon::prelude::*;
 ///
 /// This command is able to clone a repository if it is not on the root directory
 pub struct CheckoutArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

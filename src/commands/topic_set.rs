@@ -10,7 +10,7 @@ use rayon::prelude::*;
 #[derive(Debug, Parser)]
 /// Set topics for all repositories that match a regex
 pub struct TopicSetArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

@@ -14,7 +14,7 @@ use std::path::PathBuf;
 ///
 /// This command only works on those repositories that has been cloned in root directory
 pub struct FetchArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

@@ -18,7 +18,7 @@ use std::process::Output;
 /// If you want your script to use your authentication token, you
 /// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

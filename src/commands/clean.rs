@@ -11,7 +11,7 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Do git clean -f for all local repositories that match a pattern
 pub struct CleanArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

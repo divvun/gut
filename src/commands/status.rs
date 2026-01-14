@@ -15,7 +15,7 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

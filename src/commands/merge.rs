@@ -11,7 +11,7 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Merge a branch to the current branch for all repositories that match a pattern
 pub struct MergeArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

@@ -23,7 +23,7 @@ use rayon::prelude::*;
 ///
 /// This command will do nothing if there is nothing to push
 pub struct PushArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.

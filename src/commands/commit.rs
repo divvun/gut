@@ -18,7 +18,7 @@ use rayon::prelude::*;
 /// Add all and then commit with the provided messages for all
 /// repositories that match a pattern or a topic
 pub struct CommitArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
