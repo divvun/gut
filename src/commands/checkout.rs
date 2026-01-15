@@ -81,7 +81,7 @@ impl CheckoutArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation));
         }
 
         let total_count = filtered_repos.len();

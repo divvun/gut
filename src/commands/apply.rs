@@ -62,7 +62,7 @@ impl ApplyArgs {
                 "There are no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation));
         }
 
         let script_path = self

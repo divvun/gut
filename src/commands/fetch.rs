@@ -48,7 +48,7 @@ impl FetchArgs {
                 "There is no local repositories in organisation {} matches pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation));
         }
 
         let mut successful = 0;

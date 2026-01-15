@@ -58,20 +58,14 @@ impl ErrorPlaceholder for OrgSummary {
 
 impl ErrorPlaceholder for OrgResult {
     fn error_placeholder(org_name: &str) -> Self {
-        Self {
-            org_name: org_name.to_string(),
-            total_repos: 0,
-            successful_repos: 0,
-            failed_repos: 0,
-            dirty_repos: 0,
-        }
+        Self::new(org_name)
     }
 }
 
 impl OrgResult {
-    pub fn new(org_name: String) -> Self {
+    pub fn new(org_name: &str) -> Self {
         Self {
-            org_name,
+            org_name: org_name.to_string(),
             total_repos: 0,
             successful_repos: 0,
             failed_repos: 0,

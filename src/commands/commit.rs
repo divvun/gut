@@ -65,7 +65,7 @@ impl CommitArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(OrgResult::new(organisation.to_string()));
+            return Ok(OrgResult::new(organisation));
         }
 
         let statuses: Vec<_> = filtered_repos

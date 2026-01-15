@@ -42,7 +42,7 @@ impl ProtectedBranchArgs {
         let filtered_repos =
             common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
 
-        let mut result = OrgResult::new(organisation.to_string());
+        let mut result = OrgResult::new(organisation);
 
         // Process repos and track results
         for repo in filtered_repos.iter() {

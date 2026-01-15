@@ -42,7 +42,7 @@ impl DefaultBranchArgs {
         let repos =
             common::query_and_filter_repositories(organisation, self.regex.as_ref(), &token)?;
 
-        let mut result = OrgResult::new(organisation.to_string());
+        let mut result = OrgResult::new(organisation);
 
         // Process repos and track results
         for repo in repos.iter() {
