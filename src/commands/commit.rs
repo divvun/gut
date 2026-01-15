@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -18,7 +18,7 @@ use rayon::prelude::*;
 /// Add all and then commit with the provided messages for all
 /// repositories that match a pattern or a topic
 pub struct CommitArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -34,14 +34,25 @@ pub struct CommitArgs {
     #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl CommitArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org),
+            "Committed",
+        )
+    }
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+        let user = common::user()?;
+
+        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -54,7 +65,7 @@ impl CommitArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(());
+            return Ok(OrgResult::new(organisation));
         }
 
         let statuses: Vec<_> = filtered_repos
@@ -64,7 +75,16 @@ impl CommitArgs {
 
         summarize(&statuses);
 
-        Ok(())
+        let successful = statuses.iter().filter(|s| s.is_success()).count();
+        let failed = statuses.iter().filter(|s| s.has_error()).count();
+
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: filtered_repos.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 
@@ -140,6 +160,10 @@ impl Status {
 
     fn has_error(&self) -> bool {
         self.result.is_err()
+    }
+
+    fn is_success(&self) -> bool {
+        matches!(&self.result, Ok(CommitResult::Success))
     }
 
     fn to_error_row(&self) -> Row {

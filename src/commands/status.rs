@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgSummary};
 use crate::cli::{Args as CommonArgs, OutputFormat};
 use crate::filter::Filter;
 use crate::git;
@@ -15,7 +15,7 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -29,17 +29,29 @@ pub struct StatusArgs {
     #[arg(long, short)]
     /// Option to omit repositories without changes
     pub quiet: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        common::run_for_orgs_with_summary(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_single_org(common_args, org),
+            print_org_summary,
+        )
+    }
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+    fn run_single_org(&self, common_args: &CommonArgs, organisation: &str) -> Result<OrgSummary> {
+        let root = common::root()?;
+
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
-        let statuses: Vec<_> = statuses?;
+        let statuses = statuses?;
+
         let statuses: Vec<_> = statuses
             .into_iter()
             .filter(|status| {
@@ -52,14 +64,46 @@ impl StatusArgs {
 
         if let Some(OutputFormat::Json) = common_args.format {
             println!("{}", json!(statuses));
-            return Ok(());
+        } else {
+            let rows = to_rows(&statuses, self.verbose);
+            let table = to_table(&rows);
+            table.printstd();
         }
 
-        let rows = to_rows(&statuses, self.verbose);
-        let table = to_table(&rows);
+        // Lag organizasjon-sammandrag med same statistikk som summarize
+        let mut unpushed_repo_count = 0;
+        let mut uncommitted_repo_count = 0;
+        let mut total_unadded = 0;
+        let mut total_deleted = 0;
+        let mut total_modified = 0;
+        let mut total_conflicted = 0;
+        let mut total_added = 0;
 
-        table.printstd();
-        Ok(())
+        for status in &statuses {
+            if !status.status.is_empty() {
+                uncommitted_repo_count += 1;
+            }
+            if status.status.is_ahead > 0 || status.status.is_behind > 0 {
+                unpushed_repo_count += 1;
+            }
+            total_added += status.status.added.len();
+            total_conflicted += status.status.conflicted.len();
+            total_modified += status.status.modified.len();
+            total_unadded += status.status.new.len();
+            total_deleted += status.status.deleted.len();
+        }
+
+        Ok(OrgSummary {
+            name: organisation.to_string(),
+            total_repos: statuses.len(),
+            unpushed_repo_count,
+            uncommitted_repo_count,
+            total_unadded,
+            total_deleted,
+            total_modified,
+            total_conflicted,
+            total_added,
+        })
     }
 }
 
@@ -97,7 +141,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     let mut rows = vec![StatusRow::TitleSeperation, StatusRow::SummarizeTitle];
     let total = statuses.len().to_string();
     let mut unpushed_repo_count: usize = 0;
-    let mut uncommited_repo_count: usize = 0;
+    let mut uncommitted_repo_count: usize = 0;
     let mut total_unadded: usize = 0;
     let mut total_deleted: usize = 0;
     let mut total_modified: usize = 0;
@@ -106,7 +150,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
 
     for status in statuses {
         if !status.status.is_empty() {
-            uncommited_repo_count += 1;
+            uncommitted_repo_count += 1;
         }
         if status.status.is_ahead > 0 || status.status.is_behind > 0 {
             unpushed_repo_count += 1;
@@ -121,7 +165,7 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     let summarize_row = StatusRow::SummarizeAll {
         total,
         unpushed_repo_count: unpushed_repo_count.to_string(),
-        uncommited_repo_count: uncommited_repo_count.to_string(),
+        uncommitted_repo_count: uncommitted_repo_count.to_string(),
         total_unadded: total_unadded.to_string(),
         total_deleted: total_deleted.to_string(),
         total_modified: total_modified.to_string(),
@@ -206,7 +250,18 @@ enum StatusRow {
     SummarizeAll {
         total: String,
         unpushed_repo_count: String,
-        uncommited_repo_count: String,
+        uncommitted_repo_count: String,
+        total_unadded: String,
+        total_deleted: String,
+        total_modified: String,
+        total_conflicted: String,
+        total_added: String,
+    },
+    OrgSummarize {
+        org_name: String,
+        total_repos: String,
+        unpushed_repo_count: String,
+        uncommitted_repo_count: String,
         total_unadded: String,
         total_deleted: String,
         total_modified: String,
@@ -216,6 +271,7 @@ enum StatusRow {
     RepoSeperation,
     TitleSeperation,
     SummarizeTitle,
+    Empty,
 }
 
 impl StatusRow {
@@ -223,18 +279,19 @@ impl StatusRow {
         match self {
             StatusRow::RepoSeperation => row!["--------------"],
             StatusRow::TitleSeperation => row!["================"],
+            StatusRow::Empty => row![""],
             StatusRow::FileDetail { status, path } => row![r => status, path],
             StatusRow::SummarizeAll {
                 total,
                 unpushed_repo_count,
-                uncommited_repo_count,
+                uncommitted_repo_count,
                 total_unadded,
                 total_deleted,
                 total_modified,
                 total_conflicted,
                 total_added,
             } => {
-                row![total, uncommited_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
+                row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
             }
             StatusRow::RepoSummarize {
                 name,
@@ -251,6 +308,87 @@ impl StatusRow {
             StatusRow::SummarizeTitle => {
                 row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
             }
+            StatusRow::OrgSummarize {
+                org_name,
+                total_repos,
+                unpushed_repo_count,
+                uncommitted_repo_count,
+                total_unadded,
+                total_deleted,
+                total_modified,
+                total_conflicted,
+                total_added,
+            } => {
+                row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
+            }
         }
     }
+}
+
+pub fn print_org_summary(summaries: &[OrgSummary]) {
+    let mut rows = vec![];
+
+    let mut total_repos = 0;
+    let mut total_unpushed = 0;
+    let mut total_uncommited = 0;
+    let mut total_unadded = 0;
+    let mut total_deleted = 0;
+    let mut total_modified = 0;
+    let mut total_conflicted = 0;
+    let mut total_added = 0;
+
+    for summary in summaries {
+        let org_row = StatusRow::OrgSummarize {
+            org_name: summary.name.clone(),
+            total_repos: summary.total_repos.to_string(),
+            unpushed_repo_count: summary.unpushed_repo_count.to_string(),
+            uncommitted_repo_count: summary.uncommitted_repo_count.to_string(),
+            total_unadded: summary.total_unadded.to_string(),
+            total_deleted: summary.total_deleted.to_string(),
+            total_modified: summary.total_modified.to_string(),
+            total_conflicted: summary.total_conflicted.to_string(),
+            total_added: summary.total_added.to_string(),
+        };
+        rows.push(org_row);
+
+        total_repos += summary.total_repos;
+        total_unpushed += summary.unpushed_repo_count;
+        total_uncommited += summary.uncommitted_repo_count;
+        total_unadded += summary.total_unadded;
+        total_deleted += summary.total_deleted;
+        total_modified += summary.total_modified;
+        total_conflicted += summary.total_conflicted;
+        total_added += summary.total_added;
+    }
+
+    // Add separator row
+    rows.push(StatusRow::Empty);
+
+    // Add total row
+    let total_row = StatusRow::OrgSummarize {
+        org_name: "TOTAL".to_string(),
+        total_repos: total_repos.to_string(),
+        unpushed_repo_count: total_unpushed.to_string(),
+        uncommitted_repo_count: total_uncommited.to_string(),
+        total_unadded: total_unadded.to_string(),
+        total_deleted: total_deleted.to_string(),
+        total_modified: total_modified.to_string(),
+        total_conflicted: total_conflicted.to_string(),
+        total_added: total_added.to_string(),
+    };
+    rows.push(total_row);
+
+    let table = to_org_summary_table(&rows);
+    println!("\n=== All org summary ===");
+    table.printstd();
+}
+
+fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
+    let mut table = Table::init(rows);
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(
+        row!["Organisation", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+    );
+    table
 }

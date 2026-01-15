@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use super::models::Script;
 use super::topic_helper;
 use crate::cli::Args as CommonArgs;
@@ -15,7 +15,7 @@ use std::process::Output;
 /// Or to all repositories that has a specific topic
 #[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -32,11 +32,23 @@ pub struct TopicApplyArgs {
     /// use https to clone repositories if needed
     #[arg(long, short)]
     pub use_https: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl TopicApplyArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        println!("Topic apply {:?}", self);
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org),
+            "Applied",
+        )
+    }
+
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+        println!("Topic apply for organization: {}", organisation);
 
         let script_path = self
             .script
@@ -45,22 +57,39 @@ impl TopicApplyArgs {
             .expect("gut only supports UTF-8 paths now!");
 
         let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+        let repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
         let repos =
             topic_helper::filter_repos_by_topics(&repos, self.topic.as_ref(), self.regex.as_ref());
 
         println!("repos {:?}", repos);
 
-        repos.par_iter().for_each(
-            |repo| match apply(repo, script_path, &user, self.use_https) {
-                Ok(_) => println!("Apply success"),
-                Err(e) => println!("Apply failed because {:?}", e),
-            },
-        );
+        let results: Vec<_> = repos
+            .par_iter()
+            .map(
+                |repo| match apply(repo, script_path, &user, self.use_https) {
+                    Ok(_) => {
+                        println!("Apply success for repo {}", repo.repo.name);
+                        true
+                    }
+                    Err(e) => {
+                        println!("Apply failed for repo {} because {:?}", repo.repo.name, e);
+                        false
+                    }
+                },
+            )
+            .collect();
 
-        Ok(())
+        let successful = results.iter().filter(|&&success| success).count();
+        let failed = results.len() - successful;
+
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: results.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 

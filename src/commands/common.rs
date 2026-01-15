@@ -2,6 +2,8 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
+use prettytable::{Table, format, row};
+
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -10,6 +12,202 @@ use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 
 use crate::filter::{Filter, Filterable};
 use crate::user::User;
+
+/// Trait for types that can create error placeholders for failed organizations
+pub trait ErrorPlaceholder {
+    fn error_placeholder(org_name: &str) -> Self;
+}
+
+#[derive(Debug, Clone)]
+pub struct OrgResult {
+    pub org_name: String,
+    pub total_repos: usize,
+    pub successful_repos: usize,
+    pub failed_repos: usize,
+    pub dirty_repos: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct OrgSummary {
+    pub name: String,
+    pub total_repos: usize,
+    pub unpushed_repo_count: usize,
+    pub uncommitted_repo_count: usize,
+    pub total_unadded: usize,
+    pub total_deleted: usize,
+    pub total_modified: usize,
+    pub total_conflicted: usize,
+    pub total_added: usize,
+}
+
+impl ErrorPlaceholder for OrgSummary {
+    fn error_placeholder(org_name: &str) -> Self {
+        Self {
+            name: org_name.to_string(),
+            total_repos: 0,
+            unpushed_repo_count: 0,
+            uncommitted_repo_count: 0,
+            total_unadded: 0,
+            total_deleted: 0,
+            total_modified: 0,
+            total_conflicted: 0,
+            total_added: 0,
+        }
+    }
+}
+
+impl ErrorPlaceholder for OrgResult {
+    fn error_placeholder(org_name: &str) -> Self {
+        Self::new(org_name)
+    }
+}
+
+impl OrgResult {
+    pub fn new(org_name: &str) -> Self {
+        Self {
+            org_name: org_name.to_string(),
+            total_repos: 0,
+            successful_repos: 0,
+            failed_repos: 0,
+            dirty_repos: 0,
+        }
+    }
+
+    pub fn add_success(&mut self) {
+        self.total_repos += 1;
+        self.successful_repos += 1;
+    }
+
+    pub fn add_failure(&mut self) {
+        self.total_repos += 1;
+        self.failed_repos += 1;
+    }
+}
+
+/// Print a summary table for OrgResult slices with a customizable success column label
+pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &str) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row![
+        "Organisation",
+        "#repos",
+        success_column_label,
+        "Failed"
+    ]);
+
+    let mut total_repos = 0;
+    let mut total_success = 0;
+    let mut total_failed = 0;
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos
+        ]);
+        total_repos += summary.total_repos;
+        total_success += summary.successful_repos;
+        total_failed += summary.failed_repos;
+    }
+
+    table.add_empty_row();
+    table.add_row(row!["TOTAL", r -> total_repos, r -> total_success, r -> total_failed]);
+
+    println!("\n=== All org summary ===");
+    table.printstd();
+}
+
+/// Run a command against all organizations or a single one, printing OrgResult summary with custom label
+pub fn run_for_orgs<F>(
+    all_orgs: bool,
+    organisation_opt: Option<&str>,
+    run_fn: F,
+    success_column_label: &str,
+) -> Result<()>
+where
+    F: Fn(&str) -> Result<OrgResult>,
+{
+    if all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+
+        let mut summaries = Vec::new();
+
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+
+            match run_fn(org) {
+                Ok(summary) => {
+                    summaries.push(summary);
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                    summaries.push(OrgResult::error_placeholder(org));
+                }
+            }
+        }
+
+        print_org_result_summary(&summaries, success_column_label);
+
+        Ok(())
+    } else {
+        let org = organisation(organisation_opt)?;
+        run_fn(&org)?;
+        Ok(())
+    }
+}
+
+/// Run a command against all organizations or a single one with custom summary printer
+pub fn run_for_orgs_with_summary<F, R>(
+    all_orgs: bool,
+    organisation_opt: Option<&str>,
+    run_fn: F,
+    print_summary_fn: fn(&[R]),
+) -> Result<()>
+where
+    F: Fn(&str) -> Result<R>,
+    R: ErrorPlaceholder,
+{
+    if all_orgs {
+        let organizations = get_all_organizations()?;
+        if organizations.is_empty() {
+            println!("No organizations found in root directory");
+            return Ok(());
+        }
+
+        let mut summaries = Vec::new();
+
+        for org in &organizations {
+            println!("\n=== Processing organization: {} ===", org);
+
+            match run_fn(org) {
+                Ok(summary) => {
+                    summaries.push(summary);
+                }
+                Err(e) => {
+                    println!("Failed to process organization '{}': {:?}", org, e);
+                    summaries.push(R::error_placeholder(org));
+                }
+            }
+        }
+
+        print_summary_fn(&summaries);
+
+        Ok(())
+    } else {
+        let org = organisation(organisation_opt)?;
+        run_fn(&org)?;
+        Ok(())
+    }
+}
 
 pub fn query_and_filter_repositories(
     org: &str,
@@ -110,6 +308,46 @@ fn read_dirs(path: &Path) -> Result<Vec<PathBuf>> {
         .filter(|x| x.is_dir())
         .collect();
     Ok(dirs)
+}
+
+/// Checks if a directory contains at least one git repository
+fn contains_git_repos(path: &Path) -> bool {
+    let Ok(entries) = std::fs::read_dir(path) else {
+        return false;
+    };
+
+    entries.filter_map(|e| e.ok()).any(|entry| {
+        entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+            && entry.path().join(".git").is_dir()
+    })
+}
+
+pub fn get_all_organizations() -> Result<Vec<String>> {
+    let root = root()?;
+    let root_path = Path::new(&root);
+
+    if !root_path.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut organizations: Vec<String> = std::fs::read_dir(root_path)?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false))
+        .filter_map(|entry| {
+            let name = entry.file_name();
+            let name_str = name.to_str()?;
+
+            // Skip hidden directories and validate it contains git repos
+            if !name_str.starts_with('.') && contains_git_repos(&entry.path()) {
+                Some(name_str.to_string())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    organizations.sort();
+    Ok(organizations)
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {

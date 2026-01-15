@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -25,7 +25,7 @@ use crate::cli::OutputFormat;
 /// This command only works on those repositories that has been cloned in root directory
 ///
 pub struct PullArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -39,22 +39,37 @@ pub struct PullArgs {
     #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl PullArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::run_for_orgs_with_summary(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(common_args, org),
+            print_pull_summary,
+        )
+    }
+
+    pub fn run_for_organization(
+        &self,
+        common_args: &CommonArgs,
+        organisation: &str,
+    ) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
                 "There is no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(OrgResult::new(organisation));
         }
 
         let statuses: Vec<_> = sub_dirs
@@ -62,12 +77,23 @@ impl PullArgs {
             .map(|d| pull(d, &user, self.stash, self.merge))
             .collect();
 
+        // Count successful vs failed pulls
+        let successful_pulls = statuses.iter().filter(|s| s.was_updated()).count();
+        let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
+        let dirty_repos = statuses.iter().filter(|s| s.is_dirty()).count();
+
         match common_args.format.unwrap() {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };
 
-        Ok(())
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: sub_dirs.len(),
+            successful_repos: successful_pulls,
+            failed_repos: failed_pulls,
+            dirty_repos,
+        })
     }
 }
 
@@ -230,6 +256,18 @@ impl Status {
             && (self.stash_status.is_success() || matches!(self.stash_status, StashStatus::No))
     }
 
+    fn was_updated(&self) -> bool {
+        if let Ok(pull_status) = &self.status {
+            !matches!(pull_status, PullStatus::Nothing)
+        } else {
+            false
+        }
+    }
+
+    fn is_dirty(&self) -> bool {
+        matches!(self.repo_status, RepoStatus::Dirty | RepoStatus::Conflict)
+    }
+
     fn has_error(&self) -> bool {
         self.status.is_err() || matches!(self.stash_status, StashStatus::Failed(_))
     }
@@ -310,4 +348,46 @@ impl RepoStatus {
     fn is_conflict(&self) -> bool {
         matches!(self, RepoStatus::Conflict)
     }
+}
+
+fn print_pull_summary(summaries: &[OrgResult]) {
+    if summaries.is_empty() {
+        return;
+    }
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Organisation", "#repos", "Updated", "Failed", "Dirty"]);
+
+    let mut total_repos = 0;
+    let mut total_updated = 0;
+    let mut total_failed = 0;
+    let mut total_dirty = 0;
+
+    for summary in summaries {
+        table.add_row(row![
+            summary.org_name,
+            r -> summary.total_repos,
+            r -> summary.successful_repos,
+            r -> summary.failed_repos,
+            r -> summary.dirty_repos
+        ]);
+        total_repos += summary.total_repos;
+        total_updated += summary.successful_repos;
+        total_failed += summary.failed_repos;
+        total_dirty += summary.dirty_repos;
+    }
+
+    table.add_empty_row();
+
+    table.add_row(row![
+        "TOTAL",
+        r -> total_repos,
+        r -> total_updated,
+        r -> total_failed,
+        r -> total_dirty
+    ]);
+
+    println!("\n=== All org summary ===");
+    table.printstd();
 }

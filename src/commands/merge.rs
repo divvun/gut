@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
@@ -10,7 +10,7 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Merge a branch to the current branch for all repositories that match a pattern
 pub struct MergeArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -24,36 +24,70 @@ pub struct MergeArgs {
     #[arg(long, short)]
     /// Option to abort merging process if there is a conflict
     pub abort_if_conflict: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl MergeArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org, common_args),
+            "Merged",
+        )
+    }
 
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<OrgResult> {
+        let root = common::root()?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+
+        let total_count = sub_dirs.len();
+        let mut success_count = 0;
+        let mut fail_count = 0;
 
         for dir in sub_dirs {
             match merge(&dir, &self.branch, self.abort_if_conflict) {
-                Ok(status) => match status {
-                    MergeStatus::FastForward => println!("Merge fast forward"),
-                    MergeStatus::NormalMerge => println!("Merge made by the 'recursive' strategy"),
-                    MergeStatus::MergeWithConflict => {
-                        println!("Auto merge failed. Fix conflicts and then commit the results.")
+                Ok(status) => {
+                    success_count += 1;
+                    match status {
+                        MergeStatus::FastForward => println!("Merge fast forward"),
+                        MergeStatus::NormalMerge => {
+                            println!("Merge made by the 'recursive' strategy")
+                        }
+                        MergeStatus::MergeWithConflict => {
+                            println!(
+                                "Auto merge failed. Fix conflicts and then commit the results."
+                            )
+                        }
+                        MergeStatus::Nothing => println!("Already up to date"),
+                        MergeStatus::SkipByConflict => {
+                            println!("There are conflict(s), and we skipped")
+                        }
                     }
-                    MergeStatus::Nothing => println!("Already up to date"),
-                    MergeStatus::SkipByConflict => {
-                        println!("There are conflict(s), and we skipped")
-                    }
-                },
-                Err(e) => println!(
-                    "Failed to merge branch {} for dir {:?} because {:?}",
-                    self.branch, dir, e
-                ),
+                }
+                Err(e) => {
+                    fail_count += 1;
+                    println!(
+                        "Failed to merge branch {} for dir {:?} because {:?}",
+                        self.branch, dir, e
+                    );
+                }
             }
         }
 
-        Ok(())
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 

@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use super::models::Script;
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
@@ -18,7 +18,7 @@ use std::process::Output;
 /// If you want your script to use your authentication token, you
 /// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -29,13 +29,28 @@ pub struct ApplyArgs {
     #[arg(long, short)]
     /// The location of a script
     pub script: Script,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl ApplyArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org, common_args),
+            "Applied",
+        )
+    }
+
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<OrgResult> {
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-        let sub_dirs = common::read_dirs_for_org(&organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
         // set auth_token to env
         let user_token = common::user_token()?;
@@ -44,10 +59,10 @@ impl ApplyArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} that match the pattern {:?}",
+                "There are no local repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(OrgResult::new(organisation));
         }
 
         let script_path = self
@@ -63,7 +78,17 @@ impl ApplyArgs {
 
         summarize(&statuses);
 
-        Ok(())
+        let total_count = statuses.len();
+        let success_count = statuses.iter().filter(|s| !s.has_error()).count();
+        let fail_count = statuses.iter().filter(|s| s.has_error()).count();
+
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 

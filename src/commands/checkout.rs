@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::git;
 use crate::user::User;
@@ -23,7 +23,7 @@ use rayon::prelude::*;
 ///
 /// This command is able to clone a repository if it is not on the root directory
 pub struct CheckoutArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -46,14 +46,29 @@ pub struct CheckoutArgs {
     #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl CheckoutArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org, common_args),
+            "Checked out",
+        )
+    }
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+    fn run_for_organization(
+        &self,
+        organisation: &str,
+        _common_args: &CommonArgs,
+    ) -> Result<OrgResult> {
+        let user = common::user()?;
+
+        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -66,30 +81,49 @@ impl CheckoutArgs {
                 "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
-            return Ok(());
+            return Ok(OrgResult::new(organisation));
         }
 
-        filtered_repos.par_iter().for_each(|repo| {
-            match checkout_branch(
-                repo,
-                &self.branch,
-                &user,
-                "origin",
-                self.remote,
-                self.use_https,
-            ) {
-                Ok(_) => println!(
-                    "Checkout branch {} of repo {:?} successfully",
-                    &self.branch, repo.name
-                ),
-                Err(e) => println!(
-                    "Failed to checkout branch {} of repo {:?} because {:?}",
-                    &self.branch, repo.name, e
-                ),
-            }
-        });
+        let total_count = filtered_repos.len();
+        let results: Vec<_> = filtered_repos
+            .par_iter()
+            .map(|repo| {
+                match checkout_branch(
+                    repo,
+                    &self.branch,
+                    &user,
+                    "origin",
+                    self.remote,
+                    self.use_https,
+                ) {
+                    Ok(_) => {
+                        println!(
+                            "Checkout branch {} of repo {:?} successfully",
+                            &self.branch, repo.name
+                        );
+                        true
+                    }
+                    Err(e) => {
+                        println!(
+                            "Failed to checkout branch {} of repo {:?} because {:?}",
+                            &self.branch, repo.name, e
+                        );
+                        false
+                    }
+                }
+            })
+            .collect();
 
-        Ok(())
+        let success_count = results.iter().filter(|&&r| r).count();
+        let fail_count = results.iter().filter(|&&r| !r).count();
+
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: total_count,
+            successful_repos: success_count,
+            failed_repos: fail_count,
+            dirty_repos: 0,
+        })
     }
 }
 

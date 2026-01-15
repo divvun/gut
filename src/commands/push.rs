@@ -1,4 +1,4 @@
-use super::common;
+use super::common::{self, OrgResult};
 use crate::user::User;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
@@ -23,7 +23,7 @@ use rayon::prelude::*;
 ///
 /// This command will do nothing if there is nothing to push
 pub struct PushArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -38,14 +38,25 @@ pub struct PushArgs {
     pub branch: String,
     #[arg(long, short)]
     pub use_https: bool,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl PushArgs {
     pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
-        let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        common::run_for_orgs(
+            self.all_orgs,
+            self.organisation.as_deref(),
+            |org| self.run_for_organization(org),
+            "Pushed",
+        )
+    }
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+        let user = common::user()?;
+
+        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
@@ -58,7 +69,7 @@ impl PushArgs {
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
             );
-            return Ok(());
+            return Ok(OrgResult::new(organisation));
         }
 
         let statuses: Vec<_> = filtered_repos
@@ -68,7 +79,16 @@ impl PushArgs {
 
         summarize(&statuses, &self.branch);
 
-        Ok(())
+        let successful = statuses.iter().filter(|s| s.success()).count();
+        let failed = statuses.iter().filter(|s| s.has_error()).count();
+
+        Ok(OrgResult {
+            org_name: organisation.to_string(),
+            total_repos: filtered_repos.len(),
+            successful_repos: successful,
+            failed_repos: failed,
+            dirty_repos: 0,
+        })
     }
 }
 

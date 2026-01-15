@@ -7,7 +7,7 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Show all repositories that match a pattern
 pub struct ShowReposArgs {
-    #[arg(long, short)]
+    #[arg(long, short, conflicts_with = "all_orgs")]
     /// Target organisation name
     ///
     /// You can set a default organisation in the init or set organisation command.
@@ -15,6 +15,9 @@ pub struct ShowReposArgs {
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
+    #[arg(long, short)]
+    /// Run command against all organizations, not just the default one
+    pub all_orgs: bool,
 }
 
 impl ShowReposArgs {
