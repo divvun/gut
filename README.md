@@ -54,6 +54,10 @@ Extract the archive, and move the binary to somewhere on your `$PATH`.
 2. `cd gut`
 1. `cargo install --path .`
 
+If you get compilation errors related to SSL (esp. on the mac), try this variant for the last command above:
+
+`OPENSSL_NO_VENDOR=1 cargo install --path .`
+
 ## Setup
 
 1. make a [personal access token](https://github.com/settings/tokens) in GitHub - allow everything. Make sure to store it in a safe place - the token replaces your username and password when accessing GitHub via `gut`.
