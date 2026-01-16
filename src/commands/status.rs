@@ -1,4 +1,5 @@
 use super::common::{self, OrgSummary};
+use super::fetch::FetchArgs;
 use crate::cli::{Args as CommonArgs, OutputFormat};
 use crate::filter::Filter;
 use crate::git;
@@ -32,10 +33,23 @@ pub struct StatusArgs {
     #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
+    #[arg(long, short)]
+    /// Fetch from remotes before showing status
+    pub fetch: bool,
 }
 
 impl StatusArgs {
     pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+        if self.fetch {
+            let fetch_args = FetchArgs {
+                organisation: self.organisation.clone(),
+                regex: self.regex.clone(),
+                all_orgs: self.all_orgs,
+            };
+            fetch_args.run(common_args)?;
+            println!();
+        }
+
         common::run_for_orgs_with_summary(
             self.all_orgs,
             self.organisation.as_deref(),
