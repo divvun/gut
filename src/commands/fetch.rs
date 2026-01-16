@@ -7,6 +7,7 @@ use crate::path;
 use crate::user::User;
 use anyhow::{Context, Result};
 use clap::Parser;
+use rayon::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -51,16 +52,33 @@ impl FetchArgs {
             return Ok(OrgResult::new(organisation));
         }
 
-        let mut successful = 0;
-        let mut failed = 0;
+        // Collect results as (repo_name, Result)
+        let results: Vec<_> = sub_dirs
+            .par_iter()
+            .map(|d| {
+                let name = path::dir_name(d).unwrap_or_default();
+                println!("Fetching {}...", name);
+                let result = fetch(d, &user);
+                (name, result)
+            })
+            .collect();
 
-        for dir in &sub_dirs {
-            match fetch(dir, &user) {
-                Ok(_) => successful += 1,
-                Err(e) => {
-                    println!("Error fetching: {:?}", e);
-                    failed += 1;
-                }
+        // Collect errors
+        let errors: Vec<_> = results
+            .iter()
+            .filter_map(|(name, r)| r.as_ref().err().map(|e| (name.as_str(), e)))
+            .collect();
+
+        let successful = results.len() - errors.len();
+        let failed = errors.len();
+
+        // Print summary
+        if errors.is_empty() {
+            println!("\nSuccessfully fetched {} repos!", successful);
+        } else {
+            println!("\nFetched {} repos with {} errors:", successful, failed);
+            for (name, err) in &errors {
+                println!("  {} - {}", name, err);
             }
         }
 
@@ -75,14 +93,10 @@ impl FetchArgs {
 }
 
 fn fetch(dir: &PathBuf, user: &User) -> Result<()> {
-    let dir_name = path::dir_name(dir)?;
-    println!("Fetching for {}", dir_name);
-
     let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
     let cred = GitCredential::from(user);
-    git::fetch(&git_repo, "origin", Some(cred))?;
+    git::fetch(&git_repo, "origin", Some(cred), true)?;
 
-    println!("===============");
     Ok(())
 }

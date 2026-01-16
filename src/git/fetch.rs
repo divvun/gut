@@ -29,23 +29,22 @@ pub fn fetch(
     repo: &Repository,
     remote_name: &str,
     cred: Option<GitCredential>,
+    quiet: bool,
 ) -> Result<(), Error> {
     let mut remote = repo.find_remote(remote_name)?;
 
     let mut cb = common::create_remote_callback(cred)?;
 
-    //let mut fo = git2::FetchOptions::new();
-    //fo.remote_callbacks(remote_callbacks);
-    //remote.fetch(&[] as &[&str], Some(&mut fo), None)?;
-
     // This callback gets called for each remote-tracking branch that gets
     // updated. The message we output depends on whether it's a new one or an
     // update.
-    cb.update_tips(|refname, a, b| {
-        if a.is_zero() {
-            println!("[new]     {:20} {}", b, refname);
-        } else {
-            println!("[updated] {:10}..{:10} {}", a, b, refname);
+    cb.update_tips(move |refname, a, b| {
+        if !quiet {
+            if a.is_zero() {
+                println!("[new]     {:20} {}", b, refname);
+            } else {
+                println!("[updated] {:10}..{:10} {}", a, b, refname);
+            }
         }
         true
     });
@@ -53,28 +52,32 @@ pub fn fetch(
     // Here we show processed and total objects in the pack and the amount of
     // received data. Most frontends will probably want to show a percentage and
     // the download rate.
-    cb.transfer_progress(|stats| {
-        if stats.received_objects() == stats.total_objects() {
-            print!(
-                "Resolving deltas {}/{}\r",
-                stats.indexed_deltas(),
-                stats.total_deltas()
-            );
-        } else if stats.total_objects() > 0 {
-            print!(
-                "Received {}/{} objects ({}) in {} bytes\r",
-                stats.received_objects(),
-                stats.total_objects(),
-                stats.indexed_objects(),
-                stats.received_bytes()
-            );
+    cb.transfer_progress(move |stats| {
+        if !quiet {
+            if stats.received_objects() == stats.total_objects() {
+                print!(
+                    "Resolving deltas {}/{}\r",
+                    stats.indexed_deltas(),
+                    stats.total_deltas()
+                );
+            } else if stats.total_objects() > 0 {
+                print!(
+                    "Received {}/{} objects ({}) in {} bytes\r",
+                    stats.received_objects(),
+                    stats.total_objects(),
+                    stats.indexed_objects(),
+                    stats.received_bytes()
+                );
+            }
+            io::stdout().flush().unwrap();
         }
-        io::stdout().flush().unwrap();
         true
     });
-    cb.sideband_progress(|data| {
-        print!("remote: {}", str::from_utf8(data).unwrap());
-        io::stdout().flush().unwrap();
+    cb.sideband_progress(move |data| {
+        if !quiet {
+            print!("remote: {}", str::from_utf8(data).unwrap());
+            io::stdout().flush().unwrap();
+        }
         true
     });
     // Download the packfile and index it. This function updates the amount of
@@ -84,7 +87,7 @@ pub fn fetch(
     fo.remote_callbacks(cb);
     remote.download(&[] as &[&str], Some(&mut fo))?;
 
-    {
+    if !quiet {
         // If there are local objects (we got a thin pack), then tell the user
         // how many objects we saved from having to cross the network.
         let stats = remote.stats();
