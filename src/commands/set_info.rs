@@ -84,7 +84,6 @@ fn get_text(
     op_script: Option<&Script>,
     err_msg: &str,
 ) -> Result<String> {
-    println!("get_text {:?}: {:?}", op_text, op_script);
     if let Some(script) = op_script {
         script.execute_and_get_output(&repo.name, &repo.owner)
     } else {
