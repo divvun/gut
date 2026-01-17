@@ -2,7 +2,9 @@ use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
+use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Table, format, row};
+use rayon::prelude::*;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -412,4 +414,46 @@ pub fn sub_strings(string: &str, sub_len: usize) -> Vec<&str> {
         pos += len;
     }
     subs
+}
+
+/// Process items in parallel with a progress bar
+///
+/// - `title`: text shown before the progress bar (e.g., "Cloning", "Fetching")
+/// - `items`: the collection to iterate over
+/// - `process`: function that processes each item and returns a result
+/// - `name_fn`: function that extracts a display name from the result (shown in progress bar)
+pub fn process_with_progress<T, R, F, N>(
+    title: &str,
+    items: &[T],
+    process: F,
+    name_fn: N,
+) -> Vec<R>
+where
+    T: Sync,
+    R: Send,
+    F: Fn(&T) -> R + Sync + Send,
+    N: Fn(&R) -> String + Sync + Send,
+{
+    let pb = ProgressBar::new(items.len() as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{prefix} {spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} {msg}")
+            .unwrap()
+            .progress_chars("=> "),
+    );
+    pb.set_prefix(title.to_string());
+
+    let results: Vec<R> = items
+        .par_iter()
+        .map(|item| {
+            let result = process(item);
+            pb.set_message(name_fn(&result));
+            pb.inc(1);
+            result
+        })
+        .collect();
+
+    pb.finish_and_clear();
+
+    results
 }

@@ -1,7 +1,8 @@
 use super::common;
 use super::models::GitCredential;
-//use rayon::prelude::*;
+use std::io::{self, Write};
 use std::path::Path;
+use std::str;
 
 pub trait Clonable {
     type Output;
@@ -29,16 +30,50 @@ pub fn clone(
     remote_url: &str,
     local_path: &Path,
     cred: Option<GitCredential>,
+    quiet: bool,
 ) -> Result<git2::Repository, CloneError> {
-    log::debug!("Clone {:?} to {:?}", remote_url, local_path);
-    let remote_callbacks = common::create_remote_callback(cred).map_err(|s| CloneError {
+    if !quiet {
+        log::debug!("Clone {:?} to {:?}", remote_url, local_path);
+    }
+    let mut callback = common::create_remote_callback(cred).map_err(|s| CloneError {
         source: s,
         remote_url: remote_url.to_string(),
     })?;
 
+    // Set up progress callbacks that respect quiet mode
+    callback.transfer_progress(move |stats| {
+        if !quiet {
+            if stats.received_objects() == stats.total_objects() {
+                print!(
+                    "Resolving deltas {}/{}\r",
+                    stats.indexed_deltas(),
+                    stats.total_deltas()
+                );
+            } else if stats.total_objects() > 0 {
+                print!(
+                    "Received {}/{} objects ({}) in {} bytes\r",
+                    stats.received_objects(),
+                    stats.total_objects(),
+                    stats.indexed_objects(),
+                    stats.received_bytes()
+                );
+            }
+            io::stdout().flush().unwrap();
+        }
+        true
+    });
+
+    callback.sideband_progress(move |data| {
+        if !quiet {
+            print!("remote: {}", str::from_utf8(data).unwrap());
+            io::stdout().flush().unwrap();
+        }
+        true
+    });
+
     let mut fo = git2::FetchOptions::new();
 
-    fo.remote_callbacks(remote_callbacks)
+    fo.remote_callbacks(callback)
         .download_tags(git2::AutotagOption::All)
         .update_fetchhead(true);
 

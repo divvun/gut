@@ -72,10 +72,12 @@ impl PullArgs {
             return Ok(OrgResult::new(organisation));
         }
 
-        let statuses: Vec<_> = sub_dirs
-            .par_iter()
-            .map(|d| pull(d, &user, self.stash, self.merge))
-            .collect();
+        let statuses = common::process_with_progress(
+            "Pulling",
+            &sub_dirs,
+            |d| pull(d, &user, self.stash, self.merge),
+            |status| status.repo.clone(),
+        );
 
         // Count successful vs failed pulls
         let successful_pulls = statuses.iter().filter(|s| s.was_updated()).count();
@@ -164,7 +166,6 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
 
     let mut pull = || -> Result<PullStatus> {
         dir_name = path::dir_name(dir)?;
-        log::info!("Processing repo {}", dir_name);
 
         let mut git_repo =
             git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;

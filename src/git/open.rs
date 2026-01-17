@@ -14,6 +14,6 @@ pub fn open_or_clone(
 ) -> Result<Repository, Error> {
     match Repository::open(local_path) {
         Ok(repo) => Ok(repo),
-        Err(_) => clone::clone(remote_url, local_path, cred.clone()).map_err(|e| e.source),
+        Err(_) => clone::clone(remote_url, local_path, cred.clone(), false).map_err(|e| e.source),
     }
 }

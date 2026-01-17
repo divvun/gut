@@ -17,7 +17,9 @@ impl clone::Clonable for GitRepo {
     type Output = GitRepo;
 
     fn gclone(&self) -> Result<Self::Output, clone::CloneError> {
-        clone::clone(&self.remote_url, &self.local_path, self.cred.clone()).map(|_| self.clone())
+        // quiet=true since gclone is used in parallel batch operations
+        clone::clone(&self.remote_url, &self.local_path, self.cred.clone(), true)
+            .map(|_| self.clone())
     }
 }
 

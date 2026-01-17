@@ -12,7 +12,6 @@ use crate::user::User;
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
-use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Clone all repositories that matches a pattern
@@ -50,10 +49,12 @@ impl CloneArgs {
             return Ok(());
         }
 
-        let statuses: Vec<_> = filtered_repos
-            .par_iter()
-            .map(|r| clone(r, &user, use_https))
-            .collect();
+        let statuses = common::process_with_progress(
+            "Cloning",
+            &filtered_repos,
+            |r| clone(r, &user, use_https),
+            |status| status.repo.name.clone(),
+        );
 
         summarize(&statuses);
 

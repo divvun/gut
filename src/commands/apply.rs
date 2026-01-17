@@ -7,7 +7,6 @@ use anyhow::{Error, Result};
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
-use rayon::prelude::*;
 use std::env;
 use std::path::PathBuf;
 use std::process::Output;
@@ -71,10 +70,12 @@ impl ApplyArgs {
             .to_str()
             .expect("gut only supports UTF-8 paths now!");
 
-        let statuses: Vec<_> = sub_dirs
-            .par_iter()
-            .map(|r| apply_script(r, script_path))
-            .collect();
+        let statuses = common::process_with_progress(
+            "Applying",
+            &sub_dirs,
+            |r| apply_script(r, script_path),
+            |status| status.repo.clone(),
+        );
 
         summarize(&statuses);
 

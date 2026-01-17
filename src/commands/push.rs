@@ -72,10 +72,12 @@ impl PushArgs {
             return Ok(OrgResult::new(organisation));
         }
 
-        let statuses: Vec<_> = filtered_repos
-            .par_iter()
-            .map(|r| push_branch(r, &self.branch, &user, "origin", self.use_https))
-            .collect();
+        let statuses = common::process_with_progress(
+            "Pushing",
+            &filtered_repos,
+            |r| push_branch(r, &self.branch, &user, "origin", self.use_https),
+            |status| status.repo.name.clone(),
+        );
 
         summarize(&statuses, &self.branch);
 
@@ -131,8 +133,6 @@ fn push_branch(
     remote_name: &str,
     use_https: bool,
 ) -> Status {
-    log::info!("Processing repo {}", repo.name);
-
     let mut push_status = PushStatus::No;
 
     let mut push = || -> Result<()> {

@@ -7,7 +7,6 @@ use crate::path;
 use crate::user::User;
 use anyhow::{Context, Result};
 use clap::Parser;
-use rayon::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -52,16 +51,16 @@ impl FetchArgs {
             return Ok(OrgResult::new(organisation));
         }
 
-        // Collect results as (repo_name, Result)
-        let results: Vec<_> = sub_dirs
-            .par_iter()
-            .map(|d| {
+        let results = common::process_with_progress(
+            "Fetching",
+            &sub_dirs,
+            |d| {
                 let name = path::dir_name(d).unwrap_or_default();
-                println!("Fetching {}...", name);
                 let result = fetch(d, &user);
                 (name, result)
-            })
-            .collect();
+            },
+            |(name, _)| name.clone(),
+        );
 
         // Collect errors
         let errors: Vec<_> = results
@@ -74,9 +73,9 @@ impl FetchArgs {
 
         // Print summary
         if errors.is_empty() {
-            println!("\nSuccessfully fetched {} repos!", successful);
+            println!("Successfully fetched {} repos!", successful);
         } else {
-            println!("\nFetched {} repos with {} errors:", successful, failed);
+            println!("Fetched {} repos with {} errors:", successful, failed);
             for (name, err) in &errors {
                 println!("  {} - {}", name, err);
             }
