@@ -1,3 +1,4 @@
+use crate::commands::topic_helper;
 use crate::config::Config;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
@@ -8,6 +9,7 @@ use rayon::prelude::*;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::time::Duration;
 
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
@@ -291,6 +293,42 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
             org,
             e
         )),
+    }
+}
+
+/// Get repository directories for an organization.
+///
+/// If `topic` is Some, queries GitHub API to filter by topic (and optionally regex).
+/// If `topic` is None, uses local directories only (faster, no API call).
+pub fn get_repo_dirs(
+    org: &str,
+    topic: Option<&String>,
+    regex: Option<&Filter>,
+    token: &str,
+    root: &str,
+) -> Result<Vec<PathBuf>> {
+    if topic.is_some() {
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.green} {msg}")
+                .unwrap(),
+        );
+        spinner.set_message("Querying GitHub for matching repositories...");
+        spinner.enable_steady_tick(Duration::from_millis(100));
+
+        let all_repos = topic_helper::query_repositories_with_topics(org, token)?;
+
+        spinner.finish_and_clear();
+
+        let filtered = topic_helper::filter_repos(&all_repos, topic, regex);
+        let root_path = Path::new(root);
+        Ok(filtered
+            .into_iter()
+            .map(|r| root_path.join(org).join(&r.repo.name))
+            .collect())
+    } else {
+        read_dirs_for_org(org, root, regex)
     }
 }
 

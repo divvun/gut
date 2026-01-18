@@ -2,17 +2,12 @@ use super::common::{self, OrgResult};
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
-use anyhow::Result;
+use crate::path;
+use anyhow::{Context, Result};
 use clap::Parser;
-use std::path::Path;
-
-use crate::commands::topic_helper;
-use crate::convert::try_from_one;
-use crate::github::RemoteRepo;
-use crate::user::User;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
-use rayon::prelude::*;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Parser)]
 /// Add all and then commit with the provided messages for all
@@ -32,9 +27,6 @@ pub struct CommitArgs {
     /// Commit message
     pub message: String,
     #[arg(long, short)]
-    /// Option to use https instead of ssh when clone repositories
-    pub use_https: bool,
-    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }
@@ -51,27 +43,30 @@ impl CommitArgs {
 
     fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
+        let root = common::root()?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
+        let repo_dirs = common::get_repo_dirs(
+            organisation,
+            self.topic.as_ref(),
+            self.regex.as_ref(),
+            &user.token,
+            &root,
+        )?;
 
-        let filtered_repos: Vec<_> =
-            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
-                .into_iter()
-                .map(|r| r.repo)
-                .collect();
-
-        if filtered_repos.is_empty() {
+        if repo_dirs.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
-                organisation, self.regex, self.topic
+                "There are no repositories in organisation {} that match the pattern {:?}",
+                organisation, self.regex
             );
             return Ok(OrgResult::new(organisation));
         }
 
-        let statuses: Vec<_> = filtered_repos
-            .par_iter()
-            .map(|r| commit(r, &self.message, &user, self.use_https))
-            .collect();
+        let statuses = common::process_with_progress(
+            "Committing",
+            &repo_dirs,
+            |dir| commit(dir, &self.message),
+            |s| s.repo.clone(),
+        );
 
         summarize(&statuses);
 
@@ -80,7 +75,7 @@ impl CommitArgs {
 
         Ok(OrgResult {
             org_name: organisation.to_string(),
-            total_repos: filtered_repos.len(),
+            total_repos: repo_dirs.len(),
             successful_repos: successful,
             failed_repos: failed,
             dirty_repos: 0,
@@ -88,45 +83,46 @@ impl CommitArgs {
     }
 }
 
-fn commit(repo: &RemoteRepo, msg: &str, user: &User, use_https: bool) -> Status {
-    let commit = || -> Result<CommitResult> {
-        let git_repo = try_from_one(repo.clone(), user, use_https)?;
-        let git_repo = git_repo.open()?;
-
-        let status = git::status(&git_repo, true)?;
-        //let current_branch = git::head_shorthand(&git_repo)?;
-
-        if !status.can_commit() {
-            return Ok(CommitResult::Conflict);
-        }
-
-        if !status.should_commit() {
-            return Ok(CommitResult::NoChanges);
-        }
-
-        let mut index = git_repo.index()?;
-
-        let addable_list = status.addable_list();
-        for p in addable_list {
-            //log::debug!("addable file: {}", p);
-            let path = Path::new(&p);
-            index.add_path(path)?;
-        }
-
-        for p in status.deleted {
-            //log::debug!("removed file: {}", p);
-            let path = Path::new(&p);
-            index.remove_path(path)?;
-        }
-
-        git::commit_index(&git_repo, &mut index, msg)?;
-
-        Ok(CommitResult::Success)
+fn commit(dir: &PathBuf, msg: &str) -> Status {
+    let repo_name = path::dir_name(dir).unwrap_or_default();
+    let result = || -> Result<CommitResult> {
+        let git_repo =
+            git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+        do_commit(&git_repo, msg)
     };
     Status {
-        repo: repo.clone(),
-        result: commit(),
+        repo: repo_name,
+        result: result(),
     }
+}
+
+fn do_commit(git_repo: &git2::Repository, msg: &str) -> Result<CommitResult> {
+    let status = git::status(git_repo, true)?;
+
+    if !status.can_commit() {
+        return Ok(CommitResult::Conflict);
+    }
+
+    if !status.should_commit() {
+        return Ok(CommitResult::NoChanges);
+    }
+
+    let mut index = git_repo.index()?;
+
+    let addable_list = status.addable_list();
+    for p in addable_list {
+        let path = Path::new(&p);
+        index.add_path(path)?;
+    }
+
+    for p in status.deleted {
+        let path = Path::new(&p);
+        index.remove_path(path)?;
+    }
+
+    git::commit_index(git_repo, &mut index, msg)?;
+
+    Ok(CommitResult::Success)
 }
 
 pub enum CommitResult {
@@ -136,25 +132,41 @@ pub enum CommitResult {
 }
 
 struct Status {
-    repo: RemoteRepo,
+    repo: String,
     result: Result<CommitResult>,
 }
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(b -> &self.repo.name), self.status()])
+        Row::new(vec![
+            cell!(b -> &self.repo),
+            self.status_cell(),
+            self.error_cell(),
+        ])
     }
 
-    fn status(&self) -> Cell {
+    fn status_cell(&self) -> Cell {
         match &self.result {
             Ok(r) => match r {
-                CommitResult::Conflict => {
-                    cell!(Frl -> "There are conflicts. Fix conflicts and then commit the results.")
-                }
-                CommitResult::NoChanges => cell!(l -> "There is no changes."),
-                CommitResult::Success => cell!(Fgl -> "Success"),
+                CommitResult::Conflict => cell!(Fy -> "Conflict"),
+                CommitResult::NoChanges => cell!("No Changes"),
+                CommitResult::Success => cell!(Fg -> "Success"),
             },
-            Err(_) => cell!(Frr -> "Failed"),
+            Err(_) => cell!(Fr -> "Failed"),
+        }
+    }
+
+    fn error_cell(&self) -> Cell {
+        match &self.result {
+            Ok(CommitResult::Conflict) => {
+                cell!(Fy -> "Fix conflicts and commit manually")
+            }
+            Err(e) => {
+                let msg = format!("{}", e);
+                let lines = common::sub_strings(&msg, 50);
+                cell!(Fr -> lines.join("\n"))
+            }
+            _ => cell!(""),
         }
     }
 
@@ -166,24 +178,15 @@ impl Status {
         matches!(&self.result, Ok(CommitResult::Success))
     }
 
-    fn to_error_row(&self) -> Row {
-        let e = if let Err(e) = &self.result {
-            e
-        } else {
-            panic!("This should have an error here");
-        };
-
-        let msg = format!("{:?}", e);
-        let lines = common::sub_strings(msg.as_str(), 80);
-        let lines = lines.join("\n");
-        row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
+    fn has_conflict(&self) -> bool {
+        matches!(&self.result, Ok(CommitResult::Conflict))
     }
 }
 
 fn to_table(statuses: &[Status]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repo", "Status"]);
+    table.set_titles(row!["Repo", "Status", "Error"]);
     for status in statuses {
         table.add_row(status.to_row());
     }
@@ -194,29 +197,24 @@ fn summarize(statuses: &[Status]) {
     let table = to_table(statuses);
     table.printstd();
 
+    let successes: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+    let conflicts: Vec<_> = statuses.iter().filter(|s| s.has_conflict()).collect();
     let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
-    let successes: Vec<_> = statuses.iter().filter(|s| !s.has_error()).collect();
 
     if !successes.is_empty() {
-        let msg = format!("\nDid commit for {} repos successfully!", successes.len());
+        let msg = format!("\nCommitted {} repos!", successes.len());
         println!("{}", msg.green());
     }
 
-    if errors.is_empty() {
-        println!("\nThere is no error!");
-    } else {
-        let msg = format!(
-            "There are {} errors when executing the command:",
-            errors.len()
-        );
-        println!("\n{}\n", msg.red());
+    if !conflicts.is_empty() {
+        let msg = format!("\n{} repos have conflicts.", conflicts.len());
+        println!("{}", msg.yellow());
+    }
 
-        let mut error_table = Table::new();
-        error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-        error_table.set_titles(row!["Repo", "Error"]);
-        for error in errors {
-            error_table.add_row(error.to_error_row());
-        }
-        error_table.printstd();
+    if errors.is_empty() {
+        println!("\nThere are no errors!");
+    } else {
+        let msg = format!("\nThere were {} errors.", errors.len());
+        println!("{}", msg.red());
     }
 }

@@ -1,21 +1,17 @@
 use super::common::{self, OrgResult};
-use crate::user::User;
-use colored::*;
-use prettytable::{Cell, Row, Table, cell, format, row};
-
-use crate::git;
-use anyhow::{Context, Error, Result};
-
 use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
+use crate::git;
 use crate::git::GitCredential;
 use crate::git::push;
+use crate::path;
+use crate::user::User;
+use anyhow::{Context, Error, Result};
 use clap::Parser;
-
-use crate::commands::topic_helper;
-use crate::convert::try_from_one;
-use crate::github::RemoteRepo;
+use colored::*;
+use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 /// Push the provided branch to remote server for all repositories that match a pattern
@@ -37,8 +33,6 @@ pub struct PushArgs {
     #[arg(long, short, default_value = "main")]
     pub branch: String,
     #[arg(long, short)]
-    pub use_https: bool,
-    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }
@@ -55,16 +49,17 @@ impl PushArgs {
 
     fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
+        let root = common::root()?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
+        let repo_dirs = common::get_repo_dirs(
+            organisation,
+            self.topic.as_ref(),
+            self.regex.as_ref(),
+            &user.token,
+            &root,
+        )?;
 
-        let filtered_repos: Vec<_> =
-            topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
-                .into_iter()
-                .map(|r| r.repo)
-                .collect();
-
-        if filtered_repos.is_empty() {
+        if repo_dirs.is_empty() {
             println!(
                 "There are no repositories in organisation {} that match the pattern {:?}",
                 organisation, self.regex
@@ -74,9 +69,9 @@ impl PushArgs {
 
         let statuses = common::process_with_progress(
             "Pushing",
-            &filtered_repos,
-            |r| push_branch(r, &self.branch, &user, "origin", self.use_https),
-            |status| status.repo.name.clone(),
+            &repo_dirs,
+            |dir| push_repo(dir, &self.branch, &user, "origin"),
+            |status| status.repo.clone(),
         );
 
         summarize(&statuses, &self.branch);
@@ -86,7 +81,7 @@ impl PushArgs {
 
         Ok(OrgResult {
             org_name: organisation.to_string(),
-            total_repos: filtered_repos.len(),
+            total_repos: repo_dirs.len(),
             successful_repos: successful,
             failed_repos: failed,
             dirty_repos: 0,
@@ -126,20 +121,13 @@ fn summarize(statuses: &[Status], branch: &str) {
     }
 }
 
-fn push_branch(
-    repo: &RemoteRepo,
-    branch: &str,
-    user: &User,
-    remote_name: &str,
-    use_https: bool,
-) -> Status {
+fn push_repo(dir: &PathBuf, branch: &str, user: &User, remote_name: &str) -> Status {
+    let repo_name = path::dir_name(dir).unwrap_or_default();
     let mut push_status = PushStatus::No;
 
-    let mut push = || -> Result<()> {
-        let git_repo = try_from_one(repo.clone(), user, use_https)?;
-        let git_repo = git_repo
-            .open()
-            .with_context(|| format!("{:?} is not a git directory.", git_repo.local_path))?;
+    let mut do_push = || -> Result<()> {
+        let git_repo =
+            git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
         let status = git::status(&git_repo, false)?;
 
@@ -154,25 +142,25 @@ fn push_branch(
         Ok(())
     };
 
-    let result = push();
+    let result = do_push();
     if let Err(e) = result {
         push_status = PushStatus::Failed(e);
     }
 
     Status {
-        repo: repo.clone(),
+        repo: repo_name,
         status: push_status,
     }
 }
 
 struct Status {
-    repo: RemoteRepo,
+    repo: String,
     status: PushStatus,
 }
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(b -> &self.repo.name), self.status.to_cell()])
+        Row::new(vec![cell!(b -> &self.repo), self.status.to_cell()])
     }
 
     fn has_error(&self) -> bool {
@@ -193,7 +181,7 @@ impl Status {
         let msg = format!("{:?}", e);
         let lines = common::sub_strings(msg.as_str(), 80);
         let lines = lines.join("\n");
-        row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
+        row!(cell!(b -> &self.repo), cell!(Fr -> lines.as_str()))
     }
 }
 
