@@ -8,12 +8,77 @@ use crate::git;
 use crate::path;
 use anyhow::{Result, anyhow};
 use clap::Parser;
+use colored::*;
 use git2::Repository;
-use rayon::prelude::*;
+use prettytable::{Cell, Row, Table, cell, format, row};
 use std::fs::{File, create_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str;
+
+#[derive(Debug)]
+enum ApplyStatus {
+    Applied,
+    Committed,
+    Aborted,
+    NotReady(String),
+    Failed(anyhow::Error),
+}
+
+struct Status {
+    repo: String,
+    status: ApplyStatus,
+}
+
+impl Status {
+    fn to_row(&self) -> Row {
+        Row::new(vec![
+            cell!(b -> &self.repo),
+            self.status_cell(),
+            self.error_cell(),
+        ])
+    }
+
+    fn status_cell(&self) -> Cell {
+        match &self.status {
+            ApplyStatus::Applied => cell!(Fg -> "Applied"),
+            ApplyStatus::Committed => cell!(Fg -> "Committed"),
+            ApplyStatus::Aborted => cell!(Fy -> "Aborted"),
+            ApplyStatus::NotReady(_) => cell!(Fy -> "Not Ready"),
+            ApplyStatus::Failed(_) => cell!(Fr -> "Failed"),
+        }
+    }
+
+    fn error_cell(&self) -> Cell {
+        match &self.status {
+            ApplyStatus::Failed(e) => {
+                let msg = format!("{}", e);
+                let lines = common::sub_strings(&msg, 80);
+                cell!(Fr -> lines.join("\n"))
+            }
+            ApplyStatus::NotReady(reason) => {
+                let lines = common::sub_strings(reason, 80);
+                cell!(Fy -> lines.join("\n"))
+            }
+            _ => cell!(""),
+        }
+    }
+
+    fn is_success(&self) -> bool {
+        matches!(
+            self.status,
+            ApplyStatus::Applied | ApplyStatus::Committed | ApplyStatus::Aborted
+        )
+    }
+
+    fn is_not_ready(&self) -> bool {
+        matches!(self.status, ApplyStatus::NotReady(_))
+    }
+
+    fn has_error(&self) -> bool {
+        matches!(self.status, ApplyStatus::Failed(_))
+    }
+}
 
 /// Apply changes from template to all prject that match the regex
 #[derive(Debug, Parser)]
@@ -53,40 +118,81 @@ impl ApplyArgs {
         let target_dirs =
             common::read_dirs_for_org(organisation.as_str(), &root, self.regex.as_ref())?;
 
+        if target_dirs.is_empty() {
+            println!(
+                "There are no local repositories in organisation {} that match the pattern {:?}",
+                organisation, self.regex
+            );
+            return Ok(());
+        }
+
         if self.finish {
-            // finish apply process
-            target_dirs
-                .par_iter()
-                .for_each(|dir| match continue_apply(dir, !self.force_ci) {
-                    Ok(_) => println!("Apply changes finish successfully"),
-                    Err(e) => println!("Apply changes finish failed because {:?}", e),
-                });
+            let skip_ci = !self.force_ci;
+            let statuses = common::process_with_progress(
+                "Committing",
+                &target_dirs,
+                |dir| {
+                    let repo_name = path::dir_name(dir).unwrap_or_default();
+                    let status = match continue_apply(dir, skip_ci) {
+                        Ok(_) => ApplyStatus::Committed,
+                        Err(e) => {
+                            let msg = format!("{}", e);
+                            if msg.contains("not clean") || msg.contains("not ready") {
+                                ApplyStatus::NotReady(msg)
+                            } else {
+                                ApplyStatus::Failed(e)
+                            }
+                        }
+                    };
+                    Status {
+                        repo: repo_name,
+                        status,
+                    }
+                },
+                |s| s.repo.clone(),
+            );
+            summarize_continue(&statuses);
         } else if self.abort {
-            // finish apply process
-            target_dirs
-                .par_iter()
-                .for_each(|dir| match abort_apply(dir) {
-                    Ok(_) => println!("Abort Apply process success"),
-                    Err(e) => println!("Abort Apply failed because {:?}", e),
-                });
+            let statuses = common::process_with_progress(
+                "Aborting",
+                &target_dirs,
+                |dir| {
+                    let repo_name = path::dir_name(dir).unwrap_or_default();
+                    let status = match abort_apply(dir) {
+                        Ok(_) => ApplyStatus::Aborted,
+                        Err(e) => ApplyStatus::Failed(e),
+                    };
+                    Status {
+                        repo: repo_name,
+                        status,
+                    }
+                },
+                |s| s.repo.clone(),
+            );
+            summarize_abort(&statuses);
         } else {
-            // start apply process
             let template_delta =
                 TemplateDelta::get(&self.template.path.join(".gut/template.toml"))?;
+            let template_path = &self.template.path;
+            let optional = self.optional;
 
-            // println!("template delta {:?}", template_delta);
-
-            for dir in target_dirs {
-                match start_apply(&self.template.path, &template_delta, &dir, self.optional) {
-                    Ok(_) => println!(
-                        "Applied changes success. Please resolve conflict and use \"git add\" to add all changes before continue."
-                    ),
-                    Err(e) => println!(
-                        "Applied changes failed {:?}\n Please use \"--abort\" option to abort the process.",
-                        e
-                    ),
-                }
-            }
+            let statuses = common::process_with_progress(
+                "Applying",
+                &target_dirs,
+                |dir| {
+                    let repo_name = path::dir_name(dir).unwrap_or_default();
+                    let status = match start_apply(template_path, &template_delta, dir, optional) {
+                        Ok(_) => ApplyStatus::Applied,
+                        Err(e) => ApplyStatus::Failed(e),
+                    };
+                    Status {
+                        repo: repo_name,
+                        status,
+                    }
+                },
+                |s| s.repo.clone(),
+            );
+            summarize_apply(&statuses);
         }
 
         Ok(())
@@ -281,9 +387,26 @@ fn execute_patch(patch_file: &str, dir: &PathBuf) -> Result<Output> {
         .expect("failed to execute process");
 
     log::debug!("Patch result {:?} at {:?}: {:?}", patch_file, dir, output);
-    match output.status.success() {
-        true => Ok(output),
-        false => Err(anyhow!("patching failed!")),
+    if output.status.success() {
+        Ok(output)
+    } else {
+        let stderr = str::from_utf8(&output.stderr)
+            .unwrap_or("unknown error")
+            .trim();
+        let stdout = str::from_utf8(&output.stdout).unwrap_or("").trim();
+
+        // patch often writes errors to stdout, so include both
+        let error_msg = if !stderr.is_empty() && !stdout.is_empty() {
+            format!("{}\n{}", stdout, stderr)
+        } else if !stderr.is_empty() {
+            stderr.to_string()
+        } else if !stdout.is_empty() {
+            stdout.to_string()
+        } else {
+            "patching failed with no output".to_string()
+        };
+
+        Err(anyhow!("patch: {}", error_msg))
     }
 }
 
@@ -303,4 +426,90 @@ fn clean_git_dir(dir: &PathBuf) -> Result<()> {
         .expect("failed to execute process");
 
     Ok(())
+}
+
+fn to_table(statuses: &[Status]) -> Table {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Repo", "Status", "Error"]);
+    for status in statuses {
+        table.add_row(status.to_row());
+    }
+    table
+}
+
+fn summarize_apply(statuses: &[Status]) {
+    let table = to_table(statuses);
+    table.printstd();
+
+    let successes: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+
+    if !successes.is_empty() {
+        let msg = format!("\nApplied template to {} repos!", successes.len());
+        println!("{}", msg.green());
+        println!(
+            "{}",
+            "Resolve any conflicts, then use \"git add\" and run with --continue.".yellow()
+        );
+    }
+
+    if errors.is_empty() {
+        println!("\nThere are no errors!");
+    } else {
+        let msg = format!(
+            "\nThere were {} errors. Use --abort to reset failed repos.",
+            errors.len()
+        );
+        println!("{}", msg.red());
+    }
+}
+
+fn summarize_abort(statuses: &[Status]) {
+    let table = to_table(statuses);
+    table.printstd();
+
+    let successes: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+
+    if !successes.is_empty() {
+        let msg = format!("\nAborted {} repos!", successes.len());
+        println!("{}", msg.green());
+    }
+
+    if errors.is_empty() {
+        println!("\nThere are no errors!");
+    } else {
+        let msg = format!("\nThere were {} errors.", errors.len());
+        println!("{}", msg.red());
+    }
+}
+
+fn summarize_continue(statuses: &[Status]) {
+    let table = to_table(statuses);
+    table.printstd();
+
+    let successes: Vec<_> = statuses.iter().filter(|s| s.is_success()).collect();
+    let not_ready: Vec<_> = statuses.iter().filter(|s| s.is_not_ready()).collect();
+    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+
+    if !successes.is_empty() {
+        let msg = format!("\nCommitted {} repos!", successes.len());
+        println!("{}", msg.green());
+    }
+
+    if !not_ready.is_empty() {
+        let msg = format!(
+            "\n{} repos are not ready (resolve conflicts and use \"git add\" first).",
+            not_ready.len()
+        );
+        println!("{}", msg.yellow());
+    }
+
+    if errors.is_empty() && not_ready.is_empty() {
+        println!("\nThere are no errors!");
+    } else if !errors.is_empty() {
+        let msg = format!("\nThere were {} errors.", errors.len());
+        println!("{}", msg.red());
+    }
 }

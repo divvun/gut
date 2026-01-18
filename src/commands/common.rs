@@ -422,12 +422,7 @@ pub fn sub_strings(string: &str, sub_len: usize) -> Vec<&str> {
 /// - `items`: the collection to iterate over
 /// - `process`: function that processes each item and returns a result
 /// - `name_fn`: function that extracts a display name from the result (shown in progress bar)
-pub fn process_with_progress<T, R, F, N>(
-    title: &str,
-    items: &[T],
-    process: F,
-    name_fn: N,
-) -> Vec<R>
+pub fn process_with_progress<T, R, F, N>(title: &str, items: &[T], process: F, name_fn: N) -> Vec<R>
 where
     T: Sync,
     R: Send,
