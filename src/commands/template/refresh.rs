@@ -7,7 +7,7 @@ use crate::path;
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use std::fs::{read_to_string, write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[derive(Debug, Parser)]
@@ -188,10 +188,8 @@ fn get_files_to_refresh(
         let mut matched = Vec::new();
         for pattern in patterns {
             for file in &all_files {
-                if file_matches_pattern(file, pattern) {
-                    if !matched.contains(file) {
-                        matched.push(file.clone());
-                    }
+                if file_matches_pattern(file, pattern) && !matched.contains(file) {
+                    matched.push(file.clone());
                 }
             }
         }
@@ -223,7 +221,7 @@ fn file_matches_pattern(file: &str, pattern: &str) -> bool {
 ///
 /// The list of supported extensions focuses on common source code, configuration,
 /// and documentation files typically found in software repositories.
-fn is_processable_file(path: &PathBuf) -> Result<bool> {
+fn is_processable_file(path: &Path) -> Result<bool> {
     // Check by file extension first (most common case)
     if let Some(ext) = path.extension() {
         let ext = ext.to_string_lossy().to_lowercase();
