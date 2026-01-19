@@ -24,9 +24,9 @@ use std::sync::Arc;
 ///
 pub struct PullArgs {
     #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
@@ -61,7 +61,7 @@ impl PullArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} that match the pattern {:?}",
+                "There is no local repositories in owner {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(OrgResult::new(organisation));

@@ -32,7 +32,7 @@ pub fn local_path_org(organisation: &str, root: &str) -> anyhow::Result<PathBuf>
     let local_path = root_dir.join(organisation);
     if !local_path.is_dir() {
         return Err(anyhow!(
-            "There is no \"{}\" directory in root directory \"{}\"",
+            "There is no owner \"{}\" directory directory \"{}\"",
             organisation,
             root
         ));

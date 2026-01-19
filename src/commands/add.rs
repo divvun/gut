@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Add users, repos to an organisation/a team.
+/// Add users, repos to an owner/a team.
 pub struct AddArgs {
     #[command(subcommand)]
     command: AddCommand,

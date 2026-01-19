@@ -15,9 +15,9 @@ use std::process::Output;
 #[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
     #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     /// regex pattern to filter topics. This is required unless topic is provided.
     #[arg(long, short, required_unless_present("topic"))]
