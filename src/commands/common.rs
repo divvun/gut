@@ -260,7 +260,7 @@ pub fn use_https() -> Result<bool> {
 }
 
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match github::list_org_repos(token, org).context("When fetching repositories") {
+    match github::list_owner_repos(token, org).context("When fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if e.downcast_ref::<NoReposFound>().is_some() {

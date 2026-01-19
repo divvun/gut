@@ -22,6 +22,25 @@ query OrganizationRepositories($login: String!, $after: String) {
   }
 }
 
+query OwnerRepositories($login: String!, $after: String) {
+  repositoryOwner(login: $login) {
+    __typename
+    repositories(first: 100, after: $after) {
+      totalCount
+      nodes{
+        name,
+        nameWithOwner,
+        sshUrl,
+        url
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}
+
 query RepositoryDefaultBranch($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     defaultBranchRef {
@@ -32,6 +51,32 @@ query RepositoryDefaultBranch($owner: String!, $name: String!) {
 
 query OrganizationRepositoriesWithTopics($login: String!, $after: String) {
   organization(login: $login) {
+    repositories(first: 100, after: $after) {
+      totalCount
+      nodes{
+        name,
+        nameWithOwner,
+        sshUrl,
+        url,
+        repositoryTopics(first: 100) {
+          nodes {
+            topic {
+              name
+            }
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}
+
+query OwnerRepositoriesWithTopics($login: String!, $after: String) {
+  repositoryOwner(login: $login) {
+    __typename
     repositories(first: 100, after: $after) {
       totalCount
       nodes{

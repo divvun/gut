@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 
 pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
     let result =
-        github::list_org_repos_with_topics(token, org).context("When fetching repositories");
+        github::list_owner_repos_with_topics(token, org).context("When fetching repositories");
     let mut repos = match result {
         Ok(repos) => Ok(repos),
         Err(e) => {
