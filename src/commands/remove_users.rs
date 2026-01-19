@@ -17,7 +17,7 @@ pub struct RemoveUsersArgs {
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
     #[arg(long, short)]
-    /// List of user's username
+    /// Usernames to remove (eg: -u user1 -u user2)
     pub users: Vec<String>,
     #[arg(long, short)]
     /// Optional team slug

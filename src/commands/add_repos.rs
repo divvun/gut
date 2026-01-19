@@ -21,11 +21,7 @@ pub struct AddRepoArgs {
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[arg(long, short, default_value = "pull", value_parser = parse_permission)]
-    ///The permission to grant the team on repositories
-    ///
-    /// Can be one of:
-    ///
-    /// pull | push | admin | maintain | triage
+    /// Permission (pull | push | admin | maintain | triage) to grant the team
     pub permission: String,
     #[arg(long, short)]
     /// optional team slug

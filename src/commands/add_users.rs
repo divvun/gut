@@ -17,14 +17,10 @@ pub struct AddUsersArgs {
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
     #[arg(long, short, default_value = "member")]
-    /// Role of users
-    ///
-    /// It should be one of ["member", "admin"].
-    ///
-    /// If you specify a team role should be one of ["member", "maintainer"]
+    /// Role (member | admin) for org, or (member | maintainer) for team
     pub role: String,
     #[arg(long, short)]
-    /// List of user's username
+    /// Usernames to add (eg: -u user1 -u user2)
     pub users: Vec<String>,
     #[arg(long, short)]
     /// Optional team slug

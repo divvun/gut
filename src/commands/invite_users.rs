@@ -17,15 +17,14 @@ pub struct InviteUsersArgs {
     ///
     /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
-    #[arg(long, short, default_value = "Role::default()")]
-    /// Role of users
-    /// It should be one of ["member", "admin", "billing_manager"]
+    #[arg(long, short, default_value_t = Role::default())]
+    /// Role (member | admin | billing_manager) for the invited users
     pub role: Role,
     #[arg(long, short)]
-    /// list of user's emails
+    /// Email addresses to invite (eg: -e a@x.com -e b@x.com)
     pub emails: Vec<String>,
     #[arg(long, short)]
-    /// list of teams to invite the user to
+    /// Team slugs to add users to (eg: -t team1 -t team2)
     pub teams: Vec<String>,
 }
 
