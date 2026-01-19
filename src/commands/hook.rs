@@ -1,6 +1,5 @@
 use super::hook_create::*;
 use super::hook_delete::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -12,8 +11,8 @@ pub struct HookArgs {
 }
 
 impl HookArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -26,10 +25,10 @@ pub enum HookCommand {
 }
 
 impl HookCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Create(args) => args.run(common_args),
-            Self::Delete(args) => args.run(common_args),
+            Self::Create(args) => args.run(),
+            Self::Delete(args) => args.run(),
         }
     }
 }

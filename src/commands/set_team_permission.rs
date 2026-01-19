@@ -1,5 +1,4 @@
 use super::common;
-use crate::cli::Args as CommonArgs;
 use crate::github;
 
 use anyhow::{Result, anyhow};
@@ -36,7 +35,7 @@ fn parse_permission(src: &str) -> Result<String> {
 }
 
 impl SetTeamPermissionArgs {
-    pub fn set_permission(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn set_permission(&self) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

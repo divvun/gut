@@ -2,7 +2,6 @@ use super::topic_add::*;
 use super::topic_apply::*;
 use super::topic_get::*;
 use super::topic_set::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -14,8 +13,8 @@ pub struct TopicArgs {
 }
 
 impl TopicArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -32,12 +31,12 @@ pub enum TopicCommand {
 }
 
 impl TopicCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Get(args) => args.run(common_args),
-            Self::Set(args) => args.run(common_args),
-            Self::Add(args) => args.run(common_args),
-            Self::Apply(args) => args.run(common_args),
+            Self::Get(args) => args.run(),
+            Self::Set(args) => args.run(),
+            Self::Add(args) => args.run(),
+            Self::Apply(args) => args.run(),
         }
     }
 }

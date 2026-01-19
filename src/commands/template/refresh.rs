@@ -1,4 +1,3 @@
-use crate::cli::Args as CommonArgs;
 use crate::commands::common;
 use crate::commands::models::template::*;
 use crate::commands::patterns::*;
@@ -35,7 +34,7 @@ pub struct RefreshArgs {
 }
 
 impl RefreshArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         let root = common::root()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
         let target_dirs =

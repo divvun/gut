@@ -1,5 +1,4 @@
 use super::common::{self, OrgResult};
-use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
 use crate::path;
@@ -24,20 +23,16 @@ pub struct CleanArgs {
 }
 
 impl CleanArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),
-            |org| self.run_for_organization(org, common_args),
+            |org| self.run_for_organization(org),
             "Cleaned",
         )
     }
 
-    fn run_for_organization(
-        &self,
-        organisation: &str,
-        _common_args: &CommonArgs,
-    ) -> Result<OrgResult> {
+    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
         let root = common::root()?;
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 

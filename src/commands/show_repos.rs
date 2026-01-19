@@ -1,6 +1,5 @@
 use super::common;
 
-use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use clap::Parser;
 
@@ -21,7 +20,7 @@ pub struct ShowReposArgs {
 }
 
 impl ShowReposArgs {
-    pub fn show(&self, _common_args: &CommonArgs) -> anyhow::Result<()> {
+    pub fn show(&self) -> anyhow::Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

@@ -1,7 +1,6 @@
 use super::show_config::*;
 use super::show_repos::*;
 use super::show_users::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -13,8 +12,8 @@ pub struct ShowArgs {
 }
 
 impl ShowArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -30,11 +29,11 @@ pub enum ShowCommand {
 }
 
 impl ShowCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Config => show_config(common_args),
-            Self::Repos(args) => args.show(common_args),
-            Self::Users(args) => args.run(common_args),
+            Self::Config => show_config(),
+            Self::Repos(args) => args.show(),
+            Self::Users(args) => args.run(),
         }
     }
 }

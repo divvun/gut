@@ -1,5 +1,4 @@
 use super::workflow_run::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -11,8 +10,8 @@ pub struct WorkflowArgs {
 }
 
 impl WorkflowArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -23,9 +22,9 @@ pub enum WorkflowCommand {
 }
 
 impl WorkflowCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Run(args) => args.run(common_args),
+            Self::Run(args) => args.run(),
         }
     }
 }

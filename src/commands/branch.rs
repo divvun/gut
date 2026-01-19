@@ -1,7 +1,6 @@
 use super::branch_default::*;
 use super::branch_protect::*;
 use super::branch_unprotect::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -13,8 +12,8 @@ pub struct BranchArgs {
 }
 
 impl BranchArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -29,11 +28,11 @@ pub enum BranchCommand {
 }
 
 impl BranchCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            BranchCommand::Default(args) => args.set_default_branch(common_args),
-            BranchCommand::Protect(args) => args.set_protected_branch(common_args),
-            BranchCommand::Unprotect(args) => args.set_unprotected_branch(common_args),
+            BranchCommand::Default(args) => args.set_default_branch(),
+            BranchCommand::Protect(args) => args.set_protected_branch(),
+            BranchCommand::Unprotect(args) => args.set_unprotected_branch(),
         }
     }
 }

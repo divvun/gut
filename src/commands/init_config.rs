@@ -1,4 +1,3 @@
-use crate::cli::Args as CommonArgs;
 use crate::config::Config;
 use crate::github;
 use crate::user::User;
@@ -52,7 +51,7 @@ pub struct InitArgs {
 }
 
 impl InitArgs {
-    pub fn save_config(&self, _common_args: &CommonArgs) -> anyhow::Result<()> {
+    pub fn save_config(&self) -> anyhow::Result<()> {
         let user = match User::new(self.token.clone()) {
             Ok(user) => user,
             Err(e) => match e.downcast_ref::<github::Unauthorized>() {

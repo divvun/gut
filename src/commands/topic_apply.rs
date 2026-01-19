@@ -1,7 +1,6 @@
 use super::common::{self, OrgResult};
 use super::models::Script;
 use super::topic_helper;
-use crate::cli::Args as CommonArgs;
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::github::RemoteRepoWithTopics;
@@ -38,7 +37,7 @@ pub struct TopicApplyArgs {
 }
 
 impl TopicApplyArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),

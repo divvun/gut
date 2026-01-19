@@ -2,7 +2,6 @@ use super::create_branch::*;
 use super::create_discussion::*;
 use super::create_repo::*;
 use super::create_team::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -14,8 +13,8 @@ pub struct CreateArgs {
 }
 
 impl CreateArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -32,12 +31,12 @@ pub enum CreateCommand {
 }
 
 impl CreateCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Discussion(args) => args.create_discusstion(common_args),
-            Self::Team(args) => args.create_team(common_args),
-            Self::Branch(args) => args.run(common_args),
-            Self::Repo(args) => args.run(common_args),
+            Self::Discussion(args) => args.create_discusstion(),
+            Self::Team(args) => args.create_team(),
+            Self::Branch(args) => args.run(),
+            Self::Repo(args) => args.run(),
         }
     }
 }

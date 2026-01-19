@@ -1,5 +1,5 @@
 use super::common::{self, OrgResult};
-use crate::cli::Args as CommonArgs;
+use crate::cli::OutputFormat;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitCredential;
@@ -16,8 +16,6 @@ use serde_json::json;
 use std::fmt::Debug;
 use std::path::PathBuf;
 use std::sync::Arc;
-
-use crate::cli::OutputFormat;
 
 #[derive(Debug, Clone, Parser)]
 /// Pull the current branch of all local repositories that match a regex
@@ -45,20 +43,17 @@ pub struct PullArgs {
 }
 
 impl PullArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self, format: Option<OutputFormat>) -> Result<()> {
+        let format = format.unwrap_or(OutputFormat::Table);
         common::run_for_orgs_with_summary(
             self.all_orgs,
             self.organisation.as_deref(),
-            |org| self.run_for_organization(common_args, org),
+            |org| self.run_for_organization(format, org),
             print_pull_summary,
         )
     }
 
-    pub fn run_for_organization(
-        &self,
-        common_args: &CommonArgs,
-        organisation: &str,
-    ) -> Result<OrgResult> {
+    fn run_for_organization(&self, format: OutputFormat, organisation: &str) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
@@ -84,7 +79,7 @@ impl PullArgs {
         let failed_pulls = statuses.iter().filter(|s| s.has_error()).count();
         let dirty_repos = statuses.iter().filter(|s| s.is_dirty()).count();
 
-        match common_args.format.unwrap() {
+        match format {
             OutputFormat::Json => println!("{}", json!(statuses)),
             OutputFormat::Table => summarize(&statuses),
         };

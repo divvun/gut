@@ -1,5 +1,4 @@
 use super::common;
-use crate::cli::Args as CommonArgs;
 use crate::commands::topic_helper;
 use crate::convert::try_from_one;
 use crate::github::RemoteRepo;
@@ -48,7 +47,7 @@ pub struct CreateBranchArgs {
 }
 
 impl CreateBranchArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

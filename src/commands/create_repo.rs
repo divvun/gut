@@ -1,5 +1,4 @@
 use super::common;
-use crate::cli::Args as CommonArgs;
 use crate::github::create_org_repo;
 use crate::user::User;
 use std::path::PathBuf;
@@ -44,7 +43,7 @@ pub struct CreateRepoArgs {
 }
 
 impl CreateRepoArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;

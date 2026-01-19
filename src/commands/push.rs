@@ -1,5 +1,4 @@
 use super::common::{self, OrgResult};
-use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitCredential;
@@ -38,7 +37,7 @@ pub struct PushArgs {
 }
 
 impl PushArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),

@@ -1,5 +1,4 @@
 use super::common::{self, OrgResult};
-use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
@@ -28,7 +27,7 @@ pub struct DefaultBranchArgs {
 }
 
 impl DefaultBranchArgs {
-    pub fn set_default_branch(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn set_default_branch(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
             self.organisation.as_deref(),

@@ -1,6 +1,5 @@
 use super::common;
 
-use crate::cli::Args as CommonArgs;
 use crate::filter::Filter;
 use crate::github;
 use crate::github::RemoteRepo;
@@ -20,7 +19,7 @@ pub struct RemoveReposArgs {
 }
 
 impl RemoveReposArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

@@ -3,7 +3,6 @@ pub mod generate;
 pub mod patch_file;
 pub mod refresh;
 
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use apply::*;
 use generate::*;
@@ -19,8 +18,8 @@ pub struct TemplateArgs {
 }
 
 impl TemplateArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -35,11 +34,11 @@ pub enum TemplateCommand {
 }
 
 impl TemplateCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Apply(args) => args.run(common_args),
-            Self::Generate(args) => args.run(common_args),
-            Self::Refresh(args) => args.run(common_args),
+            Self::Apply(args) => args.run(),
+            Self::Generate(args) => args.run(),
+            Self::Refresh(args) => args.run(),
         }
     }
 }

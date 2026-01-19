@@ -1,6 +1,5 @@
 use super::remove_repos::*;
 use super::remove_users::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -12,8 +11,8 @@ pub struct RemoveArgs {
 }
 
 impl RemoveArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -26,10 +25,10 @@ pub enum RemoveCommand {
 }
 
 impl RemoveCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Users(args) => args.run(common_args),
-            Self::Repos(args) => args.run(common_args),
+            Self::Users(args) => args.run(),
+            Self::Repos(args) => args.run(),
         }
     }
 }

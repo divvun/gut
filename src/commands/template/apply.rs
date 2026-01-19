@@ -1,5 +1,4 @@
 use super::patch_file::*;
-use crate::cli::Args as CommonArgs;
 use crate::commands::common;
 use crate::commands::models::ExistDirectory;
 use crate::commands::models::template::*;
@@ -107,7 +106,7 @@ pub struct ApplyArgs {
 }
 
 impl ApplyArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         if self.finish && self.abort {
             println!("You cannot provide both \"--continue\" and \"--abort\" at the same time");
             return Ok(());

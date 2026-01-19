@@ -1,6 +1,5 @@
 use super::common;
 
-use crate::cli::Args as CommonArgs;
 use crate::github::RemoteRepo;
 use anyhow::{Error, Result, anyhow};
 
@@ -30,7 +29,7 @@ pub struct CloneArgs {
 }
 
 impl CloneArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         let user = common::user()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
         let use_https = match self.use_https {

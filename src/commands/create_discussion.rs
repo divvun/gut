@@ -1,5 +1,4 @@
 use super::common;
-use crate::cli::Args as CommonArgs;
 use crate::github;
 use crate::github::Unauthorized;
 
@@ -30,7 +29,7 @@ pub struct CreateDiscussionArgs {
 }
 
 impl CreateDiscussionArgs {
-    pub fn create_discusstion(&self, _common_args: &CommonArgs) -> Result<()> {
+    pub fn create_discusstion(&self) -> Result<()> {
         let token = common::user_token()?;
         let organisation = common::organisation(self.organisation.as_deref())?;
 

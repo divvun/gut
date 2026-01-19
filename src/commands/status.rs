@@ -1,6 +1,6 @@
 use super::common::{self, OrgSummary};
 use super::fetch::FetchArgs;
-use crate::cli::{Args as CommonArgs, OutputFormat};
+use crate::cli::OutputFormat;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
@@ -39,26 +39,28 @@ pub struct StatusArgs {
 }
 
 impl StatusArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self, format: Option<OutputFormat>) -> Result<()> {
+        let format = format.unwrap_or(OutputFormat::Table);
+
         if self.fetch {
             let fetch_args = FetchArgs {
                 organisation: self.organisation.clone(),
                 regex: self.regex.clone(),
                 all_orgs: self.all_orgs,
             };
-            fetch_args.run(common_args)?;
+            fetch_args.run()?;
             println!();
         }
 
         common::run_for_orgs_with_summary(
             self.all_orgs,
             self.organisation.as_deref(),
-            |org| self.run_single_org(common_args, org),
+            |org| self.run_single_org(format, org),
             print_org_summary,
         )
     }
 
-    fn run_single_org(&self, common_args: &CommonArgs, organisation: &str) -> Result<OrgSummary> {
+    fn run_single_org(&self, format: OutputFormat, organisation: &str) -> Result<OrgSummary> {
         let root = common::root()?;
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
@@ -76,12 +78,13 @@ impl StatusArgs {
             })
             .collect();
 
-        if let Some(OutputFormat::Json) = common_args.format {
-            println!("{}", json!(statuses));
-        } else {
-            let rows = to_rows(&statuses, self.verbose);
-            let table = to_table(&rows);
-            table.printstd();
+        match format {
+            OutputFormat::Json => println!("{}", json!(statuses)),
+            OutputFormat::Table => {
+                let rows = to_rows(&statuses, self.verbose);
+                let table = to_table(&rows);
+                table.printstd();
+            }
         }
 
         // Lag organizasjon-sammandrag med same statistikk som summarize

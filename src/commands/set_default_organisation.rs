@@ -1,4 +1,3 @@
-use crate::cli::Args as CommonArgs;
 use crate::config::Config;
 use clap::Parser;
 
@@ -11,7 +10,7 @@ pub struct SetOrganisationArgs {
 }
 
 impl SetOrganisationArgs {
-    pub fn run(&self, _common_args: &CommonArgs) -> anyhow::Result<()> {
+    pub fn run(&self) -> anyhow::Result<()> {
         let mut config = Config::from_file()?;
         config.default_org = Some(self.organisation.clone());
         config.save_config()

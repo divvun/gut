@@ -1,6 +1,5 @@
 use super::add_repos::*;
 use super::add_users::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -12,8 +11,8 @@ pub struct AddArgs {
 }
 
 impl AddArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -26,10 +25,10 @@ pub enum AddCommand {
 }
 
 impl AddCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            AddCommand::Users(args) => args.run(common_args),
-            AddCommand::Repos(args) => args.run(common_args),
+            AddCommand::Users(args) => args.run(),
+            AddCommand::Repos(args) => args.run(),
         }
     }
 }

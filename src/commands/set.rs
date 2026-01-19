@@ -2,7 +2,6 @@ use super::set_default_organisation::*;
 use super::set_info::*;
 use super::set_secret::*;
 use super::set_team_permission::*;
-use crate::cli::Args as CommonArgs;
 use anyhow::Result;
 use clap::Parser;
 
@@ -14,8 +13,8 @@ pub struct SetArgs {
 }
 
 impl SetArgs {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
-        self.command.run(common_args)
+    pub fn run(&self) -> Result<()> {
+        self.command.run()
     }
 }
 
@@ -32,12 +31,12 @@ pub enum SetCommand {
 }
 
 impl SetCommand {
-    pub fn run(&self, common_args: &CommonArgs) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         match self {
-            Self::Info(args) => args.run(common_args),
-            Self::Organisation(args) => args.run(common_args),
-            Self::Permission(args) => args.set_permission(common_args),
-            Self::Secret(args) => args.run(common_args),
+            Self::Info(args) => args.run(),
+            Self::Organisation(args) => args.run(),
+            Self::Permission(args) => args.set_permission(),
+            Self::Secret(args) => args.run(),
         }
     }
 }
