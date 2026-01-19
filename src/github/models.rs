@@ -1,8 +1,9 @@
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq, Serialize, Deserialize)]
 pub struct RemoteRepo {
     pub name: String,
     pub owner: String,

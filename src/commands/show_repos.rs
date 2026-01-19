@@ -1,6 +1,7 @@
 use super::common;
 
 use crate::filter::Filter;
+use crate::github::RemoteRepo;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -17,6 +18,9 @@ pub struct ShowReposArgs {
     #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
+    #[arg(long, short)]
+    /// Output as JSON
+    pub json: bool,
 }
 
 impl ShowReposArgs {
@@ -27,14 +31,24 @@ impl ShowReposArgs {
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
-        print_results(&filtered_repos);
+        if self.json {
+            print_json(&filtered_repos)?;
+        } else {
+            print_list(&filtered_repos);
+        }
 
         Ok(())
     }
 }
 
-fn print_results<T: std::fmt::Debug>(repos: &[T]) {
+fn print_list(repos: &[RemoteRepo]) {
     for repo in repos {
-        println!("{:?}", repo);
+        println!("{}", repo.name);
     }
+}
+
+fn print_json(repos: &[RemoteRepo]) -> anyhow::Result<()> {
+    let json = serde_json::to_string_pretty(repos)?;
+    println!("{}", json);
+    Ok(())
 }
