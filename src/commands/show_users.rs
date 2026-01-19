@@ -4,12 +4,12 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Show all users in an organisation
+/// Show all users in an owner
 pub struct ShowUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.

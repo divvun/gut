@@ -10,9 +10,9 @@ use std::path::PathBuf;
 /// Do git clean -f for all local repositories that match a pattern
 pub struct CleanArgs {
     #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories

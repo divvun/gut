@@ -17,9 +17,9 @@ use std::path::PathBuf;
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
     #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
@@ -405,7 +405,7 @@ fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(
-        row!["Organisation", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+        row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
     );
     table
 }

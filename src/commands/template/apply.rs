@@ -85,7 +85,7 @@ pub struct ApplyArgs {
     /// Directory of template project
     #[arg(long, short)]
     pub template: ExistDirectory,
-    /// Target organisation name
+    /// Target owner (organization or user) name
     #[arg(long, short)]
     pub organisation: Option<String>,
     /// Optional regex to filter repositories
@@ -119,7 +119,7 @@ impl ApplyArgs {
 
         if target_dirs.is_empty() {
             println!(
-                "There are no local repositories in organisation {} that match the pattern {:?}",
+                "There are no local repositories in owner {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());

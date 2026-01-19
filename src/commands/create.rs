@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create team, discussion, repo to an organisation or create a branch for repositories
+/// Create team, discussion, repo to an owner or create a branch for repositories
 pub struct CreateArgs {
     #[command(subcommand)]
     command: CreateCommand,

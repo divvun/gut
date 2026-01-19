@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Remove users, repos from an organisation/a team
+/// Remove users, repos from an owner/a team
 pub struct RemoveArgs {
     #[command(subcommand)]
     command: RemoveCommand,

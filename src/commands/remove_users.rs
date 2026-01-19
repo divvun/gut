@@ -6,14 +6,14 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Remove users by users' usernames from an organisation
+/// Remove users by users' usernames from an owner
 ///
 /// If you specify team_slug it'll try to remove users from the provided team
 pub struct RemoveUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)

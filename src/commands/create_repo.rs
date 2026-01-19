@@ -12,12 +12,12 @@ use crate::git::{Clonable, GitCredential, GitRepo, open, push};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create new repositories in an organisation and push for existing git repositories
+/// Create new repositories in an owner and push for existing git repositories
 pub struct CreateRepoArgs {
     #[arg(long, short)]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// The parent directory of all directories that you want to create new repositories

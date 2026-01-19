@@ -17,9 +17,9 @@ use std::process::Command;
 /// their actual values (e.g., 'se').
 pub struct RefreshArgs {
     #[arg(long, short)]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
@@ -42,7 +42,7 @@ impl RefreshArgs {
 
         if target_dirs.is_empty() {
             println!(
-                "No repositories found in organisation {} matching pattern {:?}",
+                "No repositories found in owner {} matching pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());

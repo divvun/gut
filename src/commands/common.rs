@@ -97,7 +97,7 @@ pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row![
-        "Organisation",
+        "Owner",
         "#repos",
         success_column_label,
         "Failed"
@@ -122,11 +122,11 @@ pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &
     table.add_empty_row();
     table.add_row(row!["TOTAL", r -> total_repos, r -> total_success, r -> total_failed]);
 
-    println!("\n=== All org summary ===");
+    println!("\n=== All owner summary ===");
     table.printstd();
 }
 
-/// Run a command against all organizations or a single one, printing OrgResult summary with custom label
+/// Run a command against all owners or a single one, printing OrgResult summary with custom label
 pub fn run_for_orgs<F>(
     all_orgs: bool,
     organisation_opt: Option<&str>,
@@ -139,21 +139,21 @@ where
     if all_orgs {
         let organizations = get_all_organizations()?;
         if organizations.is_empty() {
-            println!("No organizations found in root directory");
+            println!("No owners found in root directory");
             return Ok(());
         }
 
         let mut summaries = Vec::new();
 
         for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
+            println!("\n=== Processing owner: {} ===", org);
 
             match run_fn(org) {
                 Ok(summary) => {
                     summaries.push(summary);
                 }
                 Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
+                    println!("Failed to process owner '{}': {:?}", org, e);
                     summaries.push(OrgResult::error_placeholder(org));
                 }
             }
@@ -169,7 +169,7 @@ where
     }
 }
 
-/// Run a command against all organizations or a single one with custom summary printer
+/// Run a command against all owners or a single one with custom summary printer
 pub fn run_for_orgs_with_summary<F, R>(
     all_orgs: bool,
     organisation_opt: Option<&str>,
@@ -183,21 +183,21 @@ where
     if all_orgs {
         let organizations = get_all_organizations()?;
         if organizations.is_empty() {
-            println!("No organizations found in root directory");
+            println!("No owners found in root directory");
             return Ok(());
         }
 
         let mut summaries = Vec::new();
 
         for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
+            println!("\n=== Processing owner: {} ===", org);
 
             match run_fn(org) {
                 Ok(summary) => {
                     summaries.push(summary);
                 }
                 Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
+                    println!("Failed to process owner '{}': {:?}", org, e);
                     summaries.push(R::error_placeholder(org));
                 }
             }
@@ -244,10 +244,10 @@ pub fn organisation(opt: Option<&str>) -> Result<String> {
         Some(s) => Ok(s.to_string()),
         None => {
             let config = Config::from_file()?;
-            match config.default_org {
+            match config.default_owner {
                 Some(o) => Ok(o),
                 None => anyhow::bail!(
-                    "You need to provide an organisation or set a default organisation with init/set default organisation command."
+                    "You need to provide an owner (organization or user) or set a default owner with init/set default owner command."
                 ),
             }
         }
@@ -288,7 +288,7 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
             Ok(vec)
         }
         Err(e) => Err(anyhow!(
-            "Cannot read sub directories for organisation {} \"{}\" because {:?}",
+            "Cannot read sub directories for owner {} \"{}\" because {:?}",
             target_dir.display(),
             org,
             e
@@ -296,7 +296,7 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
     }
 }
 
-/// Get repository directories for an organization.
+/// Get repository directories for an owner (organization or user).
 ///
 /// If `topic` is Some, queries GitHub API to filter by topic (and optionally regex).
 /// If `topic` is None, uses local directories only (faster, no API call).

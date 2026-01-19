@@ -17,9 +17,9 @@ use std::process::Output;
 /// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
     #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    /// Target owner (organization or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
+    /// You can set a default owner in the init or set owner command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
@@ -53,7 +53,7 @@ impl ApplyArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There are no local repositories in organisation {} that match the pattern {:?}",
+                "There are no local repositories in owner {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(OrgResult::new(organisation));
