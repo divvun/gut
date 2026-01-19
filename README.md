@@ -21,6 +21,7 @@ Quick links:
 - [Command Overview](docs/docs/usage/overview.md) - All available commands
 - [Architecture](docs/docs/architecture.md) - Technical details
 - [Contributing](docs/docs/contributing.md) - Development guide
+- [Changelog](CHANGELOG.md) - Release history
 
 ### Viewing Documentation Locally
 
