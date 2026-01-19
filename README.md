@@ -15,6 +15,7 @@ We think it's pretty cool.
 **📚 [Full Documentation](docs/)** - Complete guides and references
 
 Quick links:
+
 - [Get Started](docs/docs/get-started.md) - Installation and setup
 - [Common Commands](docs/docs/usage/common-commands.md) - Most frequently used commands
 - [Command Overview](docs/docs/usage/overview.md) - All available commands
@@ -34,16 +35,15 @@ cd docs
 zensical serve
 ```
 
-Then open http://localhost:8000 in your browser.
-
+Then open <http://localhost:8000> in your browser.
 
 ## Installation
 
 Download the latest nightly build:
 
-* [Linux  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
-* [macOS  ](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
-* [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (i686)
+- [Linux](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=linux)   (x86_64)
+- [macOS](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=macos)   (x86_64)
+- [Windows](https://pahkat.uit.no/devtools/download/gut?channel=nightly&platform=windows) (i686)
 
 Extract the archive, and move the binary to somewhere on your `$PATH`.
 
@@ -51,7 +51,7 @@ Extract the archive, and move the binary to somewhere on your `$PATH`.
 
 1. get [Rust](https://www.rust-lang.org/learn/get-started)
 1. clone this repo: `git clone https://github.com/divvun/gut.git`
-2. `cd gut`
+1. `cd gut`
 1. `cargo install --path .`
 
 If you get compilation errors related to SSL (esp. on the mac), try this variant for the last command above:
@@ -71,6 +71,16 @@ Below the `<root-dir>` dir, there will be one directory for every organisation y
 
 To use the `git`/`ssh` protocol, you need to set up an `ssh` key for GitHub. Follow [these instructions](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
+## Features
+
+- **Multi-repo operations**: Clone, pull, push, commit, fetch across hundreds of repos with a single command
+- **Regex filtering**: Target specific repos using regex patterns (e.g., `-r "^lang-.*"`)
+- **Topic filtering**: Filter repos by GitHub topics (e.g., `--topic lang`)
+- **Multi-org support**: Run commands across all organizations with `--all-orgs` flag
+- **Progress bars**: Visual feedback for long-running operations
+- **Parallel execution**: Network operations run in parallel for speed
+- **Template system**: Apply consistent changes across repos using templates with placeholder substitution
+
 ## Usage
 
 > **NB!** Please note that this is a potentially very powerful tool. Some commands require *organisation owner permissions*, and the most dangerous ones will require an *explicit confirmation*. If you get an error that the operation is not permitted, you probably do not have sufficient access to the repos involved.
@@ -80,102 +90,127 @@ There are some [usage instructions](USAGE.md) under development.
 Then there are some use cases with example commands
 [here](https://giellalt.github.io/infra/infraremake/HowToMergeUpdatesFromCore.html).
 
-There is also some rudimentary help text. Run `gut --help` to get an overview.
+### Common Examples
 
-In version 0.1.0 it reads:
+```bash
+# Clone all repos matching a pattern
+gut clone -o myorg -r "^api-.*"
+
+# Pull all repos across all organizations
+gut pull --all-orgs
+
+# Fetch and check status of all repos matching regex
+gut status -r ".*" --fetch
+
+# Commit changes to all matching repos
+gut commit -r "^lib-.*" -m "Update dependencies"
+
+# Apply a script to multiple repos
+gut apply -r ".*" -s ./my-script.sh
+```
+
+For more details on any command, use `gut <command> --help`.
+
+There is also some rudimentary help text. Run `gut --help` to get an overview:
 
 ```
-$ gut --help         
-gut 0.1.0
+$ gut --help
 git multirepo maintenance tool
 
-USAGE:
-    gut <SUBCOMMAND>
+Usage: gut [OPTIONS] <COMMAND>
 
-FLAGS:
-    -h, --help       
-            Prints help information
+Commands:
+  add       Add users, repos to an organisation/a team
+  apply     Apply a script to all local repositories that match a pattern
+  branch    Set default, set protected branch
+  checkout  Checkout a branch all repositories that their name matches a pattern or a topic
+  ci        Generate or export ci configuration
+  clone     Clone all repositories that matches a pattern
+  clean     Do git clean -f for all local repositories that match a pattern
+  commit    Add all and then commit with the provided messages for all repositories that match a pattern or a topic
+  create    Create team, discussion, repo to an organisation or create a branch for repositories
+  fetch     Fetch all local repositories that match a regex
+  hook      Create, delete hooks for all repositories that match a pattern
+  init      Init configuration data
+  invite    Invite users to an organisation by emails
+  make      Make repositories that match a regex become public/private
+  merge     Merge a branch to the current branch for all repositories that match a pattern
+  pull      Pull the current branch of all local repositories that match a regex
+  push      Push the provided branch to remote server for all repositories that match a pattern or a topic
+  remove    Remove users, repos from an organisation/a team
+  rename    Rename repositories that match a pattern with another pattern
+  set       Set information, secret for repositories or permission for a team
+  show      Show config, list of repositories or users
+  status    Show git status of all repositories that match a pattern
+  template  Apply changes, refresh, or generate new template
+  topic     Add, get, set or apply a script by topic
+  transfer  Transfer repositories that match a regex to another organisation
+  workflow  Run a workflow
+  help      Print this message or the help of the given subcommand(s)
 
-    -V, --version    
-            Prints version information
-
-
-SUBCOMMANDS:
-    add         Add users, repos to an organisation/a team
-    apply       Apply a script to all local repositories that match a pattern
-    branch      Set default, set protected branch
-    checkout    Checkout a branch all repositories that their name matches a pattern or a topic
-    ci          
-    clean       Do git clean -f for all local repositories that match a pattern
-    clone       Clone all repositories that matches a pattern
-    commit      Add all and then commit with the provided messages for all repositories that match a pattern or a topic
-    create      Create team, discussion, repo to an organisation or create a branch for repositories
-    fetch       Fetch all local repositories that match a regex
-    help        Prints this message or the help of the given subcommand(s)
-    hook        Create, delete hooks for all repositories that match a pattern
-    init        Init configuration data
-    invite      Invite users to an organisation by emails
-    make        Make repositories that match a regex become public/private
-    merge       Merge a branch to the current branch for all repositories that match a pattern
-    pull        Pull the current branch of all local repositories that match a regex
-    push        Push the provided branch to remote server for all repositories that match a pattern or a topic
-    remove      Remove users, repos from an organisation/a team
-    set         Set information, secret for repositories or permission for a team
-    show        Show config, list of repositories or users
-    status      Show git status of all repositories that match a pattern
-    template    Apply changes or generate new template
-    topic       Add, get, set or apply a script by topic
-    transfer    Transfer repositories that match a regex to another organisation
-    workflow    Run a workflow
+Options:
+      --format <FORMAT>  [default: table] [possible values: table, json]
+  -h, --help             Print help (see more with '--help')
+  -V, --version          Print version
 ```
 
-Help text for subcommands with further details reads:
+### Subcommands Reference
+
+Commands with subcommands:
 
 ```
-SUBCOMMANDS with additional arguments:
-    add
-        repos       - Add all matched repositories to a team by using team_slug
-        users       - Invite users by users' usernames to an organisation
-    branch
-        default     - Set a branch as default for all repositories that match a pattern
-        protect     - Set a branch as protected for all local repositories that match a pattern
-    ci          Continuous Integration
-        export      - export data file for ci generate command
-        generate    - generate ci for every repositories that matches
-    create      Create team, discussion, repo to an organisation or create a branch for repositories
-        branch      - Create a new branch for all repositories that match a regex or a topic
-        discussion  - Create a discussion for a team in an organisation
-        repo        - Create new repositories in an organisation and push for existing git repositories
-        team        - Create a new team for an organisation
-    hook        Create, delete hooks for all repositories that match a pattern
-        create      - Create web hook for repos matching regex
-        delete      - Delete all web hooks for all repository that match regex
-    invite      Invite users to an organisation by emails
-        users       - Invite users to an organisation by emails
-    make        Make repositories that match a regex become public/private
-        private    
-        public     
-    remove      Remove users, repos from an organisation/a team
-        repositories    
-        users       - Remove users by users' usernames from an organisation
-    set         Set information, secret for repositories or permission for a team
-        info        - Set description and/or website for all repositories that match regex, plain text or using a script
-                      NB! Make sure there is no trailing newline at the end! Or it will fail.
-        organisation- Set default organisation name for every other command
-        permission  - Set access permissions for a team, for repos matching regex; matching repos will be added if not already in the team
-        secret      - Set a secret all repositories that match regex
-    show        Show config, list of repositories or users
-        config      - Print configuration
-        repositories- Show all repos matching regex   
-        users       - Show all users in an organisation
-    template    Apply changes or generate new template
-        apply       - Apply changes from template to all repos that match the regex
-        generate    - Generate a new project from a template
-    topic       Add, get, set or apply a script by topic
-        add      Add topics for all repositories that match a regex
-        apply    Apply a script to all repositories that has a topics that match a pattern Or to all repositories that has a specific topic
-        get      Get topics for all repositories that match a regex
-        set      Set topics for all repositories that match a regex
-    workflow    Run a workflow
-        run         - Rerun the most recent workflow or send a repository_dispatch event to trigger workflows
+add
+    repos          Add all matched repositories to a team by using team_slug
+    users          Invite users by users' usernames to an organisation
+
+branch
+    default        Set a branch as default for all repositories that match a pattern
+    protect        Set a branch as protected for all local repositories that match a pattern
+    unprotect      Remove branch protection for all local repositories that match a pattern
+
+ci
+    export         Export data file for ci generate command
+    generate       Generate ci for every repositories that matches
+
+create
+    branch         Create a new branch for all repositories that match a regex or a topic
+    discussion     Create a discussion for a team in an organisation
+    repo           Create new repositories in an organisation and push for existing git repositories
+    team           Create a new team for an organisation
+
+hook
+    create         Create web hook for repos matching regex
+    delete         Delete ALL web hooks for all repositories that match given regex
+
+invite
+    users          Invite users to an organisation by emails
+
+remove
+    repositories   Remove repositories from a team
+    users          Remove users by users' usernames from an organisation
+
+set
+    info           Set description and/or website for all repositories that match regex
+    organisation   Set default organisation name for every other command
+    permission     Set access permissions for a team on repos matching regex
+    secret         Set a secret for all repositories that match regex
+
+show
+    config         Show current configuration
+    repositories   Show all repositories that match a pattern
+    users          Show all users in an organisation
+
+template
+    apply          Apply changes from template to all projects that match the regex
+    generate       Generate a new project from a template
+    refresh        Refresh placeholder substitutions in files based on .gut/delta.toml
+
+topic
+    add            Add topics for all repositories that match a regex
+    apply          Apply a script to all repositories that have topics matching a pattern
+    get            Get topics for all repositories that match a regex
+    set            Set topics for all repositories that match a regex
+
+workflow
+    run            Rerun the most recent workflow or send a repository_dispatch event
 ```
