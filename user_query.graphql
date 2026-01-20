@@ -12,7 +12,10 @@ query OrganizationRepositories($login: String!, $after: String) {
         name,
         nameWithOwner,
         sshUrl,
-        url
+        url,
+        defaultBranchRef {
+          name
+        }
       }
       pageInfo {
         endCursor

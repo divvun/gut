@@ -1,10 +1,9 @@
 use super::common;
 use crate::filter::Filter;
-use crate::github::{self, RemoteRepo};
+use crate::github::RemoteRepo;
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Table, format, row};
-use rayon::prelude::*;
 use std::path::Path;
 use std::time::Duration;
 
@@ -26,7 +25,7 @@ pub struct ShowReposArgs {
     /// Output as JSON
     pub json: bool,
     #[arg(long, short)]
-    /// Show default branch (slower due to additional GitHub API calls)
+    /// Show default branch
     pub default_branch: bool,
 }
 
@@ -102,7 +101,7 @@ impl ShowReposArgs {
             if repos.is_empty() {
                 println!("No repositories match the pattern");
             } else {
-                print_table(&repos, organisation, root, user_token, self.default_branch)?;
+                print_table(&repos, organisation, root, self.default_branch)?;
             }
         }
 
@@ -125,7 +124,6 @@ fn print_table(
     repos: &[RemoteRepo],
     owner: &str,
     root: &str,
-    token: &str,
     show_default_branch: bool,
 ) -> anyhow::Result<()> {
     let mut table = Table::new();
@@ -134,24 +132,15 @@ fn print_table(
     let mut cloned_count = 0;
 
     if show_default_branch {
-        // Fetch all default branches in parallel using rayon
-        let repo_data: Vec<_> = repos
-            .par_iter()
-            .map(|repo| {
-                let is_cloned = is_cloned_locally(owner, &repo.name, root);
-                let default_branch =
-                    github::default_branch(repo, token).unwrap_or_else(|_| "N/A".to_string());
-                (repo, is_cloned, default_branch)
-            })
-            .collect();
-
         table.set_titles(row!["Repository", "Default Branch", "Cloned"]);
 
-        for (repo, is_cloned, default_branch) in repo_data {
+        for repo in repos {
+            let is_cloned = is_cloned_locally(owner, &repo.name, root);
             if is_cloned {
                 cloned_count += 1;
             }
 
+            let default_branch = repo.default_branch.as_deref().unwrap_or("N/A");
             let cloned_status = if is_cloned { "Yes" } else { "No" };
             table.add_row(row![repo.name, default_branch, cloned_status]);
         }
@@ -164,7 +153,7 @@ fn print_table(
             cloned_count.to_string()
         ]);
     } else {
-        // Without default branch - faster, only 2 columns
+        // Without default branch - only 2 columns
         table.set_titles(row!["Repository", "Cloned"]);
 
         for repo in repos {

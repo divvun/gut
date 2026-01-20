@@ -9,6 +9,8 @@ pub struct RemoteRepo {
     pub owner: String,
     pub ssh_url: String,
     pub https_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_branch: Option<String>,
 }
 
 impl RemoteRepo {

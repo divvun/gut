@@ -190,6 +190,7 @@ fn list_org_repos_rec(
             ssh_url: x.ssh_url.to_string(),
             owner: org.to_string(),
             https_url: x.url.to_string(),
+            default_branch: x.default_branch_ref.as_ref().map(|b| b.name.to_string()),
         })
         .collect();
 
@@ -252,6 +253,7 @@ fn list_org_repos_with_topics_rec(
                 ssh_url: x.ssh_url.to_string(),
                 owner: org.to_string(),
                 https_url: x.url.to_string(),
+                default_branch: None,
             },
             topics: x
                 .repository_topics
