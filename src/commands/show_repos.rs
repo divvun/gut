@@ -85,9 +85,6 @@ impl ShowReposArgs {
         ) {
             Ok(repos) => {
                 spinner.finish_and_clear();
-                if !json_mode {
-                    println!("\n=== {} ===", organisation);
-                }
                 repos
             }
             Err(e) => {
@@ -174,6 +171,26 @@ fn print_table(
         ]);
     }
 
-    table.printstd();
+    print_titled_table(owner, &table);
     Ok(())
+}
+
+fn print_titled_table(title: &str, table: &Table) {
+    let table_str = table.to_string();
+
+    // Measure rendered width
+    let width = table_str
+        .lines()
+        // .map(|l| UnicodeWidthStr::width(l))
+        .map(|l| l.chars().count())
+        .max()
+        .unwrap_or(0);
+
+    // Top border
+    println!("+{}+", "-".repeat(width - 2));
+
+    // Centered title row
+    println!("|{:^inner_width$}|", title, inner_width = width - 2);
+
+    print!("{}\n", table_str);
 }
