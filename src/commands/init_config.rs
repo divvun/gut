@@ -43,7 +43,7 @@ pub struct InitArgs {
     /// Github token. Gut needs github token to access your github data
     pub token: String,
     /// Default owner (can be a GitHub organization or user account)
-    #[arg(short = 'w', long, alias = "organisation")]
+    #[arg(short, long, alias = "organisation")]
     pub owner: Option<String>,
     /// Default to https instead of ssh when cloning repositories
     #[arg(short, long)]
