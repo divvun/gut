@@ -80,7 +80,7 @@ impl fmt::Display for Role {
 impl InviteUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
         let teams = team_slug_to_ids(&organisation, &user_token, &self.teams)?;
