@@ -143,7 +143,10 @@ fn summarize(statuses: &[Status], team_slug: &str) {
     if errors.is_empty() {
         println!("\nThere is no error!");
     } else {
-        let msg = format!("There were \{} errors when executing the command:", errors.len());
+        let msg = format!(
+            "There were {} errors when executing the command:",
+            errors.len()
+        );
         println!("\n{}\n", msg.red());
 
         let mut error_table = Table::new();

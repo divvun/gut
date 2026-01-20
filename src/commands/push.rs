@@ -107,7 +107,7 @@ fn summarize(statuses: &[Status], branch: &str) {
     if errors.is_empty() {
         println!("\nThere is no error!");
     } else {
-        let msg = format!("There were \{} errors when process command:", errors.len());
+        let msg = format!("There were {} errors when process command:", errors.len());
         println!("\n{}\n", msg.red());
 
         let mut error_table = Table::new();
