@@ -167,7 +167,7 @@ fn print_status_table(statuses: &[StatusResult], verbose: bool) {
     let success_statuses: Vec<_> = statuses.iter().filter_map(|s| s.result.as_ref().ok()).collect();
     let errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
     
-    let rows = to_rows_with_errors(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), &errors, verbose);
+    let rows = to_rows_with_errors_sorted(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), &errors, verbose);
     let table = to_table(&rows);
     table.printstd();
     
@@ -206,16 +206,40 @@ fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
     rows
 }
 
-fn to_rows_with_errors(statuses: &[RepoStatus], errors: &[&StatusResult], verbose: bool) -> Vec<StatusRow> {
-    let mut rows: Vec<_> = statuses.iter().flat_map(|s| s.to_rows(verbose)).collect();
+fn to_rows_with_errors_sorted(statuses: &[RepoStatus], errors: &[&StatusResult], verbose: bool) -> Vec<StatusRow> {
+    // Create a sorted list of repo names with their types
+    let mut all_repos: Vec<(&str, bool)> = Vec::new();
     
-    // Add error rows
-    for error_status in errors {
-        rows.push(StatusRow::ErrorRow {
-            name: error_status.name.clone(),
-        });
+    // Add success repos
+    for status in statuses {
+        all_repos.push((&status.name, true));
     }
     
+    // Add error repos
+    for error_status in errors {
+        all_repos.push((&error_status.name, false));
+    }
+    
+    // Sort alphabetically by name
+    all_repos.sort_by_key(|(name, _)| *name);
+    
+    // Create rows in sorted order
+    let mut rows = Vec::new();
+    for (name, is_success) in all_repos {
+        if is_success {
+            // Find the RepoStatus and add its rows
+            if let Some(status) = statuses.iter().find(|s| s.name == name) {
+                rows.extend(status.to_rows(verbose));
+            }
+        } else {
+            // Add error row
+            rows.push(StatusRow::ErrorRow {
+                name: name.to_string(),
+            });
+        }
+    }
+    
+    // Add summary at the end
     rows.append(&mut to_total_summarize(statuses));
     rows
 }
