@@ -9,11 +9,11 @@ use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 pub struct SetTeamPermissionArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -37,14 +37,14 @@ fn parse_permission(src: &str) -> Result<String> {
 impl SetTeamPermissionArgs {
     pub fn set_permission(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(&owner, self.regex.as_ref(), &user_token)?;
 
         filtered_repos.par_iter().for_each(|repo| {
             let result = github::set_team_permission(
-                &organisation,
+                &owner,
                 &self.team_slug,
                 &repo.owner,
                 &repo.name,

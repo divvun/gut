@@ -10,11 +10,11 @@ use clap::Parser;
 ///
 /// If you specify team_slug it'll try to invite users to the provided team
 pub struct AddUsersArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short, default_value = "member")]
     /// Role (member | admin) for org, or (member | maintainer) for team
     pub role: String,
@@ -36,20 +36,20 @@ impl AddUsersArgs {
 
     fn add_users_to_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(&organisation, &self.role, users, &user_token);
+        let results = add_list_user_to_org(&owner, &self.role, users, &user_token);
 
-        print_results_org(&results, &organisation, &self.role);
+        print_results_org(&results, &owner, &self.role);
 
         Ok(())
     }
 
     fn add_users_to_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = common::owner(self.owner.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 

@@ -14,11 +14,11 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Create new repositories in an owner and push for existing git repositories
 pub struct CreateRepoArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// The parent directory of all directories that you want to create new repositories
     pub dir: Option<ExistDirectory>,
@@ -47,7 +47,7 @@ impl CreateRepoArgs {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let sub_dirs = match &self.dir {
             Some(d) => common::read_dirs_with_filter(&d.path, &self.regex).with_context(|| {
@@ -57,7 +57,7 @@ impl CreateRepoArgs {
                     self
                 )
             })?,
-            None => common::read_dirs_for_org(&organisation, &root, Some(&self.regex))?,
+            None => common::read_dirs_for_org(&owner, &root, Some(&self.regex))?,
         };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
@@ -65,7 +65,7 @@ impl CreateRepoArgs {
         let user = common::user()?;
         for dir in sub_dirs {
             create_and_clone(
-                &organisation,
+                &owner,
                 &dir,
                 self.public,
                 &user,

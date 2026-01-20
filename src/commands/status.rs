@@ -17,11 +17,11 @@ use std::sync::Arc;
 #[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -45,7 +45,7 @@ impl StatusArgs {
 
         if self.fetch {
             let fetch_args = FetchArgs {
-                organisation: self.organisation.clone(),
+                owner: self.owner.clone(),
                 regex: self.regex.clone(),
                 all_orgs: self.all_orgs,
             };
@@ -55,7 +55,7 @@ impl StatusArgs {
 
         common::run_for_orgs_with_summary(
             self.all_orgs,
-            self.organisation.as_deref(),
+            self.owner.as_deref(),
             |org| self.run_single_org(format, org),
             print_org_summary,
         )

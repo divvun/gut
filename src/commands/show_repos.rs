@@ -42,7 +42,7 @@ impl ShowReposArgs {
             }
             orgs
         } else {
-            vec![common::organisation(self.organisation.as_deref())?]
+            vec![common::owner(self.organisation.as_deref())?]
         };
 
         if self.json {

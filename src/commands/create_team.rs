@@ -9,11 +9,11 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Create a new team for an owner
 pub struct CreateTeamArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Team name
     pub team_name: String,
@@ -52,16 +52,9 @@ fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse>
     let empty = &"".to_string();
     let des: &str = args.description.as_ref().unwrap_or(empty);
     let members: Vec<String> = args.members.iter().map(|s| s.to_string()).collect();
-    let organisation = common::organisation(args.organisation.as_deref())?;
+    let owner = common::owner(args.owner.as_deref())?;
 
-    match github::create_team(
-        &organisation,
-        &args.team_name,
-        des,
-        members,
-        args.secret,
-        token,
-    ) {
+    match github::create_team(&owner, &args.team_name, des, members, args.secret, token) {
         Ok(response) => Ok(response),
         Err(e) => {
             if e.downcast_ref::<Unauthorized>().is_some() {

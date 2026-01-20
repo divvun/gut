@@ -87,7 +87,7 @@ pub struct ApplyArgs {
     pub template: ExistDirectory,
     /// Target owner (organization or user) name
     #[arg(long, short)]
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     /// Optional regex to filter repositories
     #[arg(long, short)]
     pub regex: Option<Filter>,
@@ -113,14 +113,13 @@ impl ApplyArgs {
         }
 
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-        let target_dirs =
-            common::read_dirs_for_org(organisation.as_str(), &root, self.regex.as_ref())?;
+        let owner = common::owner(self.owner.as_deref())?;
+        let target_dirs = common::read_dirs_for_org(owner.as_str(), &root, self.regex.as_ref())?;
 
         if target_dirs.is_empty() {
             println!(
                 "There are no local repositories in owner {} that match the pattern {:?}",
-                organisation, self.regex
+                owner, self.regex
             );
             return Ok(());
         }

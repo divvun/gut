@@ -158,7 +158,7 @@ where
 
         Ok(())
     } else {
-        let org = organisation(organisation_opt)?;
+        let org = owner(organisation_opt)?;
         run_fn(&org)?;
         Ok(())
     }
@@ -202,7 +202,7 @@ where
 
         Ok(())
     } else {
-        let org = organisation(organisation_opt)?;
+        let org = owner(organisation_opt)?;
         run_fn(&org)?;
         Ok(())
     }
@@ -234,7 +234,7 @@ pub fn user_token() -> Result<String> {
         .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
-pub fn organisation(opt: Option<&str>) -> Result<String> {
+pub fn owner(opt: Option<&str>) -> Result<String> {
     match opt {
         Some(s) => Ok(s.to_string()),
         None => {

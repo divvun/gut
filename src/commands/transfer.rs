@@ -10,11 +10,11 @@ use clap::Parser;
 /// This will show all repositories that will affected by this command
 /// You have to enter 'YES' to confirm your action
 pub struct TransferArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// The current organisation name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
@@ -26,15 +26,15 @@ pub struct TransferArgs {
 impl TransferArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
+            common::query_and_filter_repositories(&owner, Some(&self.regex), &user_token)?;
 
         if filtered_repos.is_empty() {
             println!(
                 "There are no repositories in owner {} that match the pattern {:?}",
-                organisation, self.regex
+                owner, self.regex
             );
             return Ok(());
         }

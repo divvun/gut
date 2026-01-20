@@ -21,11 +21,11 @@ use rayon::prelude::*;
 /// The new branch will be based from a another branch (default is main).
 /// If a matched repository is not present in root dir yet, it will be cloned.
 pub struct CreateBranchArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short, required_unless_present("topic"))]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -49,9 +49,9 @@ pub struct CreateBranchArgs {
 impl CreateBranchArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
-        let all_repos = topic_helper::query_repositories_with_topics(&organisation, &user.token)?;
+        let all_repos = topic_helper::query_repositories_with_topics(&owner, &user.token)?;
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())
                 .into_iter()
@@ -61,7 +61,7 @@ impl CreateBranchArgs {
         if filtered_repos.is_empty() {
             println!(
                 "There are no repositories in owner {} that match the pattern {:?}",
-                organisation, self.regex
+                owner, self.regex
             );
             return Ok(());
         }

@@ -14,11 +14,11 @@ use std::process::Output;
 /// Or to all repositories that has a specific topic
 #[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     /// regex pattern to filter topics. This is required unless topic is provided.
     #[arg(long, short, required_unless_present("topic"))]
     pub regex: Option<Filter>,
@@ -40,7 +40,7 @@ impl TopicApplyArgs {
     pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
-            self.organisation.as_deref(),
+            self.owner.as_deref(),
             |org| self.run_for_organization(org),
             "Applied",
         )

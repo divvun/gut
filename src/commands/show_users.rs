@@ -6,11 +6,11 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Show all users in an owner
 pub struct ShowUsersArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.
     //
@@ -24,9 +24,9 @@ pub struct ShowUsersArgs {
 impl ShowUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
-        let result = github::get_org_members(&organisation, &user_token);
+        let result = github::get_org_members(&owner, &user_token);
 
         match result {
             Ok(users) => print_results(&users),

@@ -8,11 +8,11 @@ use rayon::prelude::*;
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex
 pub struct TopicGetArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -25,7 +25,7 @@ impl TopicGetArgs {
     pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
-            self.organisation.as_deref(),
+            self.owner.as_deref(),
             |org| self.run_for_organization(org),
             "Retrieved",
         )

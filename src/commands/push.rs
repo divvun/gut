@@ -18,11 +18,11 @@ use std::path::PathBuf;
 ///
 /// This command will do nothing if there is nothing to push
 pub struct PushArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -40,7 +40,7 @@ impl PushArgs {
     pub fn run(&self) -> Result<()> {
         common::run_for_orgs(
             self.all_orgs,
-            self.organisation.as_deref(),
+            self.owner.as_deref(),
             |org| self.run_for_organization(org),
             "Pushed",
         )
