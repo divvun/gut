@@ -29,16 +29,68 @@ pub struct ShowReposArgs {
 impl ShowReposArgs {
     pub fn show(&self) -> anyhow::Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
         let root = common::root()?;
 
+        if self.all_orgs {
+            self.show_all_orgs(&user_token, &root)
+        } else {
+            let organisation = common::organisation(self.organisation.as_deref())?;
+            self.show_single_org(&organisation, &user_token, &root)
+        }
+    }
+
+    fn show_single_org(
+        &self,
+        organisation: &str,
+        user_token: &str,
+        root: &str,
+    ) -> anyhow::Result<()> {
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(organisation, self.regex.as_ref(), user_token)?;
 
         if self.json {
             print_json(&filtered_repos)?;
         } else {
-            print_table(&filtered_repos, &organisation, &root, &user_token)?;
+            print_table(&filtered_repos, organisation, root, user_token)?;
+        }
+
+        Ok(())
+    }
+
+    fn show_all_orgs(&self, user_token: &str, root: &str) -> anyhow::Result<()> {
+        let organizations = common::get_all_organizations()?;
+        
+        if organizations.is_empty() {
+            println!("Fann ingen organisasjonar i root-mappa");
+            return Ok(());
+        }
+
+        if self.json {
+            // For JSON mode, collect all repos from all orgs
+            let mut all_repos = Vec::new();
+            for org in &organizations {
+                if let Ok(repos) = common::query_and_filter_repositories(org, self.regex.as_ref(), user_token) {
+                    all_repos.extend(repos);
+                }
+            }
+            print_json(&all_repos)?;
+        } else {
+            // For table mode, print a table for each org
+            for org in &organizations {
+                println!("\n=== {} ===", org);
+                match common::query_and_filter_repositories(org, self.regex.as_ref(), user_token) {
+                    Ok(repos) => {
+                        if repos.is_empty() {
+                            println!("Ingen repo matcher mønsteret");
+                        } else {
+                            print_table(&repos, org, root, user_token)?;
+                        }
+                    }
+                    Err(e) => {
+                        println!("Kunne ikkje henta repo for {}: {:?}", org, e);
+                    }
+                }
+            }
         }
 
         Ok(())
