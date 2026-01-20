@@ -70,8 +70,6 @@ impl ShowReposArgs {
         root: &str,
         json_mode: bool,
     ) -> anyhow::Result<Vec<RemoteRepo>> {
-        println!("\n=== {} ===", organisation);
-
         let spinner = ProgressBar::new_spinner();
         spinner.set_style(
             ProgressStyle::default_spinner()
@@ -88,6 +86,9 @@ impl ShowReposArgs {
         ) {
             Ok(repos) => {
                 spinner.finish_and_clear();
+                if !json_mode {
+                    println!("\n=== {} ===", organisation);
+                }
                 repos
             }
             Err(e) => {
