@@ -7,7 +7,7 @@ use crate::git::GitStatus;
 use crate::path::dir_name;
 use anyhow::{Context, Result};
 use clap::Parser;
-use prettytable::{Row, Table, format, row, cell};
+use prettytable::{Row, Table, cell, format, row};
 use rayon::prelude::*;
 use serde::Serialize;
 use serde_json::json;
@@ -137,9 +137,10 @@ impl StatusArgs {
 
 fn status(dir: &PathBuf) -> StatusResult {
     let name = dir_name(dir).unwrap_or_else(|_| "Unknown".to_string());
-    
+
     let result = (|| -> Result<RepoStatus> {
-        let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+        let git_repo =
+            git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
         let status = git::status(&git_repo, false)?;
         let branch = git::head_shorthand(&git_repo)?;
@@ -150,7 +151,7 @@ fn status(dir: &PathBuf) -> StatusResult {
         };
         Ok(repo_status)
     })();
-    
+
     StatusResult {
         name,
         result: result.map_err(Arc::new),
@@ -164,25 +165,41 @@ struct StatusResult {
 }
 
 fn print_status_table(statuses: &[StatusResult], verbose: bool) {
-    let success_statuses: Vec<_> = statuses.iter().filter_map(|s| s.result.as_ref().ok()).collect();
+    let success_statuses: Vec<_> = statuses
+        .iter()
+        .filter_map(|s| s.result.as_ref().ok())
+        .collect();
     let errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
-    
-    let rows = to_rows_with_errors_sorted(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), &errors, verbose);
+
+    let rows = to_rows_with_errors_sorted(
+        &success_statuses
+            .iter()
+            .map(|&s| s.clone())
+            .collect::<Vec<_>>(),
+        &errors,
+        verbose,
+    );
     let table = to_table(&rows);
     table.printstd();
-    
+
     if !errors.is_empty() {
-        println!("\nThere were errors processing {} repositories:\n", errors.len());
+        println!(
+            "\nThere were errors processing {} repositories:\n",
+            errors.len()
+        );
         let mut error_table = Table::new();
         error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
         error_table.set_titles(row!["Repo", "Error"]);
-        
+
         for status_result in errors {
             if let Err(error) = &status_result.result {
                 let msg = format!("{:?}", error);
                 let lines = common::sub_strings(msg.as_str(), 80);
                 let lines = lines.join("\n");
-                error_table.add_row(row![cell!(b -> &status_result.name), cell!(Fr -> lines.as_str())]);
+                error_table.add_row(row![
+                    cell!(b -> &status_result.name),
+                    cell!(Fr -> lines.as_str())
+                ]);
             }
         }
         error_table.printstd();
@@ -206,23 +223,27 @@ fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
     rows
 }
 
-fn to_rows_with_errors_sorted(statuses: &[RepoStatus], errors: &[&StatusResult], verbose: bool) -> Vec<StatusRow> {
+fn to_rows_with_errors_sorted(
+    statuses: &[RepoStatus],
+    errors: &[&StatusResult],
+    verbose: bool,
+) -> Vec<StatusRow> {
     // Create a sorted list of repo names with their types
     let mut all_repos: Vec<(&str, bool)> = Vec::new();
-    
+
     // Add success repos
     for status in statuses {
         all_repos.push((&status.name, true));
     }
-    
+
     // Add error repos
     for error_status in errors {
         all_repos.push((&error_status.name, false));
     }
-    
+
     // Sort alphabetically by name
     all_repos.sort_by_key(|(name, _)| *name);
-    
+
     // Create rows in sorted order
     let mut rows = Vec::new();
     for (name, is_success) in all_repos {
@@ -238,7 +259,7 @@ fn to_rows_with_errors_sorted(statuses: &[RepoStatus], errors: &[&StatusResult],
             });
         }
     }
-    
+
     // Add summary at the end
     rows.append(&mut to_total_summarize(statuses));
     rows
