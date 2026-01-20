@@ -4,6 +4,7 @@ use crate::filter::Filter;
 use crate::github::{self, RemoteRepo};
 use clap::Parser;
 use prettytable::{format, row, Table};
+use rayon::prelude::*;
 use std::path::Path;
 
 #[derive(Debug, Parser)]
@@ -61,24 +62,29 @@ fn print_table(
     root: &str,
     token: &str,
 ) -> anyhow::Result<()> {
+    // Fetch all default branches in parallel using rayon
+    let repo_data: Vec<_> = repos
+        .par_iter()
+        .map(|repo| {
+            let is_cloned = is_cloned_locally(owner, &repo.name, root);
+            let default_branch = github::default_branch(repo, token)
+                .unwrap_or_else(|_| "N/A".to_string());
+            (repo, is_cloned, default_branch)
+        })
+        .collect();
+
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repository", "Default Branch", "Cloned Locally"]);
 
     let mut cloned_count = 0;
 
-    for repo in repos {
-        let is_cloned = is_cloned_locally(owner, &repo.name, root);
+    for (repo, is_cloned, default_branch) in repo_data {
         if is_cloned {
             cloned_count += 1;
         }
 
         let cloned_status = if is_cloned { "Yes" } else { "No" };
-
-        // Try to get default branch, use "N/A" if it fails
-        let default_branch = github::default_branch(repo, token)
-            .unwrap_or_else(|_| "N/A".to_string());
-
         table.add_row(row![repo.name, default_branch, cloned_status]);
     }
 
