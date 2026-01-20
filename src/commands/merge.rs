@@ -20,10 +20,10 @@ pub struct MergeArgs {
     #[arg(long, short)]
     /// The branch to be merged
     pub branch: String,
-    #[arg(long, short)]
+    #[arg(long, short = 'x')]
     /// Option to abort merging process if there is a conflict
     pub abort_if_conflict: bool,
-    #[arg(long, short = 'x')]
+    #[arg(long, short)]
     /// Run command against all organizations, not just the default one
     pub all_orgs: bool,
 }
