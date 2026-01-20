@@ -24,6 +24,9 @@ pub struct ShowReposArgs {
     #[arg(long, short)]
     /// Output as JSON
     pub json: bool,
+    #[arg(long, short)]
+    /// Show default branch (slower due to additional GitHub API calls)
+    pub default_branch: bool,
 }
 
 impl ShowReposArgs {
@@ -51,7 +54,7 @@ impl ShowReposArgs {
         if self.json {
             print_json(&filtered_repos)?;
         } else {
-            print_table(&filtered_repos, organisation, root, user_token)?;
+            print_table(&filtered_repos, organisation, root, user_token, self.default_branch)?;
         }
 
         Ok(())
@@ -83,7 +86,7 @@ impl ShowReposArgs {
                         if repos.is_empty() {
                             println!("Ingen repo matcher mønsteret");
                         } else {
-                            print_table(&repos, org, root, user_token)?;
+                            print_table(&repos, org, root, user_token, self.default_branch)?;
                         }
                     }
                     Err(e) => {
@@ -113,40 +116,64 @@ fn print_table(
     owner: &str,
     root: &str,
     token: &str,
+    show_default_branch: bool,
 ) -> anyhow::Result<()> {
-    // Fetch all default branches in parallel using rayon
-    let repo_data: Vec<_> = repos
-        .par_iter()
-        .map(|repo| {
-            let is_cloned = is_cloned_locally(owner, &repo.name, root);
-            let default_branch = github::default_branch(repo, token)
-                .unwrap_or_else(|_| "N/A".to_string());
-            (repo, is_cloned, default_branch)
-        })
-        .collect();
-
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repository", "Default Branch", "Cloned Locally"]);
 
     let mut cloned_count = 0;
 
-    for (repo, is_cloned, default_branch) in repo_data {
-        if is_cloned {
-            cloned_count += 1;
+    if show_default_branch {
+        // Fetch all default branches in parallel using rayon
+        let repo_data: Vec<_> = repos
+            .par_iter()
+            .map(|repo| {
+                let is_cloned = is_cloned_locally(owner, &repo.name, root);
+                let default_branch = github::default_branch(repo, token)
+                    .unwrap_or_else(|_| "N/A".to_string());
+                (repo, is_cloned, default_branch)
+            })
+            .collect();
+
+        table.set_titles(row!["Repository", "Default Branch", "Cloned Locally"]);
+
+        for (repo, is_cloned, default_branch) in repo_data {
+            if is_cloned {
+                cloned_count += 1;
+            }
+
+            let cloned_status = if is_cloned { "Yes" } else { "No" };
+            table.add_row(row![repo.name, default_branch, cloned_status]);
         }
 
-        let cloned_status = if is_cloned { "Yes" } else { "No" };
-        table.add_row(row![repo.name, default_branch, cloned_status]);
-    }
+        // Add separator and summary row
+        table.add_empty_row();
+        table.add_row(row![
+            format!("Summary for: {}", owner),
+            repos.len().to_string(),
+            cloned_count.to_string()
+        ]);
+    } else {
+        // Without default branch - faster, only 2 columns
+        table.set_titles(row!["Repository", "Cloned Locally"]);
 
-    // Add separator and summary row
-    table.add_empty_row();
-    table.add_row(row![
-        format!("Summary for: {}", owner),
-        repos.len().to_string(),
-        cloned_count.to_string()
-    ]);
+        for repo in repos {
+            let is_cloned = is_cloned_locally(owner, &repo.name, root);
+            if is_cloned {
+                cloned_count += 1;
+            }
+
+            let cloned_status = if is_cloned { "Yes" } else { "No" };
+            table.add_row(row![repo.name, cloned_status]);
+        }
+
+        // Add separator and summary row
+        table.add_empty_row();
+        table.add_row(row![
+            format!("Summary for: {}", owner),
+            cloned_count.to_string()
+        ]);
+    }
 
     table.printstd();
     Ok(())
