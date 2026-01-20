@@ -82,7 +82,8 @@ fn print_table(
         table.add_row(row![repo.name, default_branch, cloned_status]);
     }
 
-    // Add summary row
+    // Add separator and summary row
+    table.add_empty_row();
     table.add_row(row![
         format!("Summary for: {}", owner),
         repos.len().to_string(),
