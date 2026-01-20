@@ -12,7 +12,7 @@ use crate::git::{Clonable, GitCredential, GitRepo, open, push};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create new repositories in an owner and push for existing git repositories
+/// Create GitHub repositories from local git directories and push
 pub struct CreateRepoArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name

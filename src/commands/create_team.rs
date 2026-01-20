@@ -7,7 +7,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create a new team for an owner
+/// Create a new team
 pub struct CreateTeamArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name

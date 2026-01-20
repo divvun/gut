@@ -16,9 +16,9 @@ use rayon::prelude::*;
 #[derive(Debug, Parser)]
 /// Create a new branch for all repositories that match a regex or a topic
 ///
-/// If regex is provided, this will fillter by repo name on the provided regex.
-/// If topic is provided, this will fillter if a repo contains that provided topic.
-/// The new branch will be based from a another branch (default is main).
+/// If regex is provided, this will filter by repo name on the provided regex.
+/// If topic is provided, this will filter if a repo contains that provided topic.
+/// The new branch will be based from another branch (default is main).
 /// If a matched repository is not present in root dir yet, it will be cloned.
 pub struct CreateBranchArgs {
     #[arg(long, short, alias = "organisation")]

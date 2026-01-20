@@ -7,7 +7,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create a discussion for a team in an owner
+/// Create a discussion for a team
 pub struct CreateDiscussionArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
@@ -29,11 +29,11 @@ pub struct CreateDiscussionArgs {
 }
 
 impl CreateDiscussionArgs {
-    pub fn create_discusstion(&self) -> Result<()> {
+    pub fn create_discussion(&self) -> Result<()> {
         let token = common::user_token()?;
         let owner = common::owner(self.owner.as_deref())?;
 
-        match github::create_discusstion(
+        match github::create_discussion(
             &owner,
             &self.team_slug,
             &self.subject,

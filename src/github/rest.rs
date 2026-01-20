@@ -387,7 +387,7 @@ struct AddUserToOrgBody {
     role: String,
 }
 
-pub fn create_discusstion(
+pub fn create_discussion(
     org: &str,
     team: &str,
     title: &str,
