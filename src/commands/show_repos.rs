@@ -135,7 +135,7 @@ fn print_table(
             })
             .collect();
 
-        table.set_titles(row!["Repository", "Default Branch", "Cloned Locally"]);
+        table.set_titles(row!["Repository", "Default Branch", "Cloned"]);
 
         for (repo, is_cloned, default_branch) in repo_data {
             if is_cloned {
@@ -155,7 +155,7 @@ fn print_table(
         ]);
     } else {
         // Without default branch - faster, only 2 columns
-        table.set_titles(row!["Repository", "Cloned Locally"]);
+        table.set_titles(row!["Repository", "Cloned"]);
 
         for repo in repos {
             let is_cloned = is_cloned_locally(owner, &repo.name, root);
