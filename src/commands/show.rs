@@ -22,7 +22,7 @@ pub enum ShowCommand {
     /// Show current configuration
     #[command(name = "config")]
     Config,
-    #[command(name = "repositories", aliases = &["repos"])]
+    #[command(name = "repositories", visible_aliases = &["repos"])]
     Repos(ShowReposArgs),
     #[command(name = "users")]
     Users(ShowUsersArgs),

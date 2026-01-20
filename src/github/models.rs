@@ -1,13 +1,16 @@
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq, Serialize, Deserialize)]
 pub struct RemoteRepo {
     pub name: String,
     pub owner: String,
     pub ssh_url: String,
     pub https_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_branch: Option<String>,
 }
 
 impl RemoteRepo {
