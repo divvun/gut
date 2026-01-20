@@ -96,12 +96,7 @@ pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row![
-        "Owner",
-        "#repos",
-        success_column_label,
-        "Failed"
-    ]);
+    table.set_titles(row!["Owner", "#repos", success_column_label, "Failed"]);
 
     let mut total_repos = 0;
     let mut total_success = 0;

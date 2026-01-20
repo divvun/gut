@@ -371,12 +371,10 @@ fn list_owner_repos_with_topics_rec(
     owner: &str,
     after: Option<String>,
 ) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
-    let q = OwnerRepositoriesWithTopics::build_query(
-        owner_repositories_with_topics::Variables {
-            login: owner.to_string(),
-            after,
-        },
-    );
+    let q = OwnerRepositoriesWithTopics::build_query(owner_repositories_with_topics::Variables {
+        login: owner.to_string(),
+        after,
+    });
 
     let res = query(token, &q)?;
 
@@ -385,8 +383,7 @@ fn list_owner_repos_with_topics_rec(
         return Err(Unauthorized.into());
     }
 
-    let response_body: Response<owner_repositories_with_topics::ResponseData> =
-        res.json()?;
+    let response_body: Response<owner_repositories_with_topics::ResponseData> = res.json()?;
 
     let owner_data = response_body
         .data
