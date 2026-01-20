@@ -141,7 +141,7 @@ fn summarize(statuses: &[Status]) {
     if errors.is_empty() {
         println!("\nThere is no error!");
     } else {
-        let msg = format!("There {} errors when cloning:", errors.len());
+        let msg = format!("There were \{} errors when cloning:", errors.len());
         println!("\n{}\n", msg.red());
 
         let mut error_table = Table::new();

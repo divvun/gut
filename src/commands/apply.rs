@@ -190,7 +190,7 @@ fn summarize(statuses: &[Status]) {
         println!("\nThere is no error!");
     } else {
         let msg = format!(
-            "There are {} errors when executing the command:",
+            "There were {} errors when executing the command:",
             errors.len()
         );
         println!("\n{}\n", msg.red());
