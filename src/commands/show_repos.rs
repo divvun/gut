@@ -171,7 +171,7 @@ fn print_table(
         table.add_empty_row();
         table.add_row(row![
             format!("Summary for: {}", owner),
-            cloned_count.to_string()
+            format!("{}/{}", cloned_count, repos.len())
         ]);
     }
 
