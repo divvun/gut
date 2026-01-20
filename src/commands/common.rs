@@ -475,6 +475,7 @@ where
             .progress_chars("=> "),
     );
     pb.set_prefix(title.to_string());
+    pb.enable_steady_tick(Duration::from_millis(100));
 
     let results: Vec<R> = items
         .par_iter()
