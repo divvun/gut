@@ -64,7 +64,7 @@ impl ShowReposArgs {
         let organizations = common::get_all_organizations()?;
         
         if organizations.is_empty() {
-            println!("Fann ingen organisasjonar i root-mappa");
+            println!("No organizations found in root directory");
             return Ok(());
         }
 
@@ -84,13 +84,13 @@ impl ShowReposArgs {
                 match common::query_and_filter_repositories(org, self.regex.as_ref(), user_token) {
                     Ok(repos) => {
                         if repos.is_empty() {
-                            println!("Ingen repo matcher mønsteret");
+                            println!("No repositories match the pattern");
                         } else {
                             print_table(&repos, org, root, user_token, self.default_branch)?;
                         }
                     }
                     Err(e) => {
-                        println!("Kunne ikkje henta repo for {}: {:?}", org, e);
+                        println!("Could not fetch repositories for {}: {:?}", org, e);
                     }
                 }
             }
