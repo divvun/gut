@@ -264,6 +264,7 @@ fn list_owner_repos_rec(
             ssh_url: x.ssh_url.to_string(),
             owner: owner.to_string(),
             https_url: x.url.to_string(),
+            default_branch: None,
         })
         .collect();
 
@@ -406,6 +407,7 @@ fn list_owner_repos_with_topics_rec(
                 ssh_url: x.ssh_url.to_string(),
                 owner: owner.to_string(),
                 https_url: x.url.to_string(),
+                default_branch: None,
             },
             topics: x
                 .repository_topics
