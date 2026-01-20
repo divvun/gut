@@ -167,11 +167,9 @@ fn print_status_table(statuses: &[StatusResult], verbose: bool) {
     let success_statuses: Vec<_> = statuses.iter().filter_map(|s| s.result.as_ref().ok()).collect();
     let errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
     
-    if !success_statuses.is_empty() {
-        let rows = to_rows(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), verbose);
-        let table = to_table(&rows);
-        table.printstd();
-    }
+    let rows = to_rows_with_errors(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), &errors, verbose);
+    let table = to_table(&rows);
+    table.printstd();
     
     if !errors.is_empty() {
         println!("\nThere were errors processing {} repositories:\n", errors.len());
@@ -201,8 +199,23 @@ fn to_table(statuses: &[StatusRow]) -> Table {
     table
 }
 
+#[allow(dead_code)]
 fn to_rows(statuses: &[RepoStatus], verbose: bool) -> Vec<StatusRow> {
     let mut rows: Vec<_> = statuses.iter().flat_map(|s| s.to_rows(verbose)).collect();
+    rows.append(&mut to_total_summarize(statuses));
+    rows
+}
+
+fn to_rows_with_errors(statuses: &[RepoStatus], errors: &[&StatusResult], verbose: bool) -> Vec<StatusRow> {
+    let mut rows: Vec<_> = statuses.iter().flat_map(|s| s.to_rows(verbose)).collect();
+    
+    // Add error rows
+    for error_status in errors {
+        rows.push(StatusRow::ErrorRow {
+            name: error_status.name.clone(),
+        });
+    }
+    
     rows.append(&mut to_total_summarize(statuses));
     rows
 }
@@ -342,6 +355,9 @@ enum StatusRow {
     TitleSeperation,
     SummarizeTitle,
     Empty,
+    ErrorRow {
+        name: String,
+    },
 }
 
 impl StatusRow {
@@ -350,6 +366,9 @@ impl StatusRow {
             StatusRow::RepoSeperation => row!["--------------"],
             StatusRow::TitleSeperation => row!["================"],
             StatusRow::Empty => row![""],
+            StatusRow::ErrorRow { name } => {
+                row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
+            }
             StatusRow::FileDetail { status, path } => row![r => status, path],
             StatusRow::SummarizeAll {
                 total,
