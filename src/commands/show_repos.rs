@@ -78,7 +78,7 @@ impl ShowReposArgs {
                 .template("{spinner:.green} {msg}")
                 .unwrap(),
         );
-        spinner.set_message("Querying GitHub...");
+        spinner.set_message(format!("Querying GitHub for {} repos...", organisation));
         spinner.enable_steady_tick(Duration::from_millis(100));
 
         let repos = match common::query_and_filter_repositories(
