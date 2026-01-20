@@ -7,7 +7,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
-/// Merge a branch to the current branch for all repositories that match a pattern
+/// Merge a branch into the current branch for all repositories that match a pattern
 pub struct MergeArgs {
     #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
     /// Target owner (organization or user) name
@@ -21,7 +21,7 @@ pub struct MergeArgs {
     /// The branch to be merged
     pub branch: String,
     #[arg(long, short = 'x')]
-    /// Option to abort merging process if there is a conflict
+    /// Abort merging process if there is a conflict
     pub abort_if_conflict: bool,
     #[arg(long, short)]
     /// Run command against all organizations, not just the default one
