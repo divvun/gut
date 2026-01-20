@@ -35,7 +35,7 @@ impl RenameArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in owner {} that match pattern {:?}",
+                "There are no repositories in {} that match pattern {:?}",
                 owner, self.regex
             );
             return Ok(());

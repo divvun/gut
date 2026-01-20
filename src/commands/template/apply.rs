@@ -118,7 +118,7 @@ impl ApplyArgs {
 
         if target_dirs.is_empty() {
             println!(
-                "There are no local repositories in owner {} that match the pattern {:?}",
+                "There are no local repositories in {} that match the pattern {:?}",
                 owner, self.regex
             );
             return Ok(());

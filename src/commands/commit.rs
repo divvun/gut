@@ -54,7 +54,7 @@ impl CommitArgs {
 
         if repo_dirs.is_empty() {
             println!(
-                "There are no repositories in owner {} that match the pattern {:?}",
+                "There are no repositories in {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(OrgResult::new(organisation));

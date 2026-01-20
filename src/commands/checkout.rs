@@ -83,7 +83,7 @@ impl CheckoutArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in owner {} that match the pattern {:?} or topic {:?}",
+                "There are no repositories in {} that match the pattern {:?} or topic {:?}",
                 organisation, self.regex, self.topic
             );
             return Ok(OrgResult::new(organisation));

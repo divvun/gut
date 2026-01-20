@@ -32,7 +32,7 @@ impl DeleteArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in owner {} that match the pattern {:?}",
+                "There are no repositories in {} that match the pattern {:?}",
                 owner, self.regex
             );
             return Ok(());

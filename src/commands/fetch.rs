@@ -44,7 +44,7 @@ impl FetchArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in owner {} matches pattern {:?}",
+                "There is no local repositories in {} matches pattern {:?}",
                 organisation, self.regex
             );
             return Ok(OrgResult::new(organisation));
