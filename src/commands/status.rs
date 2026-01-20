@@ -7,11 +7,12 @@ use crate::git::GitStatus;
 use crate::path::dir_name;
 use anyhow::{Context, Result};
 use clap::Parser;
-use prettytable::{Row, Table, format, row};
+use prettytable::{Row, Table, format, row, cell};
 use rayon::prelude::*;
 use serde::Serialize;
 use serde_json::json;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
@@ -65,25 +66,33 @@ impl StatusArgs {
 
         let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
 
-        let statuses: Result<Vec<_>> = sub_dirs.iter().map(status).collect();
-        let statuses = statuses?;
+        let statuses: Vec<_> = sub_dirs.iter().map(status).collect();
 
-        let statuses: Vec<_> = statuses
-            .into_iter()
-            .filter(|status| {
-                !(self.quiet
-                    && status.status.is_empty()
-                    && status.status.is_ahead == 0
-                    && status.status.is_behind == 0)
+        let filtered_statuses: Vec<_> = statuses
+            .iter()
+            .filter(|status_result| {
+                if let Ok(status) = &status_result.result {
+                    !(self.quiet
+                        && status.status.is_empty()
+                        && status.status.is_ahead == 0
+                        && status.status.is_behind == 0)
+                } else {
+                    true // Always show errors
+                }
             })
+            .cloned()
             .collect();
 
         match format {
-            OutputFormat::Json => println!("{}", json!(statuses)),
+            OutputFormat::Json => {
+                let json_statuses: Vec<_> = filtered_statuses
+                    .iter()
+                    .filter_map(|s| s.result.as_ref().ok())
+                    .collect();
+                println!("{}", json!(json_statuses));
+            }
             OutputFormat::Table => {
-                let rows = to_rows(&statuses, self.verbose);
-                let table = to_table(&rows);
-                table.printstd();
+                print_status_table(&filtered_statuses, self.verbose);
             }
         }
 
@@ -96,23 +105,25 @@ impl StatusArgs {
         let mut total_conflicted = 0;
         let mut total_added = 0;
 
-        for status in &statuses {
-            if !status.status.is_empty() {
-                uncommitted_repo_count += 1;
+        for status_result in &filtered_statuses {
+            if let Ok(status) = &status_result.result {
+                if !status.status.is_empty() {
+                    uncommitted_repo_count += 1;
+                }
+                if status.status.is_ahead > 0 || status.status.is_behind > 0 {
+                    unpushed_repo_count += 1;
+                }
+                total_added += status.status.added.len();
+                total_conflicted += status.status.conflicted.len();
+                total_modified += status.status.modified.len();
+                total_unadded += status.status.new.len();
+                total_deleted += status.status.deleted.len();
             }
-            if status.status.is_ahead > 0 || status.status.is_behind > 0 {
-                unpushed_repo_count += 1;
-            }
-            total_added += status.status.added.len();
-            total_conflicted += status.status.conflicted.len();
-            total_modified += status.status.modified.len();
-            total_unadded += status.status.new.len();
-            total_deleted += status.status.deleted.len();
         }
 
         Ok(OrgSummary {
             name: organisation.to_string(),
-            total_repos: statuses.len(),
+            total_repos: filtered_statuses.len(),
             unpushed_repo_count,
             uncommitted_repo_count,
             total_unadded,
@@ -124,18 +135,60 @@ impl StatusArgs {
     }
 }
 
-fn status(dir: &PathBuf) -> Result<RepoStatus> {
-    let name = dir_name(dir)?;
-    let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
+fn status(dir: &PathBuf) -> StatusResult {
+    let name = dir_name(dir).unwrap_or_else(|_| "Unknown".to_string());
+    
+    let result = (|| -> Result<RepoStatus> {
+        let git_repo = git::open(dir).with_context(|| format!("{:?} is not a git directory.", dir))?;
 
-    let status = git::status(&git_repo, false)?;
-    let branch = git::head_shorthand(&git_repo)?;
-    let repo_status = RepoStatus {
+        let status = git::status(&git_repo, false)?;
+        let branch = git::head_shorthand(&git_repo)?;
+        let repo_status = RepoStatus {
+            name: name.clone(),
+            branch,
+            status,
+        };
+        Ok(repo_status)
+    })();
+    
+    StatusResult {
         name,
-        branch,
-        status,
-    };
-    Ok(repo_status)
+        result: result.map_err(Arc::new),
+    }
+}
+
+#[derive(Debug, Clone)]
+struct StatusResult {
+    name: String,
+    result: Result<RepoStatus, Arc<anyhow::Error>>,
+}
+
+fn print_status_table(statuses: &[StatusResult], verbose: bool) {
+    let success_statuses: Vec<_> = statuses.iter().filter_map(|s| s.result.as_ref().ok()).collect();
+    let errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
+    
+    if !success_statuses.is_empty() {
+        let rows = to_rows(&success_statuses.iter().map(|&s| s.clone()).collect::<Vec<_>>(), verbose);
+        let table = to_table(&rows);
+        table.printstd();
+    }
+    
+    if !errors.is_empty() {
+        println!("\nThere were errors processing {} repositories:\n", errors.len());
+        let mut error_table = Table::new();
+        error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        error_table.set_titles(row!["Repo", "Error"]);
+        
+        for status_result in errors {
+            if let Err(error) = &status_result.result {
+                let msg = format!("{:?}", error);
+                let lines = common::sub_strings(msg.as_str(), 80);
+                let lines = lines.join("\n");
+                error_table.add_row(row![cell!(b -> &status_result.name), cell!(Fr -> lines.as_str())]);
+            }
+        }
+        error_table.printstd();
+    }
 }
 
 fn to_table(statuses: &[StatusRow]) -> Table {
