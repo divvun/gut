@@ -3,7 +3,7 @@ use super::common;
 use crate::filter::Filter;
 use crate::github::{self, RemoteRepo};
 use clap::Parser;
-use prettytable::{format, row, Table};
+use prettytable::{Table, format, row};
 use rayon::prelude::*;
 use std::path::Path;
 
@@ -54,7 +54,13 @@ impl ShowReposArgs {
         if self.json {
             print_json(&filtered_repos)?;
         } else {
-            print_table(&filtered_repos, organisation, root, user_token, self.default_branch)?;
+            print_table(
+                &filtered_repos,
+                organisation,
+                root,
+                user_token,
+                self.default_branch,
+            )?;
         }
 
         Ok(())
@@ -62,7 +68,7 @@ impl ShowReposArgs {
 
     fn show_all_orgs(&self, user_token: &str, root: &str) -> anyhow::Result<()> {
         let organizations = common::get_all_organizations()?;
-        
+
         if organizations.is_empty() {
             println!("No organizations found in root directory");
             return Ok(());
@@ -72,7 +78,9 @@ impl ShowReposArgs {
             // For JSON mode, collect all repos from all orgs
             let mut all_repos = Vec::new();
             for org in &organizations {
-                if let Ok(repos) = common::query_and_filter_repositories(org, self.regex.as_ref(), user_token) {
+                if let Ok(repos) =
+                    common::query_and_filter_repositories(org, self.regex.as_ref(), user_token)
+                {
                     all_repos.extend(repos);
                 }
             }
@@ -129,8 +137,8 @@ fn print_table(
             .par_iter()
             .map(|repo| {
                 let is_cloned = is_cloned_locally(owner, &repo.name, root);
-                let default_branch = github::default_branch(repo, token)
-                    .unwrap_or_else(|_| "N/A".to_string());
+                let default_branch =
+                    github::default_branch(repo, token).unwrap_or_else(|_| "N/A".to_string());
                 (repo, is_cloned, default_branch)
             })
             .collect();
