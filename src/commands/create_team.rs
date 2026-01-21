@@ -12,7 +12,7 @@ use clap::Parser;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct CreateTeamArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - teams can only exist in organisations)
+    /// Target organisation name
     pub organisation: String,
     #[arg(long, short)]
     /// Team name

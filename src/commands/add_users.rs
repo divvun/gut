@@ -13,7 +13,7 @@ use clap::Parser;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct AddUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - users can only be added to organisations)
+    /// Target organisation name
     pub organisation: String,
     #[arg(long, short, default_value = "member")]
     /// Role (member | admin) for org, or (member | maintainer) for team

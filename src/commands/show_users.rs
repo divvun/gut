@@ -9,7 +9,7 @@ use clap::Parser;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct ShowUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - only organisations have members)
+    /// Target organisation name
     pub organisation: String,
     //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.

@@ -14,7 +14,7 @@ use rayon::prelude::*;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct AddRepoArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - teams can only exist in organisations)
+    /// Target organisation name
     pub organisation: String,
     #[arg(long, short)]
     /// Optional regex to filter repositories

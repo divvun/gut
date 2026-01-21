@@ -13,7 +13,7 @@ use clap::Parser;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct RemoveUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - users can only be removed from organisations)
+    /// Target organisation name
     pub organisation: String,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)

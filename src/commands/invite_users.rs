@@ -14,7 +14,7 @@ use clap::Parser;
 /// This command only works with GitHub organisations, not user accounts.
 pub struct InviteUsersArgs {
     #[arg(long, short)]
-    /// Target organisation name (required - invitations can only be sent to organisations)
+    /// Target organisation name
     pub organisation: String,
     #[arg(long, short, default_value_t = Role::default())]
     /// Role (member | admin | billing_manager) for the invited users
