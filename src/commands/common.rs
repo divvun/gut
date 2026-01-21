@@ -213,7 +213,19 @@ pub fn query_and_filter_repositories(
     regex: Option<&Filter>,
     token: &str,
 ) -> Result<Vec<RemoteRepo>> {
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(
+        ProgressStyle::default_spinner()
+            .template("{spinner:.green} {msg}")
+            .unwrap(),
+    );
+    spinner.set_message(format!("Querying GitHub for {} repositories...", org));
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
     let remote_repos = remote_repos(token, org)?;
+
+    spinner.finish_and_clear();
+
     let mut result = RemoteRepo::filter_with_option(remote_repos, regex);
     result.sort();
     Ok(result)
@@ -307,19 +319,7 @@ pub fn get_repo_dirs(
     root: &str,
 ) -> Result<Vec<PathBuf>> {
     if topic.is_some() {
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_style(
-            ProgressStyle::default_spinner()
-                .template("{spinner:.green} {msg}")
-                .unwrap(),
-        );
-        spinner.set_message("Querying GitHub for matching repositories...");
-        spinner.enable_steady_tick(Duration::from_millis(100));
-
         let all_repos = topic_helper::query_repositories_with_topics(org, token)?;
-
-        spinner.finish_and_clear();
-
         let filtered = topic_helper::filter_repos(&all_repos, topic, regex);
         let root_path = Path::new(root);
         Ok(filtered

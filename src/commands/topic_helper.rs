@@ -2,10 +2,24 @@ use crate::filter::{Filter, Filterable};
 use crate::github;
 use crate::github::{NoReposFound, RemoteRepoWithTopics, Unauthorized};
 use anyhow::{Context, Result};
+use indicatif::{ProgressBar, ProgressStyle};
+use std::time::Duration;
 
 pub fn query_repositories_with_topics(org: &str, token: &str) -> Result<Vec<RemoteRepoWithTopics>> {
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(
+        ProgressStyle::default_spinner()
+            .template("{spinner:.green} {msg}")
+            .unwrap(),
+    );
+    spinner.set_message(format!("Querying GitHub for {} repositories...", org));
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
     let result =
         github::list_owner_repos_with_topics(token, org).context("When fetching repositories");
+
+    spinner.finish_and_clear();
+
     let mut repos = match result {
         Ok(repos) => Ok(repos),
         Err(e) => {

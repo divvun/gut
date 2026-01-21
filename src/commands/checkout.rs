@@ -9,9 +9,7 @@ use crate::user::User;
 use anyhow::{Result, anyhow};
 use clap::Parser;
 use git2::BranchType;
-use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use std::time::Duration;
 
 #[derive(Debug, Parser)]
 /// Checkout a branch all repositories that their name matches a pattern or
@@ -62,18 +60,7 @@ impl CheckoutArgs {
     fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user = common::user()?;
 
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_style(
-            ProgressStyle::default_spinner()
-                .template("{spinner:.green} {msg}")
-                .unwrap(),
-        );
-        spinner.set_message("Querying GitHub for matching repositories...");
-        spinner.enable_steady_tick(Duration::from_millis(100));
-
         let all_repos = topic_helper::query_repositories_with_topics(owner, &user.token)?;
-
-        spinner.finish_and_clear();
 
         let filtered_repos: Vec<_> =
             topic_helper::filter_repos(&all_repos, self.topic.as_ref(), self.regex.as_ref())

@@ -2,10 +2,8 @@ use super::common;
 use crate::filter::Filter;
 use crate::github::RemoteRepo;
 use clap::Parser;
-use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Table, format, row};
 use std::path::Path;
-use std::time::Duration;
 
 #[derive(Debug, Parser)]
 /// Show all repositories that match a pattern
@@ -69,26 +67,13 @@ impl ShowReposArgs {
         root: &str,
         json_mode: bool,
     ) -> anyhow::Result<Vec<RemoteRepo>> {
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_style(
-            ProgressStyle::default_spinner()
-                .template("{spinner:.green} {msg}")
-                .unwrap(),
-        );
-        spinner.set_message(format!("Querying GitHub for {} repos...", organisation));
-        spinner.enable_steady_tick(Duration::from_millis(100));
-
         let repos = match common::query_and_filter_repositories(
             organisation,
             self.regex.as_ref(),
             user_token,
         ) {
-            Ok(repos) => {
-                spinner.finish_and_clear();
-                repos
-            }
+            Ok(repos) => repos,
             Err(e) => {
-                spinner.finish_and_clear();
                 println!("Could not fetch repositories for {}: {:?}", organisation, e);
                 return Ok(Vec::new());
             }
