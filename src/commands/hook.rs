@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create, delete hooks for all repositories that match a pattern
+/// Create or delete hooks for all repositories that match a pattern
 pub struct HookArgs {
     #[command(subcommand)]
     command: HookCommand,
