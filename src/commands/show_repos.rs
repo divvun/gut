@@ -48,21 +48,21 @@ impl ShowReposArgs {
         if self.json {
             let mut all_repos = Vec::new();
             for org in &owners {
-                if let Ok(repos) = self.show_org(org, &user_token, &root, true) {
+                if let Ok(repos) = self.show_owner(org, &user_token, &root, true) {
                     all_repos.extend(repos);
                 }
             }
             print_json(&all_repos)?;
         } else {
             for org in &owners {
-                let _ = self.show_org(org, &user_token, &root, false);
+                let _ = self.show_owner(org, &user_token, &root, false);
             }
         }
 
         Ok(())
     }
 
-    fn show_org(
+    fn show_owner(
         &self,
         organisation: &str,
         user_token: &str,

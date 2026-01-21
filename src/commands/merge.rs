@@ -40,7 +40,7 @@ impl MergeArgs {
 
     fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(owner, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         let total_count = sub_dirs.len();
         let mut success_count = 0;

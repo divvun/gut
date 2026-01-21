@@ -269,8 +269,8 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
-pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Result<Vec<PathBuf>> {
-    let target_dir = path::local_path_org(org, root)?;
+pub fn read_dirs_for_owner(owner: &str, root: &str, filter: Option<&Filter>) -> Result<Vec<PathBuf>> {
+    let target_dir = path::local_path_org(owner, root)?;
 
     let result = match filter {
         Some(f) => read_dirs_with_filter(&target_dir, f),
@@ -285,7 +285,7 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
         Err(e) => Err(anyhow!(
             "Cannot read sub directories for owner {} \"{}\" because {:?}",
             target_dir.display(),
-            org,
+            owner,
             e
         )),
     }
@@ -323,7 +323,7 @@ pub fn get_repo_dirs(
             .map(|r| root_path.join(org).join(&r.repo.name))
             .collect())
     } else {
-        read_dirs_for_org(org, root, regex)
+        read_dirs_for_owner(org, root, regex)
     }
 }
 

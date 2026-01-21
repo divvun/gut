@@ -20,7 +20,7 @@ pub struct TransferArgs {
     pub regex: Filter,
     /// New organisation name
     #[arg(long, short)]
-    pub new_org: String,
+    pub new_owner: String,
 }
 
 impl TransferArgs {
@@ -41,28 +41,28 @@ impl TransferArgs {
 
         println!(
             "The following repos will be transfered to {}:",
-            self.new_org
+            self.new_owner
         );
 
         for repo in &filtered_repos {
             println!("{}", repo.full_name());
         }
 
-        if !confirm(filtered_repos.len(), &self.new_org)? {
+        if !confirm(filtered_repos.len(), &self.new_owner)? {
             println!("Command is aborted. Nothing change!");
             return Ok(());
         }
 
         for repo in filtered_repos {
-            let result = github::transfer_repo(&repo, &self.new_org, &user_token);
+            let result = github::transfer_repo(&repo, &self.new_owner, &user_token);
             match result {
                 Ok(_) => println!(
                     "Transfer repo {} to {} successfully",
-                    repo.name, self.new_org
+                    repo.name, self.new_owner
                 ),
                 Err(e) => println!(
                     "Failed to Transfer repo {} to {:?} because {:?}",
-                    repo.name, self.new_org, e
+                    repo.name, self.new_owner, e
                 ),
             }
         }

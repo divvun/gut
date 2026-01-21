@@ -55,7 +55,7 @@ impl CreateRepoArgs {
                     self
                 )
             })?,
-            None => common::read_dirs_for_org(&organisation, &root, Some(&self.regex))?,
+            None => common::read_dirs_for_owner(&organisation, &root, Some(&self.regex))?,
         };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);

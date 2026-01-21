@@ -64,7 +64,7 @@ impl StatusArgs {
     fn run_for_owner(&self, format: OutputFormat, owner: &str) -> Result<OrgSummary> {
         let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_for_org(owner, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         let statuses: Vec<_> = sub_dirs.iter().map(status).collect();
 

@@ -114,7 +114,7 @@ impl ApplyArgs {
 
         let root = common::root()?;
         let owner = common::owner(self.owner.as_deref())?;
-        let target_dirs = common::read_dirs_for_org(owner.as_str(), &root, self.regex.as_ref())?;
+        let target_dirs = common::read_dirs_for_owner(owner.as_str(), &root, self.regex.as_ref())?;
 
         if target_dirs.is_empty() {
             println!(

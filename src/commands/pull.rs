@@ -57,7 +57,7 @@ impl PullArgs {
         let user = common::user()?;
         let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_for_org(owner, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
