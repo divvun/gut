@@ -10,7 +10,7 @@ use dryoc::dryocbox::{DryocBox, PublicKey};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
-/// Set a secret for all repositories that match regex
+/// Set a secret for all repositories that match a regex
 pub struct SecretArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
