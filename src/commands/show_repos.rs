@@ -14,7 +14,7 @@ pub struct ShowReposArgs {
     /// Target owner (organization or user) name
     ///
     /// You can set a default owner in the init or set owner command.
-    pub organisation: Option<String>,
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -34,27 +34,27 @@ impl ShowReposArgs {
         let user_token = common::user_token()?;
         let root = common::root()?;
 
-        let organizations = if self.all_orgs {
-            let orgs = common::get_all_organizations()?;
-            if orgs.is_empty() {
+        let owners = if self.all_orgs {
+            let owner = common::get_all_owners()?;
+            if owner.is_empty() {
                 println!("No organizations found in root directory");
                 return Ok(());
             }
-            orgs
+            owner
         } else {
-            vec![common::owner(self.organisation.as_deref())?]
+            vec![common::owner(self.owner.as_deref())?]
         };
 
         if self.json {
             let mut all_repos = Vec::new();
-            for org in &organizations {
+            for org in &owners {
                 if let Ok(repos) = self.show_org(org, &user_token, &root, true) {
                     all_repos.extend(repos);
                 }
             }
             print_json(&all_repos)?;
         } else {
-            for org in &organizations {
+            for org in &owners {
                 let _ = self.show_org(org, &user_token, &root, false);
             }
         }

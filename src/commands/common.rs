@@ -132,7 +132,7 @@ where
     F: Fn(&str) -> Result<OrgResult>,
 {
     if all_orgs {
-        let organizations = get_all_organizations()?;
+        let organizations = get_all_owners()?;
         if organizations.is_empty() {
             println!("No owners found in root directory");
             return Ok(());
@@ -176,7 +176,7 @@ where
     R: ErrorPlaceholder,
 {
     if all_orgs {
-        let organizations = get_all_organizations()?;
+        let organizations = get_all_owners()?;
         if organizations.is_empty() {
             println!("No owners found in root directory");
             return Ok(());
@@ -357,7 +357,7 @@ fn contains_git_repos(path: &Path) -> bool {
     })
 }
 
-pub fn get_all_organizations() -> Result<Vec<String>> {
+pub fn get_all_owners() -> Result<Vec<String>> {
     let root = root()?;
     let root_path = Path::new(&root);
 
