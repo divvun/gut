@@ -21,7 +21,7 @@ pub struct DefaultBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub default_branch: String,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

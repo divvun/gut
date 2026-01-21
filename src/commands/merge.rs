@@ -23,7 +23,7 @@ pub struct MergeArgs {
     #[arg(long, short = 'x')]
     /// Abort merging process if there is a conflict
     pub abort_if_conflict: bool,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

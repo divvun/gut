@@ -44,7 +44,7 @@ pub struct CheckoutArgs {
     #[arg(long, short)]
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

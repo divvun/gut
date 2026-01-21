@@ -31,7 +31,7 @@ pub struct TopicApplyArgs {
     /// use https to clone repositories if needed
     #[arg(long, short)]
     pub use_https: bool,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

@@ -21,7 +21,7 @@ pub struct FetchArgs {
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

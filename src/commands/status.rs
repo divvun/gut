@@ -31,7 +31,7 @@ pub struct StatusArgs {
     #[arg(long, short)]
     /// Option to omit repositories without changes
     pub quiet: bool,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
     #[arg(long, short)]

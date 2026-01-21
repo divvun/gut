@@ -21,7 +21,7 @@ pub struct UnprotectedBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub branch: String,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

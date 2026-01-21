@@ -37,7 +37,7 @@ pub struct PullArgs {
     #[arg(long, short)]
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }

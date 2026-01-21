@@ -31,7 +31,7 @@ pub struct PushArgs {
     pub topic: Option<String>,
     #[arg(long, short, default_value = "main")]
     pub branch: String,
-    #[arg(long, short, alias = "all-orgs")]
+    #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
 }
