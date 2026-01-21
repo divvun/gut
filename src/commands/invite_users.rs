@@ -9,12 +9,10 @@ use std::str::FromStr;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Invite users to an organisation by emails
+/// Invite users to an organisation by email
 pub struct InviteUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
     #[arg(long, short, default_value_t = Role::default())]
     /// Role (member | admin | billing_manager) for the invited users

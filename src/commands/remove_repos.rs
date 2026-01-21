@@ -7,6 +7,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+/// Delete repositories matching a pattern
 pub struct RemoveReposArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
