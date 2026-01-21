@@ -13,10 +13,12 @@ use rayon::prelude::*;
 /// This command grants a team (within an organisation) a specific
 /// permission level (pull, push, triage, maintain, or admin)
 /// on all repositories that match the given regex filter.
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct SetTeamPermissionArgs {
     #[arg(long, short)]
-    /// Target organisation name
-    pub organisation: Option<String>,
+    /// Target organisation name (required - teams can only exist in organisations)
+    pub organisation: String,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -40,7 +42,7 @@ fn parse_permission(src: &str) -> Result<String> {
 impl SetTeamPermissionArgs {
     pub fn set_permission(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;

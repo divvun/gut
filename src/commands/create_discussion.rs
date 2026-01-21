@@ -8,10 +8,12 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 /// Create a discussion for a team in an organisation
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct CreateDiscussionArgs {
     #[arg(long, short)]
-    /// Target organisation name
-    pub organisation: Option<String>,
+    /// Target organisation name (required - team discussions can only exist in organisations)
+    pub organisation: String,
     #[arg(long, short)]
     /// Team slug
     pub team_slug: String,
@@ -29,7 +31,7 @@ pub struct CreateDiscussionArgs {
 impl CreateDiscussionArgs {
     pub fn create_discussion(&self) -> Result<()> {
         let token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         match github::create_discussion(
             &organisation,

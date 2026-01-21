@@ -10,10 +10,12 @@ use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
 /// Add matching repositories to a team
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct AddRepoArgs {
     #[arg(long, short)]
-    /// Organisation containing the repositories and team
-    pub organisation: Option<String>,
+    /// Target organisation name (required - teams can only exist in organisations)
+    pub organisation: String,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -29,7 +31,7 @@ pub struct AddRepoArgs {
 impl AddRepoArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let filtered_repos =
             common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;

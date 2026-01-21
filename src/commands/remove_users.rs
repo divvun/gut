@@ -6,13 +6,15 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Remove users from an organization or team
+/// Remove users from an organisation or team
 ///
-/// If you specify team_slug it'll remove users from the provided team instead
+/// If you specify team_slug it'll remove users from the provided team instead.
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct RemoveUsersArgs {
     #[arg(long, short)]
-    /// Target organization name
-    pub organisation: Option<String>,
+    /// Target organisation name (required - users can only be removed from organisations)
+    pub organisation: String,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)
     pub users: Vec<String>,
@@ -31,7 +33,7 @@ impl RemoveUsersArgs {
 
     fn remove_users_from_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
@@ -44,7 +46,7 @@ impl RemoveUsersArgs {
 
     fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 

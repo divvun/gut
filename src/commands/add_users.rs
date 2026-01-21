@@ -6,13 +6,15 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Add users to an organization or team
+/// Add users to an organisation or team
 ///
-/// If you specify team_slug it'll add users to the provided team instead
+/// If you specify team_slug it'll add users to the provided team instead.
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct AddUsersArgs {
     #[arg(long, short)]
-    /// Target organization name
-    pub organisation: Option<String>,
+    /// Target organisation name (required - users can only be added to organisations)
+    pub organisation: String,
     #[arg(long, short, default_value = "member")]
     /// Role (member | admin) for org, or (member | maintainer) for team
     pub role: String,
@@ -34,7 +36,7 @@ impl AddUsersArgs {
 
     fn add_users_to_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
@@ -47,7 +49,7 @@ impl AddUsersArgs {
 
     fn add_users_to_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
