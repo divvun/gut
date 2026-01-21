@@ -13,6 +13,7 @@ use clap::Parser;
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
+/// Create web hooks for all repositories that match given regex
 pub struct CreateArgs {
     #[arg(long, short, alias = "organisation")]
     /// Target owner (organization or user) name
