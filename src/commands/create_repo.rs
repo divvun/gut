@@ -141,7 +141,7 @@ fn clone_repo(
 
 /// Check if {dir} is a git repository
 /// Check if {dir} has {remote} remote
-/// Create a new repository in organization {org}
+/// Create a new repository in organisation {org}
 /// Set the new created repository as remote {remote}
 /// Push all to remote {remote}
 fn create_repo(

@@ -8,41 +8,41 @@ use rayon::prelude::*;
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex
 pub struct TopicGetArgs {
-    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl TopicGetArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
+        common::run_for_owners(
+            self.all_owners,
             self.owner.as_deref(),
-            |org| self.run_for_organization(org),
+            |owner| self.run_for_owner(owner),
             "Retrieved",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user_token = common::user_token()?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(owner, self.regex.as_ref(), &user_token)?;
 
         if filtered_repos.is_empty() {
             println!(
                 "There are no repositories in {} that match the pattern {:?}",
-                organisation, self.regex
+                owner, self.regex
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let results: Vec<_> = filtered_repos
@@ -69,7 +69,7 @@ impl TopicGetArgs {
         let failed = results.len() - successful;
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
             failed_repos: failed,

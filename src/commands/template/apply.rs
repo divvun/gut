@@ -85,7 +85,7 @@ pub struct ApplyArgs {
     /// Directory of template project
     #[arg(long, short)]
     pub template: ExistDirectory,
-    /// Target owner (organization or user) name
+    /// Target owner (organisation or user) name
     #[arg(long, short)]
     pub owner: Option<String>,
     /// Optional regex to filter repositories

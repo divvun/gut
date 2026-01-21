@@ -10,7 +10,7 @@ use clap::Parser;
 /// Delete repositories matching a pattern
 pub struct RemoveReposArgs {
     #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,

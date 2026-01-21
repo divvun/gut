@@ -15,9 +15,9 @@ pub struct ShowUsersArgs {
     // Filter members returned by their role.
     //
     // Can be one of:
-    // * all - All members of the organization, regardless of role.
+    // * all - All members of the organisation, regardless of role.
     // * admin - Organization owners.
-    // * member - Non-owner organization members.
+    // * member - Non-owner organisation members.
     //pub role: String,
 }
 

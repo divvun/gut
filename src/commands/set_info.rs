@@ -19,7 +19,7 @@ use rayon::prelude::*;
 /// Similar to --web-script and --website
 pub struct InfoArgs {
     #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,

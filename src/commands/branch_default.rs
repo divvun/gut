@@ -10,8 +10,8 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Set a branch as default for all repositories that match a pattern
 pub struct DefaultBranchArgs {
-    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
@@ -21,27 +21,26 @@ pub struct DefaultBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub default_branch: String,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl DefaultBranchArgs {
     pub fn set_default_branch(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
+        common::run_for_owners(
+            self.all_owners,
             self.owner.as_deref(),
-            |org| self.run_for_organization(org),
+            |owner| self.run_for_owner(owner),
             "Default Set",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let token = common::user_token()?;
-        let repos =
-            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &token)?;
+        let repos = common::query_and_filter_repositories(owner, self.regex.as_ref(), &token)?;
 
-        let mut result = OrgResult::new(organisation);
+        let mut result = OrgResult::new(owner);
 
         // Process repos and track results
         for repo in repos.iter() {

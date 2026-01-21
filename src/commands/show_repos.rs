@@ -10,17 +10,17 @@ use std::time::Duration;
 #[derive(Debug, Parser)]
 /// Show all repositories that match a pattern
 pub struct ShowReposArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
     #[arg(long, short)]
     /// Output as JSON
     pub json: bool,
@@ -34,13 +34,13 @@ impl ShowReposArgs {
         let user_token = common::user_token()?;
         let root = common::root()?;
 
-        let owners = if self.all_orgs {
-            let owner = common::get_all_owners()?;
-            if owner.is_empty() {
-                println!("No organizations found in root directory");
+        let owners = if self.all_owners {
+            let all_owners = common::get_all_owners()?;
+            if all_owners.is_empty() {
+                println!("No owners found in root directory");
                 return Ok(());
             }
-            owner
+            all_owners
         } else {
             vec![common::owner(self.owner.as_deref())?]
         };

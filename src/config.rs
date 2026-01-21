@@ -7,7 +7,7 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Config {
     pub root: String,
-    /// Default owner (can be a GitHub organization or user account)
+    /// Default owner (can be a GitHub organisation or user account)
     #[serde(alias = "default_org")]
     pub default_owner: Option<String>,
     pub use_https: bool,

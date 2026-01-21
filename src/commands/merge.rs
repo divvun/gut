@@ -9,8 +9,8 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Merge a branch into the current branch for all repositories that match a pattern
 pub struct MergeArgs {
-    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
@@ -23,24 +23,24 @@ pub struct MergeArgs {
     #[arg(long, short = 'x')]
     /// Abort merging process if there is a conflict
     pub abort_if_conflict: bool,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl MergeArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
+        common::run_for_owners(
+            self.all_owners,
             self.owner.as_deref(),
-            |org| self.run_for_organization(org),
+            |owner| self.run_for_owner(owner),
             "Merged",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_org(owner, &root, self.regex.as_ref())?;
 
         let total_count = sub_dirs.len();
         let mut success_count = 0;
@@ -77,7 +77,7 @@ impl MergeArgs {
         }
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
             failed_repos: fail_count,

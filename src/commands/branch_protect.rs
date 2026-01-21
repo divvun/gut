@@ -10,8 +10,8 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Set a branch as protected for all local repositories that match a pattern
 pub struct ProtectedBranchArgs {
-    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
@@ -21,27 +21,27 @@ pub struct ProtectedBranchArgs {
     #[arg(long, short)]
     /// Name of the branch
     pub protected_branch: String,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl ProtectedBranchArgs {
     pub fn set_protected_branch(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
+        common::run_for_owners(
+            self.all_owners,
             self.owner.as_deref(),
-            |org| self.run_for_organization(org),
+            |owner| self.run_for_owner(owner),
             "Protected",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user_token = common::user_token()?;
         let filtered_repos =
-            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(owner, self.regex.as_ref(), &user_token)?;
 
-        let mut result = OrgResult::new(organisation);
+        let mut result = OrgResult::new(owner);
 
         // Process repos and track results
         for repo in filtered_repos.iter() {

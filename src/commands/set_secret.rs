@@ -13,7 +13,7 @@ use rayon::prelude::*;
 /// Set a secret for all repositories that match a regex
 pub struct SecretArgs {
     #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,

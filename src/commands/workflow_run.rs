@@ -17,7 +17,7 @@ use rayon::prelude::*;
 /// And this event will only trigger a workflow run if the workflow file is on the main or default branch.
 pub struct WorkflowRunArgs {
     #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,

@@ -14,8 +14,8 @@ use std::process::Output;
 /// Or to all repositories that has a specific topic
 #[derive(Debug, Parser)]
 pub struct TopicApplyArgs {
-    #[arg(long, short, alias = "organisation", conflicts_with = "all_orgs")]
-    /// Target owner (organization or user) name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
     /// You can set a default owner in the init or set owner command.
     pub owner: Option<String>,
@@ -31,23 +31,23 @@ pub struct TopicApplyArgs {
     /// use https to clone repositories if needed
     #[arg(long, short)]
     pub use_https: bool,
-    #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    #[arg(long, short, alias = "all-orgs")]
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl TopicApplyArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
+        common::run_for_owners(
+            self.all_owners,
             self.owner.as_deref(),
-            |org| self.run_for_organization(org),
+            |owner| self.run_for_owner(owner),
             "Applied",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
-        println!("Topic apply for organization: {}", organisation);
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
+        println!("Topic apply for owner: {}", owner);
 
         let script_path = self
             .script
@@ -57,7 +57,7 @@ impl TopicApplyArgs {
 
         let user = common::user()?;
 
-        let repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
+        let repos = topic_helper::query_repositories_with_topics(owner, &user.token)?;
         let repos =
             topic_helper::filter_repos_by_topics(&repos, self.topic.as_ref(), self.regex.as_ref());
 
@@ -83,7 +83,7 @@ impl TopicApplyArgs {
         let failed = results.len() - successful;
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: results.len(),
             successful_repos: successful,
             failed_repos: failed,
