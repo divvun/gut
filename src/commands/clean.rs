@@ -9,32 +9,32 @@ use std::path::PathBuf;
 #[derive(Debug, Parser)]
 /// Do git clean -f for all local repositories that match a pattern
 pub struct CleanArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl CleanArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(org),
+        common::run_for_owners(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(owner),
             "Cleaned",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         let total_count = sub_dirs.len();
         let mut success_count = 0;
@@ -51,7 +51,7 @@ impl CleanArgs {
         }
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
             failed_repos: fail_count,

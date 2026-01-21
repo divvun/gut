@@ -12,11 +12,11 @@ use rayon::prelude::*;
 #[derive(Debug, Parser)]
 /// Delete ALL web hooks for all repositories that match given regex
 pub struct DeleteArgs {
-    #[arg(long, short)]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
@@ -25,15 +25,15 @@ pub struct DeleteArgs {
 impl DeleteArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
+            common::query_and_filter_repositories(&owner, Some(&self.regex), &user_token)?;
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?}",
-                organisation, self.regex
+                "There are no repositories in {} that match the pattern {:?}",
+                owner, self.regex
             );
             return Ok(());
         }

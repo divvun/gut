@@ -1,4 +1,4 @@
-use super::set_default_organisation::*;
+use super::set_default_owner::*;
 use super::set_info::*;
 use super::set_secret::*;
 use super::set_team_permission::*;
@@ -22,8 +22,8 @@ impl SetArgs {
 pub enum SetCommand {
     #[command(name = "info")]
     Info(InfoArgs),
-    #[command(name = "organisation")]
-    Organisation(SetOrganisationArgs),
+    #[command(name = "owner")]
+    Owner(SetOwnerArgs),
     #[command(name = "permission")]
     Permission(SetTeamPermissionArgs),
     #[command(name = "secret")]
@@ -34,7 +34,7 @@ impl SetCommand {
     pub fn run(&self) -> Result<()> {
         match self {
             Self::Info(args) => args.run(),
-            Self::Organisation(args) => args.run(),
+            Self::Owner(args) => args.run(),
             Self::Permission(args) => args.set_permission(),
             Self::Secret(args) => args.run(),
         }

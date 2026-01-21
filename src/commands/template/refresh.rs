@@ -16,11 +16,11 @@ use std::process::Command;
 /// to all files in the repository, replacing placeholders like __UND2C__ with
 /// their actual values (e.g., 'se').
 pub struct RefreshArgs {
-    #[arg(long, short)]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -36,14 +36,13 @@ pub struct RefreshArgs {
 impl RefreshArgs {
     pub fn run(&self) -> Result<()> {
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
-        let target_dirs =
-            common::read_dirs_for_org(organisation.as_str(), &root, self.regex.as_ref())?;
+        let owner = common::owner(self.owner.as_deref())?;
+        let target_dirs = common::read_dirs_for_owner(owner.as_str(), &root, self.regex.as_ref())?;
 
         if target_dirs.is_empty() {
             println!(
-                "No repositories found in organisation {} matching pattern {:?}",
-                organisation, self.regex
+                "No repositories found in owner {} matching pattern {:?}",
+                owner, self.regex
             );
             return Ok(());
         }

@@ -4,29 +4,29 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Show all users in an organisation
+/// Show all members in an organisation
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct ShowUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.
     //
     // Can be one of:
-    // * all - All members of the organization, regardless of role.
+    // * all - All members of the organisation, regardless of role.
     // * admin - Organization owners.
-    // * member - Non-owner organization members.
+    // * member - Non-owner organisation members.
     //pub role: String,
 }
 
 impl ShowUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
-        let result = github::get_org_members(&organisation, &user_token);
+        let result = github::get_org_members(organisation, &user_token);
 
         match result {
             Ok(users) => print_results(&users),

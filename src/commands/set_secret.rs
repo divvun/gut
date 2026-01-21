@@ -10,20 +10,20 @@ use dryoc::dryocbox::{DryocBox, PublicKey};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
-/// Set a secret all repositories that match regex
+/// Set a secret for all repositories that match a regex
 pub struct SecretArgs {
-    #[arg(long, short)]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[arg(long, short, required_unless_present("website"))]
+    #[arg(long, short)]
     /// The value for your secret
     pub value: String,
-    #[arg(long, short, required_unless_present("description"))]
+    #[arg(long, short)]
     /// The name of your secret
     pub name: String,
 }
@@ -31,10 +31,10 @@ pub struct SecretArgs {
 impl SecretArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
+            common::query_and_filter_repositories(&owner, Some(&self.regex), &user_token)?;
 
         filtered_repos.par_iter().for_each(|repo| {
             let result = set_secret(repo, &self.value, &self.name, &user_token);

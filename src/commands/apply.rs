@@ -16,11 +16,11 @@ use std::process::Output;
 /// If you want your script to use your authentication token, you
 /// can refer to it in your script with $GUT_TOKEN
 pub struct ApplyArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -28,23 +28,23 @@ pub struct ApplyArgs {
     /// The location of a script
     pub script: Script,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl ApplyArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(org),
+        common::run_for_owners(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(owner),
             "Applied",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let root = common::root()?;
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         // set auth_token to env
         let user_token = common::user_token()?;
@@ -53,10 +53,10 @@ impl ApplyArgs {
 
         if sub_dirs.is_empty() {
             println!(
-                "There are no local repositories in organisation {} that match the pattern {:?}",
-                organisation, self.regex
+                "There are no local repositories in {} that match the pattern {:?}",
+                owner, self.regex
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let script_path = self
@@ -79,7 +79,7 @@ impl ApplyArgs {
         let fail_count = statuses.iter().filter(|s| s.has_error()).count();
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
             failed_repos: fail_count,

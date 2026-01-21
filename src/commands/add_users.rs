@@ -6,15 +6,15 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Invite users by users' usernames to an organisation
+/// Add users to an organisation or team
 ///
-/// If you specify team_slug it'll try to invite users to the provided team
+/// If you specify team_slug it'll add users to the provided team instead.
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct AddUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     #[arg(long, short, default_value = "member")]
     /// Role (member | admin) for org, or (member | maintainer) for team
     pub role: String,
@@ -36,25 +36,25 @@ impl AddUsersArgs {
 
     fn add_users_to_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(&organisation, &self.role, users, &user_token);
+        let results = add_list_user_to_org(organisation, &self.role, users, &user_token);
 
-        print_results_org(&results, &organisation, &self.role);
+        print_results_org(&results, organisation, &self.role);
 
         Ok(())
     }
 
     fn add_users_to_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
         let results =
-            add_list_user_to_team(&organisation, team_name, &self.role, users, &user_token);
+            add_list_user_to_team(organisation, team_name, &self.role, users, &user_token);
 
         print_results_team(&results, team_name, &self.role);
 

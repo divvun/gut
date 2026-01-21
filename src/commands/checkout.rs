@@ -21,11 +21,11 @@ use std::time::Duration;
 ///
 /// This command is able to clone a repository if it is not on the root directory
 pub struct CheckoutArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -45,21 +45,21 @@ pub struct CheckoutArgs {
     /// Option to use https instead of ssh when clone repositories
     pub use_https: bool,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl CheckoutArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(org),
+        common::run_for_owners(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(owner),
             "Checked out",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user = common::user()?;
 
         let spinner = ProgressBar::new_spinner();
@@ -71,7 +71,7 @@ impl CheckoutArgs {
         spinner.set_message("Querying GitHub for matching repositories...");
         spinner.enable_steady_tick(Duration::from_millis(100));
 
-        let all_repos = topic_helper::query_repositories_with_topics(organisation, &user.token)?;
+        let all_repos = topic_helper::query_repositories_with_topics(owner, &user.token)?;
 
         spinner.finish_and_clear();
 
@@ -83,10 +83,10 @@ impl CheckoutArgs {
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?} or topic {:?}",
-                organisation, self.regex, self.topic
+                "There are no repositories in {} that match the pattern {:?} or topic {:?}",
+                owner, self.regex, self.topic
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let total_count = filtered_repos.len();
@@ -123,7 +123,7 @@ impl CheckoutArgs {
         let fail_count = results.iter().filter(|&&r| !r).count();
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: total_count,
             successful_repos: success_count,
             failed_repos: fail_count,

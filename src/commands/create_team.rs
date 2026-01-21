@@ -8,12 +8,12 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 /// Create a new team for an organisation
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct CreateTeamArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     #[arg(long, short)]
     /// Team name
     pub team_name: String,
@@ -49,13 +49,11 @@ impl CreateTeamArgs {
 }
 
 fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse> {
-    let empty = &"".to_string();
-    let des: &str = args.description.as_ref().unwrap_or(empty);
+    let des = args.description.as_deref().unwrap_or("");
     let members: Vec<String> = args.members.iter().map(|s| s.to_string()).collect();
-    let organisation = common::organisation(args.organisation.as_deref())?;
 
     match github::create_team(
-        &organisation,
+        &args.organisation,
         &args.team_name,
         des,
         members,

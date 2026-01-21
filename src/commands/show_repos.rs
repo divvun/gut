@@ -10,17 +10,17 @@ use std::time::Duration;
 #[derive(Debug, Parser)]
 /// Show all repositories that match a pattern
 pub struct ShowReposArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
     #[arg(long, short)]
     /// Output as JSON
     pub json: bool,
@@ -34,35 +34,35 @@ impl ShowReposArgs {
         let user_token = common::user_token()?;
         let root = common::root()?;
 
-        let organizations = if self.all_orgs {
-            let orgs = common::get_all_organizations()?;
-            if orgs.is_empty() {
-                println!("No organizations found in root directory");
+        let owners = if self.all_owners {
+            let all_owners = common::get_all_owners()?;
+            if all_owners.is_empty() {
+                println!("No owners found in root directory");
                 return Ok(());
             }
-            orgs
+            all_owners
         } else {
-            vec![common::organisation(self.organisation.as_deref())?]
+            vec![common::owner(self.owner.as_deref())?]
         };
 
         if self.json {
             let mut all_repos = Vec::new();
-            for org in &organizations {
-                if let Ok(repos) = self.show_org(org, &user_token, &root, true) {
+            for org in &owners {
+                if let Ok(repos) = self.show_owner(org, &user_token, &root, true) {
                     all_repos.extend(repos);
                 }
             }
             print_json(&all_repos)?;
         } else {
-            for org in &organizations {
-                let _ = self.show_org(org, &user_token, &root, false);
+            for org in &owners {
+                let _ = self.show_owner(org, &user_token, &root, false);
             }
         }
 
         Ok(())
     }
 
-    fn show_org(
+    fn show_owner(
         &self,
         organisation: &str,
         user_token: &str,
@@ -192,5 +192,5 @@ fn print_titled_table(title: &str, table: &Table) {
     // Centered title row
     println!("|{:^inner_width$}|", title, inner_width = width - 2);
 
-    print!("{}\n", table_str);
+    println!("{}", table_str);
 }

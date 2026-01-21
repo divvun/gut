@@ -13,41 +13,41 @@ use std::path::PathBuf;
 ///
 /// This command only works on those repositories that has been cloned in root directory
 pub struct FetchArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl FetchArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(org),
+        common::run_for_owners(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(owner),
             "Fetched",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} matches pattern {:?}",
-                organisation, self.regex
+                "There is no local repositories in {} matches pattern {:?}",
+                owner, self.regex
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let results = common::process_with_progress(
@@ -81,7 +81,7 @@ impl FetchArgs {
         }
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: sub_dirs.len(),
             successful_repos: successful,
             failed_repos: failed,

@@ -6,15 +6,15 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Remove users by users' usernames from an organisation
+/// Remove users from an organisation or team
 ///
-/// If you specify team_slug it'll try to remove users from the provided team
+/// If you specify team_slug it'll remove users from the provided team instead.
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct RemoveUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)
     pub users: Vec<String>,
@@ -33,24 +33,24 @@ impl RemoveUsersArgs {
 
     fn remove_users_from_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_org(&organisation, users, &user_token);
+        let results = remove_list_user_from_org(organisation, users, &user_token);
 
-        print_results_org(&results, &organisation);
+        print_results_org(&results, organisation);
 
         Ok(())
     }
 
     fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_team(&organisation, team_name, users, &user_token);
+        let results = remove_list_user_from_team(organisation, team_name, users, &user_token);
 
         print_results_team(&results, team_name);
 

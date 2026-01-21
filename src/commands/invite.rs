@@ -3,7 +3,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Invite users to an organisation by emails
+/// Invite users to an organisation by email
 pub struct InviteArgs {
     #[command(subcommand)]
     command: InviteCommand,

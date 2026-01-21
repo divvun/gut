@@ -23,11 +23,11 @@ use std::sync::Arc;
 /// This command only works on those repositories that has been cloned in root directory
 ///
 pub struct PullArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -38,33 +38,33 @@ pub struct PullArgs {
     /// Option to create a merge commit instead of rebase
     pub merge: bool,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl PullArgs {
     pub fn run(&self, format: Option<OutputFormat>) -> Result<()> {
         let format = format.unwrap_or(OutputFormat::Table);
-        common::run_for_orgs_with_summary(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(format, org),
+        common::run_for_owners_with_summary(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(format, owner),
             print_pull_summary,
         )
     }
 
-    fn run_for_organization(&self, format: OutputFormat, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, format: OutputFormat, owner: &str) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         if sub_dirs.is_empty() {
             println!(
-                "There is no local repositories in organisation {} that match the pattern {:?}",
-                organisation, self.regex
+                "There is no local repositories in {} that match the pattern {:?}",
+                owner, self.regex
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let statuses = common::process_with_progress(
@@ -85,7 +85,7 @@ impl PullArgs {
         };
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: sub_dirs.len(),
             successful_repos: successful_pulls,
             failed_repos: failed_pulls,

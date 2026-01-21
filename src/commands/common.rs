@@ -17,7 +17,7 @@ use crate::github::{NoReposFound, RemoteRepo, Unauthorized};
 use crate::filter::{Filter, Filterable};
 use crate::user::User;
 
-/// Trait for types that can create error placeholders for failed organizations
+/// Trait for types that can create error placeholders for failed organisations
 pub trait ErrorPlaceholder {
     fn error_placeholder(org_name: &str) -> Self;
 }
@@ -96,12 +96,7 @@ pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row![
-        "Organisation",
-        "#repos",
-        success_column_label,
-        "Failed"
-    ]);
+    table.set_titles(row!["Owner", "#repos", success_column_label, "Failed"]);
 
     let mut total_repos = 0;
     let mut total_success = 0;
@@ -122,39 +117,39 @@ pub fn print_org_result_summary(summaries: &[OrgResult], success_column_label: &
     table.add_empty_row();
     table.add_row(row!["TOTAL", r -> total_repos, r -> total_success, r -> total_failed]);
 
-    println!("\n=== All org summary ===");
+    println!("\n=== All owner summary ===");
     table.printstd();
 }
 
-/// Run a command against all organizations or a single one, printing OrgResult summary with custom label
-pub fn run_for_orgs<F>(
-    all_orgs: bool,
-    organisation_opt: Option<&str>,
+/// Run a command against all owners or a single one, printing OrgResult summary with custom label
+pub fn run_for_owners<F>(
+    all_owners: bool,
+    owner_opt: Option<&str>,
     run_fn: F,
     success_column_label: &str,
 ) -> Result<()>
 where
     F: Fn(&str) -> Result<OrgResult>,
 {
-    if all_orgs {
-        let organizations = get_all_organizations()?;
-        if organizations.is_empty() {
-            println!("No organizations found in root directory");
+    if all_owners {
+        let owners = get_all_owners()?;
+        if owners.is_empty() {
+            println!("No owners found in root directory");
             return Ok(());
         }
 
         let mut summaries = Vec::new();
 
-        for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
+        for owner in &owners {
+            println!("\n=== Processing owner: {} ===", owner);
 
-            match run_fn(org) {
+            match run_fn(owner) {
                 Ok(summary) => {
                     summaries.push(summary);
                 }
                 Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
-                    summaries.push(OrgResult::error_placeholder(org));
+                    println!("Failed to process owner '{}': {:?}", owner, e);
+                    summaries.push(OrgResult::error_placeholder(owner));
                 }
             }
         }
@@ -163,16 +158,16 @@ where
 
         Ok(())
     } else {
-        let org = organisation(organisation_opt)?;
-        run_fn(&org)?;
+        let current_owner = owner(owner_opt)?;
+        run_fn(&current_owner)?;
         Ok(())
     }
 }
 
-/// Run a command against all organizations or a single one with custom summary printer
-pub fn run_for_orgs_with_summary<F, R>(
-    all_orgs: bool,
-    organisation_opt: Option<&str>,
+/// Run a command against all owners or a single one with custom summary printer
+pub fn run_for_owners_with_summary<F, R>(
+    all_owners: bool,
+    owner_opt: Option<&str>,
     run_fn: F,
     print_summary_fn: fn(&[R]),
 ) -> Result<()>
@@ -180,25 +175,25 @@ where
     F: Fn(&str) -> Result<R>,
     R: ErrorPlaceholder,
 {
-    if all_orgs {
-        let organizations = get_all_organizations()?;
-        if organizations.is_empty() {
-            println!("No organizations found in root directory");
+    if all_owners {
+        let owners = get_all_owners()?;
+        if owners.is_empty() {
+            println!("No owners found in root directory");
             return Ok(());
         }
 
         let mut summaries = Vec::new();
 
-        for org in &organizations {
-            println!("\n=== Processing organization: {} ===", org);
+        for owner in &owners {
+            println!("\n=== Processing owner: {} ===", owner);
 
-            match run_fn(org) {
+            match run_fn(owner) {
                 Ok(summary) => {
                     summaries.push(summary);
                 }
                 Err(e) => {
-                    println!("Failed to process organization '{}': {:?}", org, e);
-                    summaries.push(R::error_placeholder(org));
+                    println!("Failed to process owner '{}': {:?}", owner, e);
+                    summaries.push(R::error_placeholder(owner));
                 }
             }
         }
@@ -207,8 +202,8 @@ where
 
         Ok(())
     } else {
-        let org = organisation(organisation_opt)?;
-        run_fn(&org)?;
+        let current_owner = owner(owner_opt)?;
+        run_fn(&current_owner)?;
         Ok(())
     }
 }
@@ -239,15 +234,15 @@ pub fn user_token() -> Result<String> {
         .context("Cannot get user token from the config file. Run `gut init` with a valid token")
 }
 
-pub fn organisation(opt: Option<&str>) -> Result<String> {
+pub fn owner(opt: Option<&str>) -> Result<String> {
     match opt {
         Some(s) => Ok(s.to_string()),
         None => {
             let config = Config::from_file()?;
-            match config.default_org {
+            match config.default_owner {
                 Some(o) => Ok(o),
                 None => anyhow::bail!(
-                    "You need to provide an organisation or set a default organisation with init/set default organisation command."
+                    "You need to provide an owner (organisation or user) or set a default owner with init/set default owner command."
                 ),
             }
         }
@@ -260,7 +255,7 @@ pub fn use_https() -> Result<bool> {
 }
 
 fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
-    match github::list_org_repos(token, org).context("When fetching repositories") {
+    match github::list_owner_repos(token, org).context("When fetching repositories") {
         Ok(repos) => Ok(repos),
         Err(e) => {
             if e.downcast_ref::<NoReposFound>().is_some() {
@@ -274,8 +269,12 @@ fn remote_repos(token: &str, org: &str) -> Result<Vec<RemoteRepo>> {
     }
 }
 
-pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Result<Vec<PathBuf>> {
-    let target_dir = path::local_path_org(org, root)?;
+pub fn read_dirs_for_owner(
+    owner: &str,
+    root: &str,
+    filter: Option<&Filter>,
+) -> Result<Vec<PathBuf>> {
+    let target_dir = path::local_path_org(owner, root)?;
 
     let result = match filter {
         Some(f) => read_dirs_with_filter(&target_dir, f),
@@ -288,15 +287,15 @@ pub fn read_dirs_for_org(org: &str, root: &str, filter: Option<&Filter>) -> Resu
             Ok(vec)
         }
         Err(e) => Err(anyhow!(
-            "Cannot read sub directories for organisation {} \"{}\" because {:?}",
+            "Cannot read sub directories for owner {} \"{}\" because {:?}",
             target_dir.display(),
-            org,
+            owner,
             e
         )),
     }
 }
 
-/// Get repository directories for an organization.
+/// Get repository directories for an owner (organisation or user).
 ///
 /// If `topic` is Some, queries GitHub API to filter by topic (and optionally regex).
 /// If `topic` is None, uses local directories only (faster, no API call).
@@ -328,7 +327,7 @@ pub fn get_repo_dirs(
             .map(|r| root_path.join(org).join(&r.repo.name))
             .collect())
     } else {
-        read_dirs_for_org(org, root, regex)
+        read_dirs_for_owner(org, root, regex)
     }
 }
 
@@ -362,7 +361,7 @@ fn contains_git_repos(path: &Path) -> bool {
     })
 }
 
-pub fn get_all_organizations() -> Result<Vec<String>> {
+pub fn get_all_owners() -> Result<Vec<String>> {
     let root = root()?;
     let root_path = Path::new(&root);
 
@@ -370,7 +369,7 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
         return Ok(Vec::new());
     }
 
-    let mut organizations: Vec<String> = std::fs::read_dir(root_path)?
+    let mut organisations: Vec<String> = std::fs::read_dir(root_path)?
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false))
         .filter_map(|entry| {
@@ -386,8 +385,8 @@ pub fn get_all_organizations() -> Result<Vec<String>> {
         })
         .collect();
 
-    organizations.sort();
-    Ok(organizations)
+    organisations.sort();
+    Ok(organisations)
 }
 
 pub fn confirm(prompt: &str, key: &str) -> Result<bool> {

@@ -9,13 +9,13 @@ use std::str::FromStr;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Invite users to an organisation by emails
+/// Invite users to an organisation by email
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct InviteUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     #[arg(long, short, default_value_t = Role::default())]
     /// Role (member | admin | billing_manager) for the invited users
     pub role: Role,
@@ -80,20 +80,20 @@ impl fmt::Display for Role {
 impl InviteUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
-        let teams = team_slug_to_ids(&organisation, &user_token, &self.teams)?;
+        let teams = team_slug_to_ids(organisation, &user_token, &self.teams)?;
 
         let results = add_list_user_to_org(
-            &organisation,
+            organisation,
             self.role.to_value(),
             emails,
             &user_token,
             teams,
         );
 
-        print_results_org(&results, &organisation, self.role.to_value());
+        print_results_org(&results, organisation, self.role.to_value());
 
         Ok(())
     }

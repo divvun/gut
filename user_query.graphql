@@ -4,8 +4,9 @@ query UserQuery {
   }
 }
 
-query OrganizationRepositories($login: String!, $after: String) {
-  organization(login: $login) {
+query OwnerRepositories($login: String!, $after: String) {
+  repositoryOwner(login: $login) {
+    __typename
     repositories(first: 100, after: $after) {
       totalCount
       nodes{
@@ -33,8 +34,9 @@ query RepositoryDefaultBranch($owner: String!, $name: String!) {
   }
 }
 
-query OrganizationRepositoriesWithTopics($login: String!, $after: String) {
-  organization(login: $login) {
+query OwnerRepositoriesWithTopics($login: String!, $after: String) {
+  repositoryOwner(login: $login) {
+    __typename
     repositories(first: 100, after: $after) {
       totalCount
       nodes{

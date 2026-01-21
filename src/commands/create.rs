@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create team, discussion, repo to an organisation or create a branch for repositories
+/// Create a team, discussion, repository, or branch
 pub struct CreateArgs {
     #[command(subcommand)]
     command: CreateCommand,
@@ -33,7 +33,7 @@ pub enum CreateCommand {
 impl CreateCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            Self::Discussion(args) => args.create_discusstion(),
+            Self::Discussion(args) => args.create_discussion(),
             Self::Team(args) => args.create_team(),
             Self::Branch(args) => args.run(),
             Self::Repo(args) => args.run(),

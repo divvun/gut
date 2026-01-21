@@ -42,9 +42,9 @@ pub struct InitArgs {
     #[arg(short, long)]
     /// Github token. Gut needs github token to access your github data
     pub token: String,
-    /// Default organisation
-    #[arg(short, long)]
-    pub organisation: Option<String>,
+    /// Default owner (can be a GitHub organisation or user account)
+    #[arg(short, long, alias = "organisation")]
+    pub owner: Option<String>,
     /// Default to https instead of ssh when cloning repositories
     #[arg(short, long)]
     pub use_https: bool,
@@ -64,7 +64,7 @@ impl InitArgs {
         user.save_user()?;
         let config = Config::new(
             self.root.to_str().unwrap().to_string(),
-            self.organisation.clone(),
+            self.owner.clone(),
             self.use_https,
         );
         config.save_config()

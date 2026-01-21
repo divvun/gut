@@ -4,9 +4,9 @@ use crate::config::Config;
 pub fn show_config() -> anyhow::Result<()> {
     let user = common::user()?;
     let root = Config::root()?;
-    let organisation = match common::organisation(None) {
+    let owner = match common::owner(None) {
         Ok(s) => s,
-        Err(_) => "(no default org)".to_string(),
+        Err(_) => "(no default owner)".to_string(),
     };
     let use_https = common::use_https()?;
 
@@ -14,7 +14,7 @@ pub fn show_config() -> anyhow::Result<()> {
         "Username: {}\nGithub token: {}\nRoot directory: {}",
         user.username, user.token, root
     );
-    println!("Default org: {}\nHttps? {}", organisation, use_https);
+    println!("Default owner: {}\nHttps? {}", owner, use_https);
 
     Ok(())
 }

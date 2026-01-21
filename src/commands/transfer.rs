@@ -10,59 +10,59 @@ use clap::Parser;
 /// This will show all repositories that will affected by this command
 /// You have to enter 'YES' to confirm your action
 pub struct TransferArgs {
-    #[arg(long, short)]
+    #[arg(long, short, alias = "organisation")]
     /// The current organisation name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Regex to filter repositories
     pub regex: Filter,
     /// New organisation name
     #[arg(long, short)]
-    pub new_org: String,
+    pub new_owner: String,
 }
 
 impl TransferArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, Some(&self.regex), &user_token)?;
+            common::query_and_filter_repositories(&owner, Some(&self.regex), &user_token)?;
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?}",
-                organisation, self.regex
+                "There are no repositories in {} that match the pattern {:?}",
+                owner, self.regex
             );
             return Ok(());
         }
 
         println!(
             "The following repos will be transfered to {}:",
-            self.new_org
+            self.new_owner
         );
 
         for repo in &filtered_repos {
             println!("{}", repo.full_name());
         }
 
-        if !confirm(filtered_repos.len(), &self.new_org)? {
+        if !confirm(filtered_repos.len(), &self.new_owner)? {
             println!("Command is aborted. Nothing change!");
             return Ok(());
         }
 
         for repo in filtered_repos {
-            let result = github::transfer_repo(&repo, &self.new_org, &user_token);
+            let result = github::transfer_repo(&repo, &self.new_owner, &user_token);
             match result {
                 Ok(_) => println!(
                     "Transfer repo {} to {} successfully",
-                    repo.name, self.new_org
+                    repo.name, self.new_owner
                 ),
                 Err(e) => println!(
                     "Failed to Transfer repo {} to {:?} because {:?}",
-                    repo.name, self.new_org, e
+                    repo.name, self.new_owner, e
                 ),
             }
         }

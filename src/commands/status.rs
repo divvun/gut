@@ -17,11 +17,11 @@ use std::sync::Arc;
 #[derive(Debug, Parser)]
 /// Show git status of all repositories that match a pattern
 pub struct StatusArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -32,8 +32,8 @@ pub struct StatusArgs {
     /// Option to omit repositories without changes
     pub quiet: bool,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
     #[arg(long, short)]
     /// Fetch from remotes before showing status
     pub fetch: bool,
@@ -45,26 +45,26 @@ impl StatusArgs {
 
         if self.fetch {
             let fetch_args = FetchArgs {
-                organisation: self.organisation.clone(),
+                owner: self.owner.clone(),
                 regex: self.regex.clone(),
-                all_orgs: self.all_orgs,
+                all_owners: self.all_owners,
             };
             fetch_args.run()?;
             println!();
         }
 
-        common::run_for_orgs_with_summary(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_single_org(format, org),
+        common::run_for_owners_with_summary(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(format, owner),
             print_org_summary,
         )
     }
 
-    fn run_single_org(&self, format: OutputFormat, organisation: &str) -> Result<OrgSummary> {
+    fn run_for_owner(&self, format: OutputFormat, owner: &str) -> Result<OrgSummary> {
         let root = common::root()?;
 
-        let sub_dirs = common::read_dirs_for_org(organisation, &root, self.regex.as_ref())?;
+        let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
         let statuses: Vec<_> = sub_dirs.iter().map(status).collect();
 
@@ -122,7 +122,7 @@ impl StatusArgs {
         }
 
         Ok(OrgSummary {
-            name: organisation.to_string(),
+            name: owner.to_string(),
             total_repos: filtered_statuses.len(),
             unpushed_repo_count,
             uncommitted_repo_count,
@@ -522,7 +522,7 @@ fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(
-        row!["Organisation", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
+        row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
     );
     table
 }

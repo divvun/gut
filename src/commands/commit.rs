@@ -12,11 +12,11 @@ use std::path::{Path, PathBuf};
 /// Add all and then commit with the provided messages for all
 /// repositories that match a pattern or a topic
 pub struct CommitArgs {
-    #[arg(long, short, conflicts_with = "all_orgs")]
-    /// Target organisation name
+    #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
+    /// Target owner (organisation or user) name
     ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -26,26 +26,26 @@ pub struct CommitArgs {
     /// Commit message
     pub message: String,
     #[arg(long, short)]
-    /// Run command against all organizations, not just the default one
-    pub all_orgs: bool,
+    /// Run command against all owners, not just the default one
+    pub all_owners: bool,
 }
 
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_orgs(
-            self.all_orgs,
-            self.organisation.as_deref(),
-            |org| self.run_for_organization(org),
+        common::run_for_owners(
+            self.all_owners,
+            self.owner.as_deref(),
+            |owner| self.run_for_owner(owner),
             "Committed",
         )
     }
 
-    fn run_for_organization(&self, organisation: &str) -> Result<OrgResult> {
+    fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {
         let user = common::user()?;
         let root = common::root()?;
 
         let repo_dirs = common::get_repo_dirs(
-            organisation,
+            owner,
             self.topic.as_ref(),
             self.regex.as_ref(),
             &user.token,
@@ -54,10 +54,10 @@ impl CommitArgs {
 
         if repo_dirs.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?}",
-                organisation, self.regex
+                "There are no repositories in {} that match the pattern {:?}",
+                owner, self.regex
             );
-            return Ok(OrgResult::new(organisation));
+            return Ok(OrgResult::new(owner));
         }
 
         let statuses = common::process_with_progress(
@@ -73,7 +73,7 @@ impl CommitArgs {
         let failed = statuses.iter().filter(|s| s.has_error()).count();
 
         Ok(OrgResult {
-            org_name: organisation.to_string(),
+            org_name: owner.to_string(),
             total_repos: repo_dirs.len(),
             successful_repos: successful,
             failed_repos: failed,

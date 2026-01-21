@@ -9,13 +9,13 @@ use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
-/// Add all matched repositories to a team by using team_slug
+/// Add matching repositories to a team
+///
+/// This command only works with GitHub organisations, not user accounts.
 pub struct AddRepoArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
-    pub organisation: Option<String>,
+    pub organisation: String,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -23,7 +23,7 @@ pub struct AddRepoArgs {
     /// Permission (pull | push | admin | maintain | triage) to grant the team
     pub permission: String,
     #[arg(long, short)]
-    /// optional team slug
+    /// Optional team slug
     #[arg(long, short)]
     pub team_slug: String,
 }
@@ -31,14 +31,14 @@ pub struct AddRepoArgs {
 impl AddRepoArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = &self.organisation;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
+            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user.token)?;
 
         if filtered_repos.is_empty() {
             println!(
-                "There are no repositories in organisation {} that match the pattern {:?}",
+                "There are no repositories in {} that match the pattern {:?}",
                 organisation, self.regex
             );
             return Ok(());

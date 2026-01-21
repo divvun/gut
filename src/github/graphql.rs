@@ -21,7 +21,7 @@ struct UserQuery;
     query_path = "user_query.graphql",
     response_derives = "Debug"
 )]
-struct OrganizationRepositories;
+struct OwnerRepositories;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -37,7 +37,7 @@ struct RepositoryDefaultBranch;
     query_path = "user_query.graphql",
     response_derives = "Debug"
 )]
-struct OrganizationRepositoriesWithTopics;
+struct OwnerRepositoriesWithTopics;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -152,13 +152,13 @@ fn get_org_members_rec(
     Ok(list_member)
 }
 
-fn list_org_repos_rec(
+fn list_owner_repos_rec(
     token: &str,
-    org: &str,
+    owner: &str,
     after: Option<String>,
 ) -> anyhow::Result<Vec<RemoteRepo>> {
-    let q = OrganizationRepositories::build_query(organization_repositories::Variables {
-        login: org.to_string(),
+    let q = OwnerRepositories::build_query(owner_repositories::Variables {
+        login: owner.to_string(),
         after,
     });
 
@@ -169,17 +169,17 @@ fn list_org_repos_rec(
         return Err(Unauthorized.into());
     }
 
-    let response_body: Response<organization_repositories::ResponseData> = res.json()?;
+    let response_body: Response<owner_repositories::ResponseData> = res.json()?;
 
-    let org_data = response_body
+    let owner_data = response_body
         .data
         .as_ref()
         .ok_or(InvalidRepoResponse)?
-        .organization
+        .repository_owner
         .as_ref()
         .ok_or(InvalidRepoResponse)?;
 
-    let repositories = org_data.repositories.nodes.as_ref();
+    let repositories = owner_data.repositories.nodes.as_ref();
 
     let mut list_repo: Vec<RemoteRepo> = repositories
         .ok_or(NoReposFound)?
@@ -188,17 +188,17 @@ fn list_org_repos_rec(
         .map(|x| RemoteRepo {
             name: x.name.to_string(),
             ssh_url: x.ssh_url.to_string(),
-            owner: org.to_string(),
+            owner: owner.to_string(),
             https_url: x.url.to_string(),
             default_branch: x.default_branch_ref.as_ref().map(|b| b.name.to_string()),
         })
         .collect();
 
-    let page_info = &org_data.repositories.page_info;
+    let page_info = &owner_data.repositories.page_info;
 
     if page_info.has_next_page {
         let after = page_info.end_cursor.as_ref().map(|x| x.to_string());
-        match list_org_repos_rec(token, org, after) {
+        match list_owner_repos_rec(token, owner, after) {
             Ok(mut l) => list_repo.append(&mut l),
             Err(e) => return Err(e),
         }
@@ -206,21 +206,19 @@ fn list_org_repos_rec(
     Ok(list_repo)
 }
 
-pub fn list_org_repos(token: &str, org: &str) -> anyhow::Result<Vec<RemoteRepo>> {
-    list_org_repos_rec(token, org, None)
+pub fn list_owner_repos(token: &str, owner: &str) -> anyhow::Result<Vec<RemoteRepo>> {
+    list_owner_repos_rec(token, owner, None)
 }
 
-fn list_org_repos_with_topics_rec(
+fn list_owner_repos_with_topics_rec(
     token: &str,
-    org: &str,
+    owner: &str,
     after: Option<String>,
 ) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
-    let q = OrganizationRepositoriesWithTopics::build_query(
-        organization_repositories_with_topics::Variables {
-            login: org.to_string(),
-            after,
-        },
-    );
+    let q = OwnerRepositoriesWithTopics::build_query(owner_repositories_with_topics::Variables {
+        login: owner.to_string(),
+        after,
+    });
 
     let res = query(token, &q)?;
 
@@ -229,18 +227,17 @@ fn list_org_repos_with_topics_rec(
         return Err(Unauthorized.into());
     }
 
-    let response_body: Response<organization_repositories_with_topics::ResponseData> =
-        res.json()?;
+    let response_body: Response<owner_repositories_with_topics::ResponseData> = res.json()?;
 
-    let org_data = response_body
+    let owner_data = response_body
         .data
         .as_ref()
         .ok_or(InvalidRepoResponse)?
-        .organization
+        .repository_owner
         .as_ref()
         .ok_or(InvalidRepoResponse)?;
 
-    let repositories = org_data.repositories.nodes.as_ref();
+    let repositories = owner_data.repositories.nodes.as_ref();
 
     let temp = vec![];
     let mut list_repo: Vec<RemoteRepoWithTopics> = repositories
@@ -251,7 +248,7 @@ fn list_org_repos_with_topics_rec(
             repo: RemoteRepo {
                 name: x.name.to_string(),
                 ssh_url: x.ssh_url.to_string(),
-                owner: org.to_string(),
+                owner: owner.to_string(),
                 https_url: x.url.to_string(),
                 default_branch: None,
             },
@@ -267,11 +264,11 @@ fn list_org_repos_with_topics_rec(
         })
         .collect();
 
-    let page_info = &org_data.repositories.page_info;
+    let page_info = &owner_data.repositories.page_info;
 
     if page_info.has_next_page {
         let after = page_info.end_cursor.as_ref().map(|x| x.to_string());
-        match list_org_repos_with_topics_rec(token, org, after) {
+        match list_owner_repos_with_topics_rec(token, owner, after) {
             Ok(mut l) => list_repo.append(&mut l),
             Err(e) => return Err(e),
         }
@@ -279,11 +276,11 @@ fn list_org_repos_with_topics_rec(
     Ok(list_repo)
 }
 
-pub fn list_org_repos_with_topics(
+pub fn list_owner_repos_with_topics(
     token: &str,
-    org: &str,
+    owner: &str,
 ) -> anyhow::Result<Vec<RemoteRepoWithTopics>> {
-    list_org_repos_with_topics_rec(token, org, None)
+    list_owner_repos_with_topics_rec(token, owner, None)
 }
 
 #[allow(dead_code)]

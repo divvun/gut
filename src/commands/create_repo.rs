@@ -12,12 +12,10 @@ use crate::git::{Clonable, GitCredential, GitRepo, open, push};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Create new repositories in an organisation and push for existing git repositories
+/// Create GitHub repositories from local git directories and push
 pub struct CreateRepoArgs {
     #[arg(long, short)]
     /// Target organisation name
-    ///
-    /// You can set a default organisation in the init or set organisation command.
     pub organisation: Option<String>,
     #[arg(long, short)]
     /// The parent directory of all directories that you want to create new repositories
@@ -47,7 +45,7 @@ impl CreateRepoArgs {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;
-        let organisation = common::organisation(self.organisation.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let sub_dirs = match &self.dir {
             Some(d) => common::read_dirs_with_filter(&d.path, &self.regex).with_context(|| {
@@ -57,7 +55,7 @@ impl CreateRepoArgs {
                     self
                 )
             })?,
-            None => common::read_dirs_for_org(&organisation, &root, Some(&self.regex))?,
+            None => common::read_dirs_for_owner(&organisation, &root, Some(&self.regex))?,
         };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
@@ -143,7 +141,7 @@ fn clone_repo(
 
 /// Check if {dir} is a git repository
 /// Check if {dir} has {remote} remote
-/// Create a new repository in organization {org}
+/// Create a new repository in organisation {org}
 /// Set the new created repository as remote {remote}
 /// Push all to remote {remote}
 fn create_repo(
@@ -184,7 +182,7 @@ fn create_repo(
         .file_name()
         .ok_or_else(|| anyhow!("{:?} does not have a vaild name", dir))?
         .to_str()
-        .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
+        .ok_or_else(|| anyhow!("{:?} does not have a valid name", dir))?;
 
     let created_repo = create_org_repo(org, repo_name, public, &user.token)?;
     log::debug!("new created repo: {:?}", created_repo.html_url);
