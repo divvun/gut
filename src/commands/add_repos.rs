@@ -9,13 +9,11 @@ use prettytable::{Cell, Row, Table, cell, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
-/// Add all matched repositories to a team by using team_slug
+/// Add matching repositories to a team
 pub struct AddRepoArgs {
-    #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
-    ///
-    /// You can set a default owner in the init or set owner command.
-    pub owner: Option<String>,
+    #[arg(long, short)]
+    /// Organisation containing the repositories and team
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -23,7 +21,7 @@ pub struct AddRepoArgs {
     /// Permission (pull | push | admin | maintain | triage) to grant the team
     pub permission: String,
     #[arg(long, short)]
-    /// optional team slug
+    /// Optional team slug
     #[arg(long, short)]
     pub team_slug: String,
 }
@@ -31,15 +29,15 @@ pub struct AddRepoArgs {
 impl AddRepoArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let owner = common::owner(self.owner.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&owner, self.regex.as_ref(), &user.token)?;
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
 
         if filtered_repos.is_empty() {
             println!(
                 "There are no repositories in {} that match the pattern {:?}",
-                owner, self.regex
+                organisation, self.regex
             );
             return Ok(());
         }
