@@ -14,11 +14,9 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 /// Create GitHub repositories from local git directories and push
 pub struct CreateRepoArgs {
-    #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
-    ///
-    /// You can set a default owner in the init or set owner command.
-    pub owner: Option<String>,
+    #[arg(long, short)]
+    /// Target organisation name
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// The parent directory of all directories that you want to create new repositories
     pub dir: Option<ExistDirectory>,
@@ -47,7 +45,7 @@ impl CreateRepoArgs {
         log::debug!("Create Repo {:?}", self);
 
         let root = common::root()?;
-        let owner = common::owner(self.owner.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let sub_dirs = match &self.dir {
             Some(d) => common::read_dirs_with_filter(&d.path, &self.regex).with_context(|| {
@@ -57,7 +55,7 @@ impl CreateRepoArgs {
                     self
                 )
             })?,
-            None => common::read_dirs_for_org(&owner, &root, Some(&self.regex))?,
+            None => common::read_dirs_for_org(&organisation, &root, Some(&self.regex))?,
         };
 
         log::debug!("Filtered sub dirs: {:?}", sub_dirs);
@@ -65,7 +63,7 @@ impl CreateRepoArgs {
         let user = common::user()?;
         for dir in sub_dirs {
             create_and_clone(
-                &owner,
+                &organisation,
                 &dir,
                 self.public,
                 &user,
@@ -184,7 +182,7 @@ fn create_repo(
         .file_name()
         .ok_or_else(|| anyhow!("{:?} does not have a vaild name", dir))?
         .to_str()
-        .ok_or_else(|| anyhow!("{:?} doesn not have a valid name", dir))?;
+        .ok_or_else(|| anyhow!("{:?} does not have a valid name", dir))?;
 
     let created_repo = create_org_repo(org, repo_name, public, &user.token)?;
     log::debug!("new created repo: {:?}", created_repo.html_url);
