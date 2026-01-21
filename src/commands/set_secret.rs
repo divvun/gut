@@ -20,10 +20,10 @@ pub struct SecretArgs {
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Filter,
-    #[arg(long, short, required_unless_present("website"))]
+    #[arg(long, short)]
     /// The value for your secret
     pub value: String,
-    #[arg(long, short, required_unless_present("description"))]
+    #[arg(long, short)]
     /// The name of your secret
     pub name: String,
 }
