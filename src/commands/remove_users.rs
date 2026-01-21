@@ -37,9 +37,9 @@ impl RemoveUsersArgs {
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_org(&organisation, users, &user_token);
+        let results = remove_list_user_from_org(organisation, users, &user_token);
 
-        print_results_org(&results, &organisation);
+        print_results_org(&results, organisation);
 
         Ok(())
     }
@@ -50,7 +50,7 @@ impl RemoveUsersArgs {
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_team(&organisation, team_name, users, &user_token);
+        let results = remove_list_user_from_team(organisation, team_name, users, &user_token);
 
         print_results_team(&results, team_name);
 

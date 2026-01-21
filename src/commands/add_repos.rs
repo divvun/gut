@@ -34,7 +34,7 @@ impl AddRepoArgs {
         let organisation = &self.organisation;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
+            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user.token)?;
 
         if filtered_repos.is_empty() {
             println!(

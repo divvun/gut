@@ -34,7 +34,7 @@ impl CreateDiscussionArgs {
         let organisation = &self.organisation;
 
         match github::create_discussion(
-            &organisation,
+            organisation,
             &self.team_slug,
             &self.subject,
             &self.body,

@@ -26,7 +26,7 @@ impl ShowUsersArgs {
         let user_token = common::user_token()?;
         let organisation = &self.organisation;
 
-        let result = github::get_org_members(&organisation, &user_token);
+        let result = github::get_org_members(organisation, &user_token);
 
         match result {
             Ok(users) => print_results(&users),

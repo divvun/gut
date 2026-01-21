@@ -40,9 +40,9 @@ impl AddUsersArgs {
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = add_list_user_to_org(&organisation, &self.role, users, &user_token);
+        let results = add_list_user_to_org(organisation, &self.role, users, &user_token);
 
-        print_results_org(&results, &organisation, &self.role);
+        print_results_org(&results, organisation, &self.role);
 
         Ok(())
     }
@@ -54,7 +54,7 @@ impl AddUsersArgs {
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
         let results =
-            add_list_user_to_team(&organisation, team_name, &self.role, users, &user_token);
+            add_list_user_to_team(organisation, team_name, &self.role, users, &user_token);
 
         print_results_team(&results, team_name, &self.role);
 

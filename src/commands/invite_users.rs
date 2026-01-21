@@ -83,17 +83,17 @@ impl InviteUsersArgs {
         let organisation = &self.organisation;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
-        let teams = team_slug_to_ids(&organisation, &user_token, &self.teams)?;
+        let teams = team_slug_to_ids(organisation, &user_token, &self.teams)?;
 
         let results = add_list_user_to_org(
-            &organisation,
+            organisation,
             self.role.to_value(),
             emails,
             &user_token,
             teams,
         );
 
-        print_results_org(&results, &organisation, self.role.to_value());
+        print_results_org(&results, organisation, self.role.to_value());
 
         Ok(())
     }

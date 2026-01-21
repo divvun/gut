@@ -45,11 +45,11 @@ impl SetTeamPermissionArgs {
         let organisation = &self.organisation;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user_token)?;
 
         filtered_repos.par_iter().for_each(|repo| {
             let result = github::set_team_permission(
-                &organisation,
+                organisation,
                 &self.team_slug,
                 &repo.owner,
                 &repo.name,

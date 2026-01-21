@@ -192,5 +192,5 @@ fn print_titled_table(title: &str, table: &Table) {
     // Centered title row
     println!("|{:^inner_width$}|", title, inner_width = width - 2);
 
-    print!("{}\n", table_str);
+    println!("{}", table_str);
 }
