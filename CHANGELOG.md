@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0] - 2026-01-21
+
+### Added
+
+- **Personal account support**: gut now works with both GitHub organizations and personal user accounts as owners (#200)
+- **`show repos` improvements** (#201):
+  - `--json` flag for structured JSON output
+  - `--default-branch` flag to show default branch column (requires extra API calls)
+  - Clean table format showing repository name and clone status by default
+- **Spinner for all GitHub API queries**: All commands that query GitHub now show "Querying GitHub for {owner} repositories..." spinner
+
+### Changed
+
+- **Terminology**: "organisation" → "owner" throughout CLI flags, help text, and output to reflect support for both orgs and users
+  - `--organisation` flag renamed to `--owner` (with `--organisation` kept as alias)
+  - `set default organisation` → `set default owner`
+  - `--all-orgs` → `--all-owners`
+- **`status` command**: Failed repos now shown in main table with dashes instead of separate error section
+- **Consolidated spinner code**: Spinners moved into shared query functions, reducing duplication
+
+### Fixed
+
+- **`set secret` command**: Fixed panic when running the command
+- **`status` command**: Now handles per-repo errors gracefully instead of failing entirely
+
 ## [0.4.0] - 2025-01-19
 
 ### Added
