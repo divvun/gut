@@ -8,12 +8,15 @@ use clap::Parser;
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
+/// Set the permission level a team has on matching repositories
+///
+/// This command grants a team (within an organisation) a specific
+/// permission level (pull, push, triage, maintain, or admin)
+/// on all repositories that match the given regex filter.
 pub struct SetTeamPermissionArgs {
-    #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
-    ///
-    /// You can set a default owner in the init or set owner command.
-    pub owner: Option<String>,
+    #[arg(long, short)]
+    /// Target organisation name
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -37,14 +40,14 @@ fn parse_permission(src: &str) -> Result<String> {
 impl SetTeamPermissionArgs {
     pub fn set_permission(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let owner = common::owner(self.owner.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(&owner, self.regex.as_ref(), &user_token)?;
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user_token)?;
 
         filtered_repos.par_iter().for_each(|repo| {
             let result = github::set_team_permission(
-                &owner,
+                &organisation,
                 &self.team_slug,
                 &repo.owner,
                 &repo.name,
