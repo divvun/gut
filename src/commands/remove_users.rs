@@ -6,15 +6,13 @@ use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Remove users by users' usernames from an owner
+/// Remove users from an organization or team
 ///
-/// If you specify team_slug it'll try to remove users from the provided team
+/// If you specify team_slug it'll remove users from the provided team instead
 pub struct RemoveUsersArgs {
-    #[arg(long, short, alias = "organisation")]
-    /// Target owner (organization or user) name
-    ///
-    /// You can set a default owner in the init or set owner command.
-    pub owner: Option<String>,
+    #[arg(long, short)]
+    /// Target organization name
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)
     pub users: Vec<String>,
@@ -33,24 +31,24 @@ impl RemoveUsersArgs {
 
     fn remove_users_from_org(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let owner = common::owner(self.owner.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_org(&owner, users, &user_token);
+        let results = remove_list_user_from_org(&organisation, users, &user_token);
 
-        print_results_org(&results, &owner);
+        print_results_org(&results, &organisation);
 
         Ok(())
     }
 
     fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
         let user_token = common::user_token()?;
-        let owner = common::owner(self.owner.as_deref())?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
 
-        let results = remove_list_user_from_team(&owner, team_name, users, &user_token);
+        let results = remove_list_user_from_team(&organisation, team_name, users, &user_token);
 
         print_results_team(&results, team_name);
 
