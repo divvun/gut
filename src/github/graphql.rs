@@ -188,7 +188,12 @@ fn list_owner_repos_rec(
         .map(|x| RemoteRepo {
             name: x.name.to_string(),
             ssh_url: x.ssh_url.to_string(),
-            owner: owner.to_string(),
+            owner: x
+                .name_with_owner
+                .split('/')
+                .next()
+                .unwrap_or(owner)
+                .to_string(),
             https_url: x.url.to_string(),
             default_branch: x.default_branch_ref.as_ref().map(|b| b.name.to_string()),
         })
@@ -248,7 +253,12 @@ fn list_owner_repos_with_topics_rec(
             repo: RemoteRepo {
                 name: x.name.to_string(),
                 ssh_url: x.ssh_url.to_string(),
-                owner: owner.to_string(),
+                owner: x
+                    .name_with_owner
+                    .split('/')
+                    .next()
+                    .unwrap_or(owner)
+                    .to_string(),
                 https_url: x.url.to_string(),
                 default_branch: None,
             },
