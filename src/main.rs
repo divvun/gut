@@ -5,6 +5,7 @@ mod convert;
 mod filter;
 mod git;
 mod github;
+mod health;
 mod path;
 mod toml;
 mod user;
