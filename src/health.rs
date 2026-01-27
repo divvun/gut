@@ -30,6 +30,11 @@ pub fn check_git_config() -> Vec<HealthWarning> {
         }
     }
 
+    // Check if Git LFS is installed
+    if let Some(warning) = check_git_lfs_installed() {
+        warnings.push(warning);
+    }
+
     warnings
 }
 
@@ -57,6 +62,29 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
     None
 }
 
+/// Check if Git LFS is installed
+fn check_git_lfs_installed() -> Option<HealthWarning> {
+    let output = Command::new("git")
+        .args(&["lfs", "version"])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return Some(HealthWarning {
+            title: "Git LFS not installed".to_string(),
+            message: "Git LFS is not installed or not properly configured.".to_string(),
+            suggestion: Some(
+                "Many repositories use Git LFS for large files. Install it with:\n   \
+                macOS: brew install git-lfs && git lfs install\n   \
+                Linux: apt-get install git-lfs && git lfs install (or equivalent for your distro)"
+                    .to_string(),
+            ),
+        });
+    }
+
+    None
+}
+
 /// Print all health warnings at the end of command execution
 pub fn print_warnings(warnings: &[HealthWarning]) {
     if !warnings.is_empty() {
@@ -69,7 +97,7 @@ pub fn print_warnings(warnings: &[HealthWarning]) {
 
 // Additional health checks that could be implemented:
 //
-// 1. Check for LFS installation when repo uses Git LFS
+// 1. ✅ Check for LFS installation when repo uses Git LFS
 // 2. Check for sufficient disk space
 // 3. Check Git version (minimum required version)
 // 4. Check for proper SSH key configuration
@@ -80,3 +108,4 @@ pub fn print_warnings(warnings: &[HealthWarning]) {
 // 9. Check for Git credential helper configuration
 // 10. ✅ Check for NFD/NFC normalization conflicts in existing repos
 // 11. ✅ Check for case-duplicate filenames (identical names except for letter case)
+// 10. Check for NFD/NFC normalization conflicts in existing repos
