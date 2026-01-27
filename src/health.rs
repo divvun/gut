@@ -75,7 +75,8 @@ pub fn print_warnings(warnings: &[HealthWarning]) {
 // 4. Check for proper SSH key configuration
 // 5. Check for .gitignore patterns that might cause issues
 // 6. Check for very long filenames (macOS has limits)
-// 7. Check for case sensitivity issues (macOS is case-insensitive by default)
+// 7. ✅ Check for case sensitivity issues (macOS is case-insensitive by default)
 // 8. Check for proper line ending configuration (core.autocrlf)
 // 9. Check for Git credential helper configuration
-// 10. Check for NFD/NFC normalization conflicts in existing repos
+// 10. ✅ Check for NFD/NFC normalization conflicts in existing repos
+// 11. ✅ Check for case-duplicate filenames (identical names except for letter case)
