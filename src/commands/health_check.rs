@@ -6,7 +6,7 @@ use clap::Parser;
 use colored::*;
 use prettytable::{Table, cell, format, row};
 use std::path::{Path, PathBuf};
-use unicode_normalization::is_nfc;
+use unicode_normalization::UnicodeNormalization;
 
 #[derive(Debug, Parser)]
 /// Check for NFD/NFC normalization conflicts in repository filenames
@@ -289,6 +289,14 @@ fn check_repo(repo_path: &PathBuf) -> RepoCheckResult {
 }
 
 /// Check a single repository for NFC normalization issues
+///
+/// This function walks the git tree and identifies filenames that are stored in NFD
+/// (decomposed) form when an NFC (composed) equivalent exists in Unicode.
+///
+/// Note: Some character combinations (like Cyrillic base characters + combining macron U+0304)
+/// have NO precomposed NFC form in Unicode. These are correctly stored in NFD form and will
+/// NOT be flagged as issues. The function only reports files where an NFC equivalent exists
+/// but the filename uses NFD instead.
 fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>> {
     let mut issues = Vec::new();
     
@@ -304,15 +312,24 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>>
     // Walk the tree recursively
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
-            let full_path = if path.is_empty() {
-                entry.name().unwrap_or("").to_string()
-            } else {
-                format!("{}/{}", path, entry.name().unwrap_or(""))
-            };
+            // Use name_bytes() to get raw bytes from git object database without normalization.
+            // The name() method might apply NFC normalization depending on git config.
+            let name_bytes = entry.name_bytes();
             
-            // Check if the path contains NFD characters
-            if !is_nfc(&full_path) {
-                issues.push(full_path);
+            // Check if name_bytes is valid UTF-8 and compare with NFC form
+            if let Ok(name_str) = std::str::from_utf8(name_bytes) {
+                let normalized: String = name_str.nfc().collect();
+                
+                // Only flag as issue if NFC form differs from current form.
+                // This means an NFC equivalent exists but the file uses NFD.
+                if name_str != normalized.as_str() {
+                    let full_path = if path.is_empty() {
+                        name_str.to_string()
+                    } else {
+                        format!("{}/{}", path, name_str)
+                    };
+                    issues.push(full_path);
+                }
             }
         }
         git2::TreeWalkResult::Ok
