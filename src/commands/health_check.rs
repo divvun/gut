@@ -166,6 +166,9 @@ impl HealthCheckArgs {
 
     fn print_single_owner_summary(&self, summary: &OwnerSummary) {
         println!("\n{}", "═".repeat(80));
+        println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
+        println!("{}", "═".repeat(80));
+        
         if summary.issues.is_empty() {
             println!("{} All filenames are correctly encoded in {} repositories!", 
                 "✓".green().bold(),
