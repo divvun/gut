@@ -9,17 +9,16 @@ use std::path::{Path, PathBuf};
 use unicode_normalization::UnicodeNormalization;
 
 #[derive(Debug, Parser)]
-/// Check for filesystem compatibility issues in repository filenames
+/// Check repositories for NFD normalization issues and case-duplicate filenames
 ///
-/// This command scans all files in local repositories and reports potential issues:
+/// This command scans all files in local repositories and checks for:
 ///
-/// 1. NFD/NFC normalization conflicts: Filenames with Unicode decomposed (NFD)
-///    characters that could cause conflicts with Git's expected NFC normalization
-///    on macOS.
+/// - NFD normalization issues: Filenames with decomposed Unicode characters that
+///   have a composed (NFC) equivalent, which can cause conflicts on macOS
 ///
-/// 2. Case-duplicate files: Files with identical names when compared case-insensitively.
-///    These files coexist on Linux but cause problems on case-insensitive filesystems
-///    (macOS/Windows), where git-lfs may check out the wrong version.
+/// - Case-duplicate filenames: Files with identical names except for letter case
+///   (e.g., File.txt and file.txt), which cause problems on case-insensitive
+///   filesystems like macOS and Windows
 pub struct HealthCheckArgs {
     #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
     /// Target owner (organisation or user) name
