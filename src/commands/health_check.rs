@@ -130,7 +130,7 @@ impl HealthCheckArgs {
         println!("\n{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
         
         if summary.issues.is_empty() {
-            println!("  {} All files are correctly encoded", "✓".green().bold());
+            println!("  {} All filenames are correctly encoded", "✓".green().bold());
         } else {
             let repo_count = summary.issues.iter()
                 .map(|i| i.repo.as_str())
@@ -167,7 +167,7 @@ impl HealthCheckArgs {
     fn print_single_owner_summary(&self, summary: &OwnerSummary) {
         println!("\n{}", "═".repeat(80));
         if summary.issues.is_empty() {
-            println!("{} All files are correctly encoded in {} repositories!", 
+            println!("{} All filenames are correctly encoded in {} repositories!", 
                 "✓".green().bold(),
                 summary.total_repos
             );
@@ -213,7 +213,7 @@ impl HealthCheckArgs {
         let total_issues: usize = summaries.iter().map(|s| s.issues.len()).sum();
         
         if total_issues == 0 {
-            println!("{} All files are correctly encoded in {} repositories across {} owners!", 
+            println!("{} All filenames are correctly encoded in {} repositories across {} owners!", 
                 "✓".green().bold(),
                 total_repos,
                 summaries.len()
