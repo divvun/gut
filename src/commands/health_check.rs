@@ -137,7 +137,7 @@ impl HealthCheckArgs {
                 .collect::<std::collections::HashSet<_>>()
                 .len();
             
-            println!("  {} Found {} files with NFD normalization in {} repositories", 
+            println!("  {} Found {} filenames with NFD normalization in {} repositories", 
                 "⚠".yellow().bold(),
                 summary.issues.len(),
                 repo_count
@@ -177,7 +177,7 @@ impl HealthCheckArgs {
                 .collect::<std::collections::HashSet<_>>()
                 .len();
             
-            println!("{} Found {} files with NFD normalization in {} of {} repositories", 
+            println!("{} Found {} filenames with NFD normalization in {} of {} repositories", 
                 "⚠".yellow().bold(),
                 summary.issues.len(),
                 repo_count,
@@ -219,7 +219,7 @@ impl HealthCheckArgs {
                 summaries.len()
             );
         } else {
-            println!("{} Found {} files with NFD normalization across {} owners", 
+            println!("{} Found {} filenames with NFD normalization across {} owners", 
                 "⚠".yellow().bold(),
                 total_issues,
                 summaries.len()
