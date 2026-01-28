@@ -1,5 +1,6 @@
 use super::common;
 use crate::git;
+use crate::health;
 use crate::path;
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -90,6 +91,9 @@ impl HealthCheckArgs {
                 self.print_single_owner_summary(summary);
             }
         }
+
+        // Run system configuration health checks
+        self.print_system_health_checks();
 
         Ok(())
     }
@@ -330,6 +334,57 @@ impl HealthCheckArgs {
         println!("     - Identify which variant to keep");
         println!("     - Delete the unwanted variant(s): {}", "git rm <unwanted_file>".cyan());
         println!("     - Commit and push the change");
+    }
+
+    fn print_system_health_checks(&self) {
+        println!("\n{}", "═".repeat(80));
+        println!("{}", "SYSTEM CONFIGURATION CHECKS".bold());
+        println!("{}", "═".repeat(80));
+
+        let warnings = health::check_git_config();
+        
+        // Print status for each check
+        println!("\n{}", "System configuration status:".bold());
+        
+        // Check 1: core.precomposeUnicode (macOS only)
+        if cfg!(target_os = "macos") {
+            let has_precompose_issue = warnings.iter()
+                .any(|w| w.title.contains("precomposeUnicode"));
+            
+            if has_precompose_issue {
+                println!("  {} {}", "✗".red().bold(), "core.precomposeUnicode setting".dimmed());
+            } else {
+                println!("  {} {}", "✓".green().bold(), "core.precomposeUnicode setting");
+            }
+        }
+        
+        // Check 2: Git LFS installation
+        let has_lfs_issue = warnings.iter()
+            .any(|w| w.title.contains("Git LFS"));
+        
+        if has_lfs_issue {
+            println!("  {} {}", "✗".red().bold(), "Git LFS installation".dimmed());
+        } else {
+            println!("  {} {}", "✓".green().bold(), "Git LFS installation");
+        }
+        
+        // Print remediation steps if there are issues
+        if !warnings.is_empty() {
+            println!("\n{}", "Configuration issues found:".yellow().bold());
+            
+            for warning in &warnings {
+                println!("\n  {} {}", "⚠".yellow().bold(), warning.title.yellow());
+                println!("    {}", warning.message);
+                if let Some(suggestion) = &warning.suggestion {
+                    println!("\n    {}", "How to fix:".bold());
+                    for line in suggestion.lines() {
+                        println!("    {}", line.bright_black());
+                    }
+                }
+            }
+        }
+        
+        println!("\n{}", "═".repeat(80));
     }
 }
 
