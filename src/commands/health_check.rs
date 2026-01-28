@@ -346,26 +346,67 @@ impl HealthCheckArgs {
         // Print status for each check
         println!("\n{}", "System configuration status:".bold());
         
-        // Check 1: core.precomposeUnicode (macOS only)
+        // Check 1: Git version
+        let has_git_version_issue = warnings.iter()
+            .any(|w| w.title.contains("Git version"));
+        
+        let git_version = health::get_git_version()
+            .unwrap_or_else(|| "unknown".to_string());
+        
+        if has_git_version_issue {
+            println!("  {} {} ({})", 
+                "✗".red().bold(), 
+                "Git version".dimmed(),
+                git_version.dimmed()
+            );
+        } else {
+            println!("  {} {} ({})", 
+                "✓".green().bold(), 
+                "Git version",
+                git_version.bright_black()
+            );
+        }
+        
+        // Check 2: core.precomposeUnicode (macOS only)
         if cfg!(target_os = "macos") {
             let has_precompose_issue = warnings.iter()
                 .any(|w| w.title.contains("precomposeUnicode"));
             
+            let precompose_value = health::get_precompose_unicode_value();
+            
             if has_precompose_issue {
-                println!("  {} {}", "✗".red().bold(), "core.precomposeUnicode setting".dimmed());
+                println!("  {} {} ({})", 
+                    "✗".red().bold(), 
+                    "core.precomposeUnicode setting".dimmed(),
+                    precompose_value.dimmed()
+                );
             } else {
-                println!("  {} {}", "✓".green().bold(), "core.precomposeUnicode setting");
+                println!("  {} {} ({})", 
+                    "✓".green().bold(), 
+                    "core.precomposeUnicode setting",
+                    precompose_value.bright_black()
+                );
             }
         }
         
-        // Check 2: Git LFS installation
+        // Check 3: Git LFS installation
         let has_lfs_issue = warnings.iter()
             .any(|w| w.title.contains("Git LFS"));
         
+        let lfs_installed = health::is_git_lfs_installed();
+        
         if has_lfs_issue {
-            println!("  {} {}", "✗".red().bold(), "Git LFS installation".dimmed());
+            println!("  {} {} ({})", 
+                "✗".red().bold(), 
+                "Git LFS installation".dimmed(),
+                "not installed".dimmed()
+            );
         } else {
-            println!("  {} {}", "✓".green().bold(), "Git LFS installation");
+            println!("  {} {} ({})", 
+                "✓".green().bold(), 
+                "Git LFS installation",
+                "installed".bright_black()
+            );
         }
         
         // Print remediation steps if there are issues
