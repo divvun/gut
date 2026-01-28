@@ -276,7 +276,7 @@ impl HealthCheckArgs {
                 table.printstd();
             }
             
-            self.print_recommendations();
+            self.print_recommendations(!summary.nfd_issues.is_empty(), !summary.case_duplicates.is_empty());
         }
         println!("{}", "═".repeat(80));
     }
@@ -313,27 +313,36 @@ impl HealthCheckArgs {
                 );
             }
             
-            self.print_recommendations();
+            self.print_recommendations(total_nfd > 0, total_case_dups > 0);
         }
         println!("{}", "═".repeat(80));
     }
 
-    fn print_recommendations(&self) {
-        println!("\n{}", "Recommendations:".bold());
-        println!("\n{}", "For NFD normalization issues:".yellow());
-        println!("  1. Ensure {} is set on macOS:", "git config --global core.precomposeUnicode true".cyan());
-        println!("     {}", "git config --global core.precomposeUnicode true".cyan());
-        println!("  2. Use a tool like {} to fix affected repositories", "jaso".cyan());
-        println!("  3. Consider creating a new commit with normalized filenames");
+    fn print_recommendations(&self, has_nfd_issues: bool, has_case_duplicates: bool) {
+        if !has_nfd_issues && !has_case_duplicates {
+            return;
+        }
         
-        println!("\n{}", "For case-duplicate issues:".yellow());
-        println!("  1. These files have the same name with different case (e.g., File.txt and file.txt)");
-        println!("  2. On case-insensitive filesystems (macOS/Windows), only one can exist");
-        println!("  3. Git-LFS gets confused and may check out the wrong version");
-        println!("  4. To fix: On a case-sensitive Linux system:");
-        println!("     - Identify which variant to keep");
-        println!("     - Delete the unwanted variant(s): {}", "git rm <unwanted_file>".cyan());
-        println!("     - Commit and push the change");
+        println!("\n{}", "Recommendations:".bold());
+        
+        if has_nfd_issues {
+            println!("\n{}", "For NFD normalization issues:".yellow());
+            println!("  1. Ensure {} is set on macOS:", "git config --global core.precomposeUnicode true".cyan());
+            println!("     {}", "git config --global core.precomposeUnicode true".cyan());
+            println!("  2. Use {} to fix affected repositories:", "nfd-fixer".cyan());
+            println!("     {}", "https://github.com/divvun/nfd-fixer".cyan());
+        }
+        
+        if has_case_duplicates {
+            println!("\n{}", "For case-duplicate issues:".yellow());
+            println!("  1. These files have the same name with different case (e.g., File.txt and file.txt)");
+            println!("  2. On case-insensitive filesystems (macOS/Windows), only one can exist");
+            println!("  3. Git-LFS gets confused and may check out the wrong version");
+            println!("  4. To fix: On a case-sensitive Linux system:");
+            println!("     - Identify which variant to keep");
+            println!("     - Delete the unwanted variant(s): {}", "git rm <unwanted_file>".cyan());
+            println!("     - Commit and push the change");
+        }
     }
 
     fn print_system_health_checks(&self) {
