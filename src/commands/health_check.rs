@@ -32,6 +32,12 @@ pub struct HealthCheckArgs {
     #[arg(long, default_value = "50")]
     /// Size threshold in MB for detecting large files not tracked by LFS
     pub large_file_mb: u64,
+    #[arg(long, default_value = "200")]
+    /// Filename length threshold in bytes for warnings
+    pub filename_length_bytes: usize,
+    #[arg(long, default_value = "400")]
+    /// Full path length threshold in bytes for warnings
+    pub path_length_bytes: usize,
 }
 
 #[derive(Debug)]
@@ -64,12 +70,22 @@ struct LargeIgnoredFileIssue {
     size_bytes: u64,
 }
 
+#[derive(Debug)]
+struct LongPathIssue {
+    owner: String,
+    repo: String,
+    file_path: String,
+    path_bytes: usize,
+    filename_bytes: usize,
+}
+
 struct RepoCheckResult {
     repo_name: String,
     nfd_issues: Vec<String>,
     case_duplicates: Vec<Vec<String>>,
     large_files: Vec<(String, u64)>,
     large_ignored_files: Vec<(String, u64)>,
+    long_paths: Vec<(String, usize, usize)>, // (path, path_bytes, filename_bytes)
 }
 
 struct OwnerSummary {
@@ -79,6 +95,7 @@ struct OwnerSummary {
     case_duplicates: Vec<CaseDuplicateIssue>,
     large_files: Vec<LargeFileIssue>,
     large_ignored_files: Vec<LargeIgnoredFileIssue>,
+    long_path_issues: Vec<LongPathIssue>,
 }
 
 impl HealthCheckArgs {
@@ -136,6 +153,7 @@ impl HealthCheckArgs {
                 case_duplicates: Vec::new(),
                 large_files: Vec::new(),
                 large_ignored_files: Vec::new(),
+                long_path_issues: Vec::new(),
             });
         }
 
@@ -151,10 +169,12 @@ impl HealthCheckArgs {
         // Process repos with progress bar
         let progress_message = format!("Checking {}", owner);
         let threshold_bytes = self.large_file_mb * 1024 * 1024;
+        let filename_threshold = self.filename_length_bytes;
+        let path_threshold = self.path_length_bytes;
         let results = common::process_with_progress(
             &progress_message,
             &repos,
-            |repo_path| check_repo(repo_path, threshold_bytes),
+            |repo_path| check_repo(repo_path, threshold_bytes, filename_threshold, path_threshold),
             |result| result.repo_name.clone(),
         );
 
@@ -163,6 +183,7 @@ impl HealthCheckArgs {
         let mut all_case_duplicates = Vec::new();
         let mut all_large_files = Vec::new();
         let mut all_large_ignored_files = Vec::new();
+        let mut all_long_paths = Vec::new();
         
         for result in results {
             for file_path in result.nfd_issues {
@@ -198,6 +219,16 @@ impl HealthCheckArgs {
                     size_bytes,
                 });
             }
+            
+            for (file_path, path_bytes, filename_bytes) in result.long_paths {
+                all_long_paths.push(LongPathIssue {
+                    owner: owner.to_string(),
+                    repo: result.repo_name.clone(),
+                    file_path,
+                    path_bytes,
+                    filename_bytes,
+                });
+            }
         }
 
         Ok(OwnerSummary {
@@ -207,6 +238,7 @@ impl HealthCheckArgs {
             case_duplicates: all_case_duplicates,
             large_files: all_large_files,
             large_ignored_files: all_large_ignored_files,
+            long_path_issues: all_long_paths,
         })
     }
 
@@ -711,7 +743,7 @@ impl HealthCheckArgs {
 }
 
 /// Check a single repository for NFC normalization issues
-fn check_repo(repo_path: &PathBuf, large_file_threshold: u64) -> RepoCheckResult {
+fn check_repo(repo_path: &PathBuf, large_file_threshold: u64, filename_threshold: usize, path_threshold: usize) -> RepoCheckResult {
     let repo_name = path::dir_name(repo_path).unwrap_or_default();
     
     // Try to open as git repo
@@ -723,12 +755,13 @@ fn check_repo(repo_path: &PathBuf, large_file_threshold: u64) -> RepoCheckResult
             case_duplicates: Vec::new(),
             large_files: Vec::new(),
             large_ignored_files: Vec::new(),
+            long_paths: Vec::new(),
         },
     };
 
     let nfd_issues = check_repo_for_nfc_issues(&git_repo).unwrap_or_default();
     let case_duplicates = check_repo_for_case_duplicates(&git_repo).unwrap_or_default();
-    let (large_files, large_ignored_files) = check_repo_for_large_files(&git_repo, large_file_threshold).unwrap_or_default();
+    let (large_files, large_ignored_files, long_paths) = check_repo_for_large_files(&git_repo, large_file_threshold, filename_threshold, path_threshold).unwrap_or_default();
     
     RepoCheckResult {
         repo_name,
@@ -736,6 +769,7 @@ fn check_repo(repo_path: &PathBuf, large_file_threshold: u64) -> RepoCheckResult
         case_duplicates,
         large_files,
         large_ignored_files,
+        long_paths,
     }
 }
 
@@ -850,14 +884,15 @@ fn check_repo_for_case_duplicates(git_repo: &git2::Repository) -> Result<Vec<Vec
 /// but are not tracked by Git LFS (i.e., not pointer files). Returns two lists:
 /// 1. Regular large files that should be tracked by LFS
 /// 2. Large files that match .gitignore patterns (should be removed from git entirely)
-fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64) -> Result<(Vec<(String, u64)>, Vec<(String, u64)>)> {
+fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64, filename_threshold: usize, path_threshold: usize) -> Result<(Vec<(String, u64)>, Vec<(String, u64)>, Vec<(String, usize, usize)>)> {
     let mut large_files = Vec::new();
     let mut large_ignored_files = Vec::new();
+    let mut long_paths = Vec::new();
     
     // Get the HEAD tree
     let head = match git_repo.head() {
         Ok(h) => h,
-        Err(_) => return Ok((large_files, large_ignored_files)), // Empty repo or no commits
+        Err(_) => return Ok((large_files, large_ignored_files, long_paths)), // Empty repo or no commits
     };
     
     let commit = head.peel_to_commit()?;
@@ -866,6 +901,21 @@ fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64)
     // Walk the tree recursively
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
+            let name = std::str::from_utf8(entry.name_bytes()).unwrap_or("<invalid utf-8>");
+            let full_path = if path.is_empty() {
+                name.to_string()
+            } else {
+                format!("{}/{}", path.trim_end_matches('/'), name)
+            };
+            
+            // Check path and filename lengths
+            let path_bytes = full_path.as_bytes().len();
+            let filename_bytes = name.as_bytes().len();
+            
+            if filename_bytes > filename_threshold || path_bytes > path_threshold {
+                long_paths.push((full_path.clone(), path_bytes, filename_bytes));
+            }
+            
             // Get the blob object to check its size
             if let Ok(oid) = entry.id().try_into() {
                 if let Ok(blob) = git_repo.find_blob(oid) {
@@ -879,13 +929,6 @@ fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64)
                             blob.content().starts_with(b"version https://git-lfs.github.com/spec/");
                         
                         if !is_lfs {
-                            let name = std::str::from_utf8(entry.name_bytes()).unwrap_or("<invalid utf-8>");
-                            let full_path = if path.is_empty() {
-                                name.to_string()
-                            } else {
-                                format!("{}/{}", path.trim_end_matches('/'), name)
-                            };
-                            
                             // Check if file should be ignored according to .gitignore
                             let should_ignore = git_repo.status_should_ignore(std::path::Path::new(&full_path))
                                 .unwrap_or(false);
@@ -907,5 +950,8 @@ fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64)
     large_files.sort_by(|a, b| b.1.cmp(&a.1));
     large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
     
-    Ok((large_files, large_ignored_files))
+    // Sort long paths by path length (longest first)
+    long_paths.sort_by(|a, b| b.1.cmp(&a.1));
+    
+    Ok((large_files, large_ignored_files, long_paths))
 }
