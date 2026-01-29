@@ -29,6 +29,9 @@ pub struct HealthCheckArgs {
     #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
+    #[arg(long, default_value = "50")]
+    /// Size threshold in MB for detecting large files not tracked by LFS
+    pub large_file_mb: u64,
 }
 
 #[derive(Debug)]
@@ -45,10 +48,28 @@ struct CaseDuplicateIssue {
     files: Vec<String>,
 }
 
+#[derive(Debug)]
+struct LargeFileIssue {
+    owner: String,
+    repo: String,
+    file_path: String,
+    size_bytes: u64,
+}
+
+#[derive(Debug)]
+struct LargeIgnoredFileIssue {
+    owner: String,
+    repo: String,
+    file_path: String,
+    size_bytes: u64,
+}
+
 struct RepoCheckResult {
     repo_name: String,
     nfd_issues: Vec<String>,
     case_duplicates: Vec<Vec<String>>,
+    large_files: Vec<(String, u64)>,
+    large_ignored_files: Vec<(String, u64)>,
 }
 
 struct OwnerSummary {
@@ -56,6 +77,8 @@ struct OwnerSummary {
     total_repos: usize,
     nfd_issues: Vec<NormalizationIssue>,
     case_duplicates: Vec<CaseDuplicateIssue>,
+    large_files: Vec<LargeFileIssue>,
+    large_ignored_files: Vec<LargeIgnoredFileIssue>,
 }
 
 impl HealthCheckArgs {
@@ -111,6 +134,8 @@ impl HealthCheckArgs {
                 total_repos: 0,
                 nfd_issues: Vec::new(),
                 case_duplicates: Vec::new(),
+                large_files: Vec::new(),
+                large_ignored_files: Vec::new(),
             });
         }
 
@@ -125,16 +150,19 @@ impl HealthCheckArgs {
 
         // Process repos with progress bar
         let progress_message = format!("Checking {}", owner);
+        let threshold_bytes = self.large_file_mb * 1024 * 1024;
         let results = common::process_with_progress(
             &progress_message,
             &repos,
-            |repo_path| check_repo(repo_path),
+            |repo_path| check_repo(repo_path, threshold_bytes),
             |result| result.repo_name.clone(),
         );
 
         // Collect all issues
         let mut all_nfd_issues = Vec::new();
         let mut all_case_duplicates = Vec::new();
+        let mut all_large_files = Vec::new();
+        let mut all_large_ignored_files = Vec::new();
         
         for result in results {
             for file_path in result.nfd_issues {
@@ -152,6 +180,24 @@ impl HealthCheckArgs {
                     files: duplicate_group,
                 });
             }
+            
+            for (file_path, size_bytes) in result.large_files {
+                all_large_files.push(LargeFileIssue {
+                    owner: owner.to_string(),
+                    repo: result.repo_name.clone(),
+                    file_path,
+                    size_bytes,
+                });
+            }
+            
+            for (file_path, size_bytes) in result.large_ignored_files {
+                all_large_ignored_files.push(LargeIgnoredFileIssue {
+                    owner: owner.to_string(),
+                    repo: result.repo_name.clone(),
+                    file_path,
+                    size_bytes,
+                });
+            }
         }
 
         Ok(OwnerSummary {
@@ -159,14 +205,16 @@ impl HealthCheckArgs {
             total_repos,
             nfd_issues: all_nfd_issues,
             case_duplicates: all_case_duplicates,
+            large_files: all_large_files,
+            large_ignored_files: all_large_ignored_files,
         })
     }
 
     fn print_owner_summary(&self, summary: &OwnerSummary) {
         println!("{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
         
-        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() {
-            println!("  {} All filenames are correctly encoded", "✓".green().bold());
+        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() {
+            println!("  {} All checks passed", "✓".green().bold());
         } else {
             // Report NFD issues
             if !summary.nfd_issues.is_empty() {
@@ -215,6 +263,76 @@ impl HealthCheckArgs {
                     }
                 }
             }
+            
+            // Report large files
+            if !summary.large_files.is_empty() {
+                let repo_count = summary.large_files.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n  {} Found {} large files (> {} MB) not in LFS in {} repositories", 
+                    "⚠".yellow().bold(),
+                    summary.large_files.len(),
+                    self.large_file_mb,
+                    repo_count
+                );
+                
+                // Group by repo
+                let mut by_repo: std::collections::HashMap<String, Vec<&LargeFileIssue>> = 
+                    std::collections::HashMap::new();
+                
+                for issue in &summary.large_files {
+                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
+                }
+                
+                let mut repos: Vec<_> = by_repo.keys().collect();
+                repos.sort();
+                
+                for repo in repos {
+                    let issues = &by_repo[repo];
+                    println!("    {} {} ({} files)", "→".cyan(), repo.yellow(), issues.len());
+                    for issue in issues {
+                        let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
+                        println!("      {} ({:.1} MB)", issue.file_path.dimmed(), size_mb);
+                    }
+                }
+            }
+            
+            // Large ignored files section (files that should be removed from git)
+            if !summary.large_ignored_files.is_empty() {
+                let repo_count = summary.large_ignored_files.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n  {} Found {} large files (> {} MB) that should be removed from git in {} repositories", 
+                    "⚠".red().bold(),
+                    summary.large_ignored_files.len(),
+                    self.large_file_mb,
+                    repo_count
+                );
+                
+                // Group by repo
+                let mut by_repo: std::collections::HashMap<String, Vec<&LargeIgnoredFileIssue>> = 
+                    std::collections::HashMap::new();
+                
+                for issue in &summary.large_ignored_files {
+                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
+                }
+                
+                let mut repos: Vec<_> = by_repo.keys().collect();
+                repos.sort();
+                
+                for repo in repos {
+                    let issues = &by_repo[repo];
+                    println!("    {} {} ({} files)", "→".red(), repo.yellow(), issues.len());
+                    for issue in issues {
+                        let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
+                        println!("      {} ({:.1} MB)", issue.file_path.dimmed(), size_mb);
+                    }
+                }
+            }
         }
     }
 
@@ -223,8 +341,8 @@ impl HealthCheckArgs {
         println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
         println!("{}", "═".repeat(80));
         
-        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() {
-            println!("{} All filenames are correctly encoded in {} repositories!", 
+        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() && summary.large_ignored_files.is_empty() {
+            println!("{} All checks passed for {} repositories!", 
                 "✓".green().bold(),
                 summary.total_repos
             );
@@ -282,7 +400,74 @@ impl HealthCheckArgs {
                 table.printstd();
             }
             
-            self.print_recommendations(!summary.nfd_issues.is_empty(), !summary.case_duplicates.is_empty());
+            // Large files section
+            if !summary.large_files.is_empty() {
+                let repo_count = summary.large_files.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n{} Found {} large files (> {} MB) not tracked by LFS in {} of {} repositories", 
+                    "⚠".yellow().bold(),
+                    summary.large_files.len(),
+                    self.large_file_mb,
+                    repo_count,
+                    summary.total_repos
+                );
+                
+                // Print detailed table
+                println!("\n{}", "Detailed list of large files:".bold());
+                let mut table = Table::new();
+                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+                table.set_titles(row!["Repository", "File Path", "Size"]);
+                
+                for issue in &summary.large_files {
+                    let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
+                    table.add_row(row![
+                        cell!(b -> &issue.repo),
+                        cell!(&issue.file_path),
+                        cell!(r -> format!("{:.1} MB", size_mb))
+                    ]);
+                }
+                
+                table.printstd();
+            }
+            
+            // Large ignored files section (more serious - should be removed from git)
+            if !summary.large_ignored_files.is_empty() {
+                let repo_count = summary.large_ignored_files.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n{} Found {} large files (> {} MB) that should be removed from git in {} of {} repositories", 
+                    "⚠".red().bold(),
+                    summary.large_ignored_files.len(),
+                    self.large_file_mb,
+                    repo_count,
+                    summary.total_repos
+                );
+                println!("{}", "These files match .gitignore patterns and should never have been committed".dimmed());
+                
+                // Print detailed table
+                println!("\n{}", "Detailed list of files to remove:".bold());
+                let mut table = Table::new();
+                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+                table.set_titles(row!["Repository", "File Path", "Size"]);
+                
+                for issue in &summary.large_ignored_files {
+                    let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
+                    table.add_row(row![
+                        cell!(b -> &issue.repo),
+                        cell!(&issue.file_path),
+                        cell!(r -> format!("{:.1} MB", size_mb))
+                    ]);
+                }
+                
+                table.printstd();
+            }
+            
+            self.print_recommendations(!summary.nfd_issues.is_empty(), !summary.case_duplicates.is_empty(), !summary.large_files.is_empty(), !summary.large_ignored_files.is_empty());
         }
         println!("{}", "═".repeat(80));
     }
@@ -295,9 +480,11 @@ impl HealthCheckArgs {
         let total_repos: usize = summaries.iter().map(|s| s.total_repos).sum();
         let total_nfd: usize = summaries.iter().map(|s| s.nfd_issues.len()).sum();
         let total_case_dups: usize = summaries.iter().map(|s| s.case_duplicates.len()).sum();
+        let total_large_files: usize = summaries.iter().map(|s| s.large_files.len()).sum();
+        let total_large_ignored: usize = summaries.iter().map(|s| s.large_ignored_files.len()).sum();
         
-        if total_nfd == 0 && total_case_dups == 0 {
-            println!("{} All filenames are correctly encoded in {} repositories across {} owners!", 
+        if total_nfd == 0 && total_case_dups == 0 && total_large_files == 0 && total_large_ignored == 0 {
+            println!("{} All checks passed for {} repositories across {} owners!", 
                 "✓".green().bold(),
                 total_repos,
                 summaries.len()
@@ -319,13 +506,31 @@ impl HealthCheckArgs {
                 );
             }
             
-            self.print_recommendations(total_nfd > 0, total_case_dups > 0);
+            if total_large_files > 0 {
+                println!("{} Found {} large files (> {} MB) not tracked by LFS across {} owners", 
+                    "⚠".yellow().bold(),
+                    total_large_files,
+                    self.large_file_mb,
+                    summaries.len()
+                );
+            }
+            
+            if total_large_ignored > 0 {
+                println!("{} Found {} large files (> {} MB) that should be removed from git across {} owners", 
+                    "⚠".red().bold(),
+                    total_large_ignored,
+                    self.large_file_mb,
+                    summaries.len()
+                );
+            }
+            
+            self.print_recommendations(total_nfd > 0, total_case_dups > 0, total_large_files > 0, total_large_ignored > 0);
         }
         println!("{}", "═".repeat(80));
     }
 
-    fn print_recommendations(&self, has_nfd_issues: bool, has_case_duplicates: bool) {
-        if !has_nfd_issues && !has_case_duplicates {
+    fn print_recommendations(&self, has_nfd_issues: bool, has_case_duplicates: bool, has_large_files: bool, has_large_ignored: bool) {
+        if !has_nfd_issues && !has_case_duplicates && !has_large_files && !has_large_ignored {
             return;
         }
         
@@ -348,6 +553,45 @@ impl HealthCheckArgs {
             println!("     - Identify which variant to keep");
             println!("     - Delete the unwanted variant(s): {}", "git rm <unwanted_file>".cyan());
             println!("     - Commit and push the change");
+        }
+        
+        if has_large_files {
+            println!("\n{}", "For large files not tracked by LFS:".yellow());
+            println!("  1. Install Git LFS if not already installed:");
+            println!("     {}", "brew install git-lfs && git lfs install".cyan());
+            println!("  2. Navigate to the repository and track the file type:");
+            println!("     {}", "git lfs track \"*.extension\"".cyan());
+            println!("     (Replace .extension with the actual file extension, e.g., .zip, .pdf, .bin)");
+            println!("  3. Or track a specific file:");
+            println!("     {}", "git lfs track \"path/to/large/file.ext\"".cyan());
+            println!("  4. Add the .gitattributes file:");
+            println!("     {}", "git add .gitattributes".cyan());
+            println!("  5. Remove the file from Git's object database and re-add it:");
+            println!("     {}", "git rm --cached path/to/large/file.ext".cyan());
+            println!("     {}", "git add path/to/large/file.ext".cyan());
+            println!("  6. Commit and push:");
+            println!("     {}", "git commit -m \"Move large file to LFS\"".cyan());
+            println!("     {}", "git push".cyan());
+            println!("  7. To clean up old large files from history, use:");
+            println!("     {}", "git lfs migrate import --include=\"*.extension\" --everything".cyan());
+            println!("     {}", "Note: This rewrites history. Coordinate with team before running.".dimmed());
+        }
+        
+        if has_large_ignored {
+            println!("\n{}", "For large files that should be removed from git:".red());
+            println!("  {} These files match .gitignore patterns and should never have been committed", "!".red().bold());
+            println!("  1. Remove the file from git (but keep it locally):");
+            println!("     {}", "git rm --cached path/to/file".cyan());
+            println!("  2. Verify the file is now in .gitignore:");
+            println!("     {}", "git check-ignore path/to/file".cyan());
+            println!("     (Should output the file path if properly ignored)");
+            println!("  3. Commit the removal:");
+            println!("     {}", "git commit -m \"Remove generated file from git\"".cyan());
+            println!("     {}", "git push".cyan());
+            println!("  4. To completely remove from history (reduces repo size):");
+            println!("     {}", "git filter-repo --path path/to/file --invert-paths".cyan());
+            println!("     {} or use BFG Repo-Cleaner for multiple files", "OR".bold());
+            println!("     {}", "Note: This rewrites history. All team members must re-clone.".red().dimmed());
         }
     }
 
@@ -445,7 +689,7 @@ impl HealthCheckArgs {
 }
 
 /// Check a single repository for NFC normalization issues
-fn check_repo(repo_path: &PathBuf) -> RepoCheckResult {
+fn check_repo(repo_path: &PathBuf, large_file_threshold: u64) -> RepoCheckResult {
     let repo_name = path::dir_name(repo_path).unwrap_or_default();
     
     // Try to open as git repo
@@ -455,16 +699,21 @@ fn check_repo(repo_path: &PathBuf) -> RepoCheckResult {
             repo_name,
             nfd_issues: Vec::new(),
             case_duplicates: Vec::new(),
+            large_files: Vec::new(),
+            large_ignored_files: Vec::new(),
         },
     };
 
     let nfd_issues = check_repo_for_nfc_issues(&git_repo).unwrap_or_default();
     let case_duplicates = check_repo_for_case_duplicates(&git_repo).unwrap_or_default();
+    let (large_files, large_ignored_files) = check_repo_for_large_files(&git_repo, large_file_threshold).unwrap_or_default();
     
     RepoCheckResult {
         repo_name,
         nfd_issues,
         case_duplicates,
+        large_files,
+        large_ignored_files,
     }
 }
 
@@ -506,7 +755,7 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>>
                     let full_path = if path.is_empty() {
                         name_str.to_string()
                     } else {
-                        format!("{}/{}", path, name_str)
+                        format!("{}/{}", path.trim_end_matches('/'), name_str)
                     };
                     issues.push(full_path);
                 }
@@ -548,7 +797,7 @@ fn check_repo_for_case_duplicates(git_repo: &git2::Repository) -> Result<Vec<Vec
                 let full_path = if path.is_empty() {
                     name_str.to_string()
                 } else {
-                    format!("{}/{}", path, name_str)
+                    format!("{}/{}", path.trim_end_matches('/'), name_str)
                 };
                 
                 // Use lowercase version as key for case-insensitive comparison
@@ -571,4 +820,70 @@ fn check_repo_for_case_duplicates(git_repo: &git2::Repository) -> Result<Vec<Vec
     duplicates.sort();
     
     Ok(duplicates)
+}
+
+/// Check a single repository for large files not tracked by LFS
+///
+/// This function walks the git tree and identifies files that exceed the size threshold
+/// but are not tracked by Git LFS (i.e., not pointer files). Returns two lists:
+/// 1. Regular large files that should be tracked by LFS
+/// 2. Large files that match .gitignore patterns (should be removed from git entirely)
+fn check_repo_for_large_files(git_repo: &git2::Repository, threshold_bytes: u64) -> Result<(Vec<(String, u64)>, Vec<(String, u64)>)> {
+    let mut large_files = Vec::new();
+    let mut large_ignored_files = Vec::new();
+    
+    // Get the HEAD tree
+    let head = match git_repo.head() {
+        Ok(h) => h,
+        Err(_) => return Ok((large_files, large_ignored_files)), // Empty repo or no commits
+    };
+    
+    let commit = head.peel_to_commit()?;
+    let tree = commit.tree()?;
+    
+    // Walk the tree recursively
+    tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
+        if entry.kind() == Some(git2::ObjectType::Blob) {
+            // Get the blob object to check its size
+            if let Ok(oid) = entry.id().try_into() {
+                if let Ok(blob) = git_repo.find_blob(oid) {
+                    let size = blob.size();
+                    
+                    // Check if file exceeds threshold
+                    if size > threshold_bytes as usize {
+                        // Check if it's an LFS pointer file
+                        // LFS pointer files are small text files with specific format
+                        let is_lfs = blob.size() < 200 && 
+                            blob.content().starts_with(b"version https://git-lfs.github.com/spec/");
+                        
+                        if !is_lfs {
+                            let name = std::str::from_utf8(entry.name_bytes()).unwrap_or("<invalid utf-8>");
+                            let full_path = if path.is_empty() {
+                                name.to_string()
+                            } else {
+                                format!("{}/{}", path.trim_end_matches('/'), name)
+                            };
+                            
+                            // Check if file should be ignored according to .gitignore
+                            let should_ignore = git_repo.status_should_ignore(std::path::Path::new(&full_path))
+                                .unwrap_or(false);
+                            
+                            if should_ignore {
+                                large_ignored_files.push((full_path, size as u64));
+                            } else {
+                                large_files.push((full_path, size as u64));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        git2::TreeWalkResult::Ok
+    })?;
+    
+    // Sort by size (largest first)
+    large_files.sort_by(|a, b| b.1.cmp(&a.1));
+    large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
+    
+    Ok((large_files, large_ignored_files))
 }

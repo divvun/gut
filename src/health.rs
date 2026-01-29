@@ -218,4 +218,4 @@ pub fn print_warnings(warnings: &[HealthWarning]) {
 // 9. Check for Git credential helper configuration
 // 10. ✅ Check for NFD/NFC normalization conflicts in existing repos
 // 11. ✅ Check for case-duplicate filenames (identical names except for letter case)
-// 12. Check for large files not tracked by LFS
+// 12. ✅ Check for large files not tracked by LFS
