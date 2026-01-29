@@ -258,15 +258,6 @@ pub fn get_autocrlf_value() -> String {
     }
 }
 
-/// Check if Git LFS is installed and return its status
-pub fn is_git_lfs_installed() -> bool {
-    Command::new("git")
-        .args(&["lfs", "version"])
-        .output()
-        .map(|out| out.status.success())
-        .unwrap_or(false)
-}
-
 /// Print all health warnings at the end of command execution
 pub fn print_warnings(warnings: &[HealthWarning]) {
     if !warnings.is_empty() {

@@ -68,21 +68,18 @@ pub struct HealthCheckArgs {
 
 #[derive(Debug)]
 struct NormalizationIssue {
-    owner: String,
     repo: String,
     file_path: String,
 }
 
 #[derive(Debug)]
 struct CaseDuplicateIssue {
-    owner: String,
     repo: String,
     files: Vec<String>,
 }
 
 #[derive(Debug)]
 struct LargeFileIssue {
-    owner: String,
     repo: String,
     file_path: String,
     size_bytes: u64,
@@ -90,7 +87,6 @@ struct LargeFileIssue {
 
 #[derive(Debug)]
 struct LargeIgnoredFileIssue {
-    owner: String,
     repo: String,
     file_path: String,
     size_bytes: u64,
@@ -98,7 +94,6 @@ struct LargeIgnoredFileIssue {
 
 #[derive(Debug)]
 struct LongPathIssue {
-    owner: String,
     repo: String,
     file_path: String,
     path_bytes: usize,
@@ -127,15 +122,11 @@ struct OwnerSummary {
 // Trait for displaying issues in a generic way
 trait IssueDisplay {
     fn repo(&self) -> &str;
-    fn owner(&self) -> &str;
 }
 
 impl IssueDisplay for NormalizationIssue {
     fn repo(&self) -> &str {
         &self.repo
-    }
-    fn owner(&self) -> &str {
-        &self.owner
     }
 }
 
@@ -143,26 +134,17 @@ impl IssueDisplay for LargeFileIssue {
     fn repo(&self) -> &str {
         &self.repo
     }
-    fn owner(&self) -> &str {
-        &self.owner
-    }
 }
 
 impl IssueDisplay for LargeIgnoredFileIssue {
     fn repo(&self) -> &str {
         &self.repo
     }
-    fn owner(&self) -> &str {
-        &self.owner
-    }
 }
 
 impl IssueDisplay for LongPathIssue {
     fn repo(&self) -> &str {
         &self.repo
-    }
-    fn owner(&self) -> &str {
-        &self.owner
     }
 }
 
@@ -286,7 +268,6 @@ impl HealthCheckArgs {
         for result in results {
             for file_path in result.nfd_issues {
                 all_nfd_issues.push(NormalizationIssue {
-                    owner: owner.to_string(),
                     repo: result.repo_name.clone(),
                     file_path,
                 });
@@ -294,7 +275,6 @@ impl HealthCheckArgs {
 
             for duplicate_group in result.case_duplicates {
                 all_case_duplicates.push(CaseDuplicateIssue {
-                    owner: owner.to_string(),
                     repo: result.repo_name.clone(),
                     files: duplicate_group,
                 });
@@ -302,7 +282,6 @@ impl HealthCheckArgs {
 
             for (file_path, size_bytes) in result.large_files {
                 all_large_files.push(LargeFileIssue {
-                    owner: owner.to_string(),
                     repo: result.repo_name.clone(),
                     file_path,
                     size_bytes,
@@ -311,7 +290,6 @@ impl HealthCheckArgs {
 
             for (file_path, size_bytes) in result.large_ignored_files {
                 all_large_ignored_files.push(LargeIgnoredFileIssue {
-                    owner: owner.to_string(),
                     repo: result.repo_name.clone(),
                     file_path,
                     size_bytes,
@@ -320,7 +298,6 @@ impl HealthCheckArgs {
 
             for (file_path, path_bytes, filename_bytes) in result.long_paths {
                 all_long_paths.push(LongPathIssue {
-                    owner: owner.to_string(),
                     repo: result.repo_name.clone(),
                     file_path,
                     path_bytes,
@@ -1001,8 +978,6 @@ impl HealthCheckArgs {
         // Check 4: Git LFS installation
         let has_lfs_issue = warnings.iter().any(|w| w.title.contains("Git LFS"));
 
-        let lfs_installed = health::is_git_lfs_installed();
-
         if has_lfs_issue {
             println!(
                 "  {} {} ({})",
@@ -1236,30 +1211,29 @@ fn check_repo_for_large_files(
             }
 
             // Get the blob object to check its size
-            if let Ok(oid) = entry.id().try_into() {
-                if let Ok(blob) = git_repo.find_blob(oid) {
-                    let size = blob.size();
+            let oid: git2::Oid = entry.id().into();
+            if let Ok(blob) = git_repo.find_blob(oid) {
+                let size = blob.size();
 
-                    // Check if file exceeds threshold
-                    if size > threshold_bytes as usize {
-                        // Check if it's an LFS pointer file
-                        // LFS pointer files are small text files with specific format
-                        let is_lfs = blob.size() < 200
-                            && blob
-                                .content()
-                                .starts_with(b"version https://git-lfs.github.com/spec/");
+                // Check if file exceeds threshold
+                if size > threshold_bytes as usize {
+                    // Check if it's an LFS pointer file
+                    // LFS pointer files are small text files with specific format
+                    let is_lfs = blob.size() < 200
+                        && blob
+                            .content()
+                            .starts_with(b"version https://git-lfs.github.com/spec/");
 
-                        if !is_lfs {
-                            // Check if file should be ignored according to .gitignore
-                            let should_ignore = git_repo
-                                .status_should_ignore(std::path::Path::new(&full_path))
-                                .unwrap_or(false);
+                    if !is_lfs {
+                        // Check if file should be ignored according to .gitignore
+                        let should_ignore = git_repo
+                            .status_should_ignore(std::path::Path::new(&full_path))
+                            .unwrap_or(false);
 
-                            if should_ignore {
-                                large_ignored_files.push((full_path, size as u64));
-                            } else {
-                                large_files.push((full_path, size as u64));
-                            }
+                        if should_ignore {
+                            large_ignored_files.push((full_path, size as u64));
+                        } else {
+                            large_files.push((full_path, size as u64));
                         }
                     }
                 }
