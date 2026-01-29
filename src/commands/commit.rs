@@ -1,6 +1,7 @@
 use super::common::{self, OrgResult};
 use crate::filter::Filter;
 use crate::git;
+use crate::health;
 use crate::path;
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -32,12 +33,17 @@ pub struct CommitArgs {
 
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
-        common::run_for_owners(
+        let warnings = health::check_git_config();
+        
+        let result = common::run_for_owners(
             self.all_owners,
             self.owner.as_deref(),
             |owner| self.run_for_owner(owner),
             "Committed",
-        )
+        );
+        
+        health::print_warnings(&warnings);
+        result
     }
 
     fn run_for_owner(&self, owner: &str) -> Result<OrgResult> {

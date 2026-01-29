@@ -5,6 +5,7 @@ mod convert;
 mod filter;
 mod git;
 mod github;
+mod health;
 mod path;
 mod toml;
 mod user;
@@ -35,6 +36,7 @@ fn main() -> Result<()> {
         Commands::Commit(cmd) => cmd.run(),
         Commands::Create(cmd) => cmd.run(),
         Commands::Fetch(cmd) => cmd.run(),
+        Commands::Health(cmd) => cmd.run(),
         Commands::Hook(cmd) => cmd.run(),
         Commands::Init(cmd) => cmd.save_config(),
         Commands::Invite(cmd) => cmd.run(),

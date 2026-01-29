@@ -7,6 +7,7 @@ use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::Clonable;
 use crate::git::models::GitRepo;
+use crate::health;
 use crate::user::User;
 use clap::Parser;
 use colored::*;
@@ -30,6 +31,8 @@ pub struct CloneArgs {
 
 impl CloneArgs {
     pub fn run(&self) -> Result<()> {
+        let warnings = health::check_git_config();
+        
         let user = common::user()?;
         let owner = common::owner(self.owner.as_deref())?;
         let use_https = match self.use_https {
@@ -56,7 +59,8 @@ impl CloneArgs {
         );
 
         summarize(&statuses);
-
+        
+        health::print_warnings(&warnings);
         Ok(())
     }
 }
