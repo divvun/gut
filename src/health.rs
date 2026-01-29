@@ -177,12 +177,12 @@ pub fn get_precompose_unicode_value() -> String {
         Ok(out) => {
             let value = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if value.is_empty() {
-                "(default: true)".to_string()
+                "default: true".to_string()
             } else {
                 value
             }
         }
-        Err(_) => "(not set)".to_string(),
+        Err(_) => "not set".to_string(),
     }
 }
 
