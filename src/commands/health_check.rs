@@ -648,7 +648,29 @@ impl HealthCheckArgs {
             }
         }
         
-        // Check 3: Git LFS installation
+        // Check 3: core.autocrlf (Unix systems only)
+        if cfg!(unix) {
+            let has_autocrlf_issue = warnings.iter()
+                .any(|w| w.title.contains("autocrlf"));
+            
+            let autocrlf_value = health::get_autocrlf_value();
+            
+            if has_autocrlf_issue {
+                println!("  {} {} ({})", 
+                    "✗".red().bold(), 
+                    "core.autocrlf setting".dimmed(),
+                    autocrlf_value.dimmed()
+                );
+            } else {
+                println!("  {} {} ({})", 
+                    "✓".green().bold(), 
+                    "core.autocrlf setting",
+                    autocrlf_value.bright_black()
+                );
+            }
+        }
+        
+        // Check 4: Git LFS installation
         let has_lfs_issue = warnings.iter()
             .any(|w| w.title.contains("Git LFS"));
         

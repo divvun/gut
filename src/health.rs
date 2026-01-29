@@ -35,6 +35,13 @@ pub fn check_git_config() -> Vec<HealthWarning> {
         }
     }
 
+    // Check core.autocrlf on Unix systems (macOS/Linux)
+    if cfg!(unix) {
+        if let Some(warning) = check_autocrlf() {
+            warnings.push(warning);
+        }
+    }
+
     // Check if Git LFS is installed
     if let Some(warning) = check_git_lfs_installed() {
         warnings.push(warning);
@@ -128,6 +135,46 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
     None
 }
 
+/// Check if core.autocrlf is properly set on Unix systems (macOS/Linux)
+/// 
+/// Having core.autocrlf=true on Unix systems can cause problems:
+/// - Automatic CRLF conversion can corrupt binary files
+/// - Can cause Git to report changes that don't actually exist
+/// - Is user-specific rather than repository-specific
+/// Best practice: Use .gitattributes files in repositories instead
+fn check_autocrlf() -> Option<HealthWarning> {
+    let output = Command::new("git")
+        .args(&["config", "--get", "core.autocrlf"])
+        .output()
+        .ok()?;
+
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_lowercase();
+
+    // Warn if set to "true" on Unix systems (problematic)
+    // "false", "input", or empty (unset) are all OK
+    if value == "true" {
+        return Some(HealthWarning {
+            title: "core.autocrlf enabled on Unix system".to_string(),
+            message: "Git setting 'core.autocrlf' is set to 'true', which can cause problems on Unix systems.".to_string(),
+            suggestion: Some(
+                "Run: git config --global core.autocrlf input\n   \
+                Or: git config --global --unset core.autocrlf\n   \
+                \n   \
+                Best practice: Use .gitattributes files in your repositories instead.\n   \
+                Example .gitattributes content:\n   \
+                  * text=auto\n   \
+                  *.sh text eol=lf\n   \
+                  *.bat text eol=crlf\n   \
+                \n   \
+                This ensures consistent behavior across all team members."
+                    .to_string(),
+            ),
+        });
+    }
+
+    None
+}
+
 /// Check if Git LFS is installed
 fn check_git_lfs_installed() -> Option<HealthWarning> {
     let output = Command::new("git")
@@ -186,6 +233,25 @@ pub fn get_precompose_unicode_value() -> String {
     }
 }
 
+/// Get the current core.autocrlf setting value
+pub fn get_autocrlf_value() -> String {
+    let output = Command::new("git")
+        .args(&["config", "--get", "core.autocrlf"])
+        .output();
+    
+    match output {
+        Ok(out) => {
+            let value = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if value.is_empty() {
+                "default: false".to_string()
+            } else {
+                value
+            }
+        }
+        Err(_) => "not set".to_string(),
+    }
+}
+
 /// Check if Git LFS is installed and return its status
 pub fn is_git_lfs_installed() -> bool {
     Command::new("git")
@@ -214,7 +280,7 @@ pub fn print_warnings(warnings: &[HealthWarning]) {
 // 5. Check for .gitignore patterns that might cause issues
 // 6. Check for very long filenames (macOS has limits)
 // 7. ✅ Check for case sensitivity issues (macOS is case-insensitive by default)
-// 8. Check for proper line ending configuration (core.autocrlf)
+// 8. ✅ Check for proper line ending configuration (core.autocrlf)
 // 9. Check for Git credential helper configuration
 // 10. ✅ Check for NFD/NFC normalization conflicts in existing repos
 // 11. ✅ Check for case-duplicate filenames (identical names except for letter case)
