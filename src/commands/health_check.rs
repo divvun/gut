@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
 use prettytable::{Table, cell, format, row};
+use std::collections::{HashMap, HashSet, BTreeMap};
 use std::path::{Path, PathBuf};
 use unicode_normalization::UnicodeNormalization;
 
@@ -121,6 +122,51 @@ struct OwnerSummary {
     large_files: Vec<LargeFileIssue>,
     large_ignored_files: Vec<LargeIgnoredFileIssue>,
     long_path_issues: Vec<LongPathIssue>,
+}
+
+// Trait for displaying issues in a generic way
+trait IssueDisplay {
+    fn repo(&self) -> &str;
+    fn owner(&self) -> &str;
+}
+
+impl IssueDisplay for NormalizationIssue {
+    fn repo(&self) -> &str { &self.repo }
+    fn owner(&self) -> &str { &self.owner }
+}
+
+impl IssueDisplay for LargeFileIssue {
+    fn repo(&self) -> &str { &self.repo }
+    fn owner(&self) -> &str { &self.owner }
+}
+
+impl IssueDisplay for LargeIgnoredFileIssue {
+    fn repo(&self) -> &str { &self.repo }
+    fn owner(&self) -> &str { &self.owner }
+}
+
+impl IssueDisplay for LongPathIssue {
+    fn repo(&self) -> &str { &self.repo }
+    fn owner(&self) -> &str { &self.owner }
+}
+
+// Generic helper functions
+fn count_affected_repos<T: IssueDisplay>(issues: &[T]) -> usize {
+    issues.iter()
+        .map(|i| i.repo())
+        .collect::<HashSet<_>>()
+        .len()
+}
+
+fn group_by_repo<T: IssueDisplay>(issues: &[T]) -> BTreeMap<String, Vec<&T>> {
+    let mut by_repo: HashMap<String, Vec<&T>> = HashMap::new();
+    
+    for issue in issues {
+        by_repo.entry(issue.repo().to_string()).or_default().push(issue);
+    }
+    
+    // Convert to BTreeMap for sorted keys
+    by_repo.into_iter().collect()
 }
 
 impl HealthCheckArgs {
@@ -275,10 +321,7 @@ impl HealthCheckArgs {
         } else {
             // Report NFD issues
             if !summary.nfd_issues.is_empty() {
-                let repo_count = summary.nfd_issues.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.nfd_issues);
                 
                 println!("  {} Found {} filenames with NFD normalization in {} repositories", 
                     "⚠".yellow().bold(),
@@ -286,19 +329,9 @@ impl HealthCheckArgs {
                     repo_count
                 );
                 
-                // Group by repo
-                let mut by_repo: std::collections::HashMap<String, Vec<&NormalizationIssue>> = 
-                    std::collections::HashMap::new();
+                let by_repo = group_by_repo(&summary.nfd_issues);
                 
-                for issue in &summary.nfd_issues {
-                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
-                }
-                
-                let mut repos: Vec<_> = by_repo.keys().collect();
-                repos.sort();
-                
-                for repo in repos {
-                    let issues = &by_repo[repo];
+                for (repo, issues) in by_repo {
                     println!("    {} {} ({} files)", "→".cyan(), repo.yellow(), issues.len());
                     for issue in issues {
                         println!("      {}", issue.file_path.dimmed());
@@ -323,10 +356,7 @@ impl HealthCheckArgs {
             
             // Report large files
             if !summary.large_files.is_empty() {
-                let repo_count = summary.large_files.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.large_files);
                 
                 println!("\n  {} Found {} large files (> {} MB) not in LFS in {} repositories", 
                     "⚠".yellow().bold(),
@@ -335,19 +365,9 @@ impl HealthCheckArgs {
                     repo_count
                 );
                 
-                // Group by repo
-                let mut by_repo: std::collections::HashMap<String, Vec<&LargeFileIssue>> = 
-                    std::collections::HashMap::new();
+                let by_repo = group_by_repo(&summary.large_files);
                 
-                for issue in &summary.large_files {
-                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
-                }
-                
-                let mut repos: Vec<_> = by_repo.keys().collect();
-                repos.sort();
-                
-                for repo in repos {
-                    let issues = &by_repo[repo];
+                for (repo, issues) in by_repo {
                     println!("    {} {} ({} files)", "→".cyan(), repo.yellow(), issues.len());
                     for issue in issues {
                         let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
@@ -358,10 +378,7 @@ impl HealthCheckArgs {
             
             // Large ignored files section (files that should be removed from git)
             if !summary.large_ignored_files.is_empty() {
-                let repo_count = summary.large_ignored_files.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.large_ignored_files);
                 
                 println!("\n  {} Found {} large files (> {} MB) that should be removed from git in {} repositories", 
                     "⚠".red().bold(),
@@ -370,19 +387,9 @@ impl HealthCheckArgs {
                     repo_count
                 );
                 
-                // Group by repo
-                let mut by_repo: std::collections::HashMap<String, Vec<&LargeIgnoredFileIssue>> = 
-                    std::collections::HashMap::new();
+                let by_repo = group_by_repo(&summary.large_ignored_files);
                 
-                for issue in &summary.large_ignored_files {
-                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
-                }
-                
-                let mut repos: Vec<_> = by_repo.keys().collect();
-                repos.sort();
-                
-                for repo in repos {
-                    let issues = &by_repo[repo];
+                for (repo, issues) in by_repo {
                     println!("    {} {} ({} files)", "→".red(), repo.yellow(), issues.len());
                     for issue in issues {
                         let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
@@ -393,10 +400,7 @@ impl HealthCheckArgs {
             
             // Report long paths/filenames
             if !summary.long_path_issues.is_empty() {
-                let repo_count = summary.long_path_issues.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.long_path_issues);
                 
                 println!("\n  {} Found {} files with long paths or filenames in {} repositories", 
                     "⚠".yellow().bold(),
@@ -404,19 +408,9 @@ impl HealthCheckArgs {
                     repo_count
                 );
                 
-                // Group by repo
-                let mut by_repo: std::collections::HashMap<String, Vec<&LongPathIssue>> = 
-                    std::collections::HashMap::new();
+                let by_repo = group_by_repo(&summary.long_path_issues);
                 
-                for issue in &summary.long_path_issues {
-                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
-                }
-                
-                let mut repos: Vec<_> = by_repo.keys().collect();
-                repos.sort();
-                
-                for repo in repos {
-                    let issues = &by_repo[repo];
+                for (repo, issues) in by_repo {
                     println!("    {} {} ({} files)", "→".cyan(), repo.yellow(), issues.len());
                     for issue in issues {
                         println!("      {} (name: {}B, path: {}B)", 
@@ -443,10 +437,7 @@ impl HealthCheckArgs {
         } else {
             // NFD issues section
             if !summary.nfd_issues.is_empty() {
-                let repo_count = summary.nfd_issues.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.nfd_issues);
                 
                 println!("{} Found {} filenames with NFD normalization in {} of {} repositories", 
                     "⚠".yellow().bold(),
@@ -496,10 +487,7 @@ impl HealthCheckArgs {
             
             // Large files section
             if !summary.large_files.is_empty() {
-                let repo_count = summary.large_files.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.large_files);
                 
                 println!("\n{} Found {} large files (> {} MB) not tracked by LFS in {} of {} repositories", 
                     "⚠".yellow().bold(),
@@ -529,10 +517,7 @@ impl HealthCheckArgs {
             
             // Large ignored files section (more serious - should be removed from git)
             if !summary.large_ignored_files.is_empty() {
-                let repo_count = summary.large_ignored_files.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.large_ignored_files);
                 
                 println!("\n{} Found {} large files (> {} MB) that should be removed from git in {} of {} repositories", 
                     "⚠".red().bold(),
@@ -563,10 +548,7 @@ impl HealthCheckArgs {
             
             // Long paths section
             if !summary.long_path_issues.is_empty() {
-                let repo_count = summary.long_path_issues.iter()
-                    .map(|i| i.repo.as_str())
-                    .collect::<std::collections::HashSet<_>>()
-                    .len();
+                let repo_count = count_affected_repos(&summary.long_path_issues);
                 
                 println!("\n{} Found {} files with long paths or filenames (filename > {}B or path > {}B) in {} of {} repositories", 
                     "⚠".yellow().bold(),
