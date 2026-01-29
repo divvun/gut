@@ -71,7 +71,12 @@ impl HealthCheckArgs {
 
         let mut owner_summaries = Vec::new();
 
-        for owner in &owners {
+        for (index, owner) in owners.iter().enumerate() {
+            // Add blank line before each owner (except first) when checking multiple
+            if self.all_owners && index > 0 {
+                println!();
+            }
+            
             let summary = self.check_owner(&root, owner)?;
             
             // Print per-owner summary if checking multiple owners
@@ -119,8 +124,9 @@ impl HealthCheckArgs {
         let total_repos = repos.len();
 
         // Process repos with progress bar
+        let progress_message = format!("Checking {}", owner);
         let results = common::process_with_progress(
-            "Checking",
+            &progress_message,
             &repos,
             |repo_path| check_repo(repo_path),
             |result| result.repo_name.clone(),
@@ -157,7 +163,7 @@ impl HealthCheckArgs {
     }
 
     fn print_owner_summary(&self, summary: &OwnerSummary) {
-        println!("\n{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
+        println!("{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
         
         if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() {
             println!("  {} All filenames are correctly encoded", "✓".green().bold());
