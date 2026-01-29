@@ -34,14 +34,14 @@ pub struct CommitArgs {
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
         let warnings = health::check_git_config();
-        
+
         let result = common::run_for_owners(
             self.all_owners,
             self.owner.as_deref(),
             |owner| self.run_for_owner(owner),
             "Committed",
         );
-        
+
         health::print_warnings(&warnings);
         result
     }

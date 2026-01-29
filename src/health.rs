@@ -11,7 +11,11 @@ pub struct HealthWarning {
 
 impl HealthWarning {
     pub fn print(&self) {
-        eprintln!("\n{} {}", "⚠️  Warning:".yellow().bold(), self.title.yellow());
+        eprintln!(
+            "\n{} {}",
+            "⚠️  Warning:".yellow().bold(),
+            self.title.yellow()
+        );
         eprintln!("   {}", self.message);
         if let Some(suggestion) = &self.suggestion {
             eprintln!("   {}", suggestion.bright_black());
@@ -52,29 +56,27 @@ pub fn check_git_config() -> Vec<HealthWarning> {
 
 /// Check if Git version meets minimum requirements (>= 1.7.10)
 fn check_git_version() -> Option<HealthWarning> {
-    let output = Command::new("git")
-        .args(&["--version"])
-        .output()
-        .ok()?;
+    let output = Command::new("git").args(&["--version"]).output().ok()?;
 
     let version_output = String::from_utf8_lossy(&output.stdout);
-    
+
     // Parse version from output like "git version 2.39.3 (Apple Git-146)"
-    let version_str = version_output
-        .split_whitespace()
-        .nth(2)?;
-    
+    let version_str = version_output.split_whitespace().nth(2)?;
+
     let parts: Vec<&str> = version_str.split('.').collect();
     if parts.len() >= 2 {
         let major = parts[0].parse::<u32>().ok()?;
         let minor = parts[1].parse::<u32>().ok()?;
-        
+
         // Require Git >= 1.7.10
         // Check: version is 1.7.x where x < 10, or version is 1.x where x < 7, or version is 0.x
         if major < 1 || (major == 1 && minor < 7) {
             return Some(HealthWarning {
                 title: "Git version too old".to_string(),
-                message: format!("Git version {}.{} is too old. Minimum required is 1.7.10.", major, minor),
+                message: format!(
+                    "Git version {}.{} is too old. Minimum required is 1.7.10.",
+                    major, minor
+                ),
                 suggestion: Some(
                     "Update Git to version 1.7.10 or newer:\n   \
                     macOS: brew upgrade git\n   \
@@ -89,7 +91,10 @@ fn check_git_version() -> Option<HealthWarning> {
                 if patch < 10 {
                     return Some(HealthWarning {
                         title: "Git version too old".to_string(),
-                        message: format!("Git version {}.{}.{} is too old. Minimum required is 1.7.10.", major, minor, patch),
+                        message: format!(
+                            "Git version {}.{}.{} is too old. Minimum required is 1.7.10.",
+                            major, minor, patch
+                        ),
                         suggestion: Some(
                             "Update Git to version 1.7.10 or newer:\n   \
                             macOS: brew upgrade git\n   \
@@ -106,7 +111,7 @@ fn check_git_version() -> Option<HealthWarning> {
 }
 
 /// Check if core.precomposeUnicode is properly set on macOS
-/// 
+///
 /// Since Git 1.7.10, the default behavior on macOS is to use precomposed Unicode (NFC),
 /// so it's OK if this setting is not explicitly set. We only warn if it's explicitly
 /// set to false.
@@ -116,7 +121,9 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
         .output()
         .ok()?;
 
-    let value = String::from_utf8_lossy(&output.stdout).trim().to_lowercase();
+    let value = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .to_lowercase();
 
     // Only warn if explicitly set to false (empty/unset is OK as default is true since Git 1.7.10)
     if value == "false" {
@@ -136,7 +143,7 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
 }
 
 /// Check if core.autocrlf is properly set on Unix systems (macOS/Linux)
-/// 
+///
 /// Having core.autocrlf=true on Unix systems can cause problems:
 /// - Automatic CRLF conversion can corrupt binary files
 /// - Can cause Git to report changes that don't actually exist
@@ -148,7 +155,9 @@ fn check_autocrlf() -> Option<HealthWarning> {
         .output()
         .ok()?;
 
-    let value = String::from_utf8_lossy(&output.stdout).trim().to_lowercase();
+    let value = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .to_lowercase();
 
     // Warn if set to "true" on Unix systems (problematic)
     // "false", "input", or empty (unset) are all OK
@@ -200,13 +209,10 @@ fn check_git_lfs_installed() -> Option<HealthWarning> {
 
 /// Get the current Git version as a string
 pub fn get_git_version() -> Option<String> {
-    let output = Command::new("git")
-        .args(&["--version"])
-        .output()
-        .ok()?;
+    let output = Command::new("git").args(&["--version"]).output().ok()?;
 
     let version_output = String::from_utf8_lossy(&output.stdout);
-    
+
     // Parse version from output like "git version 2.39.3 (Apple Git-146)"
     version_output
         .split_whitespace()
@@ -219,7 +225,7 @@ pub fn get_precompose_unicode_value() -> String {
     let output = Command::new("git")
         .args(&["config", "--get", "core.precomposeUnicode"])
         .output();
-    
+
     match output {
         Ok(out) => {
             let value = String::from_utf8_lossy(&out.stdout).trim().to_string();
@@ -238,7 +244,7 @@ pub fn get_autocrlf_value() -> String {
     let output = Command::new("git")
         .args(&["config", "--get", "core.autocrlf"])
         .output();
-    
+
     match output {
         Ok(out) => {
             let value = String::from_utf8_lossy(&out.stdout).trim().to_string();

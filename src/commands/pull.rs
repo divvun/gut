@@ -46,7 +46,7 @@ pub struct PullArgs {
 impl PullArgs {
     pub fn run(&self, format: Option<OutputFormat>) -> Result<()> {
         let warnings = health::check_git_config();
-        
+
         let format = format.unwrap_or(OutputFormat::Table);
         let result = common::run_for_owners_with_summary(
             self.all_owners,
@@ -54,7 +54,7 @@ impl PullArgs {
             |owner| self.run_for_owner(format, owner),
             print_pull_summary,
         );
-        
+
         health::print_warnings(&warnings);
         result
     }

@@ -1,8 +1,8 @@
 use crate::commands::{
     AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CiArgs, CleanArgs, CloneArgs, CommitArgs,
-    CreateArgs, FetchArgs, HealthCheckArgs, HookArgs, InitArgs, InviteArgs, MakeArgs, MergeArgs, PullArgs, PushArgs,
-    RemoveArgs, RenameArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs, TopicArgs, TransferArgs,
-    WorkflowArgs,
+    CreateArgs, FetchArgs, HealthCheckArgs, HookArgs, InitArgs, InviteArgs, MakeArgs, MergeArgs,
+    PullArgs, PushArgs, RemoveArgs, RenameArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs,
+    TopicArgs, TransferArgs, WorkflowArgs,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 

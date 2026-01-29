@@ -154,7 +154,7 @@ pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStat
         is_ahead,
         is_behind,
     };
-    
+
     // WORKAROUND for NFD/NFC issues on macOS:
     // libgit2 can report files as "deleted" when they actually exist on disk but have
     // different Unicode normalization (NFD vs NFC). Check if "deleted" files actually
@@ -169,7 +169,7 @@ pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStat
 /// On macOS, when `core.precomposeUnicode=true` but the git tree contains NFD-normalized
 /// filenames (from commits made before the setting was enabled), libgit2 will report these
 /// files as "deleted" because it can't find them on disk (it's looking for NFC names).
-/// 
+///
 /// This function checks if any "deleted" files actually exist on disk (with NFD names)
 /// and reclassifies them as "modified" instead, matching git CLI behavior.
 fn fix_nfd_status_issues(repo: &Repository, mut status: GitStatus) -> Result<GitStatus, Error> {
@@ -177,13 +177,13 @@ fn fix_nfd_status_issues(repo: &Repository, mut status: GitStatus) -> Result<Git
         Some(dir) => dir,
         None => return Ok(status), // Bare repo, no working directory
     };
-    
+
     let mut actually_modified = Vec::new();
     let mut truly_deleted = Vec::new();
-    
+
     for deleted_path in &status.deleted {
         let full_path = workdir.join(deleted_path);
-        
+
         // Check if file exists on disk
         if full_path.exists() {
             // File exists! This is likely an NFD/NFC mismatch.
@@ -194,10 +194,10 @@ fn fix_nfd_status_issues(repo: &Repository, mut status: GitStatus) -> Result<Git
             truly_deleted.push(deleted_path.clone());
         }
     }
-    
+
     // Update status with corrected classifications
     status.deleted = truly_deleted;
     status.modified.extend(actually_modified);
-    
+
     Ok(status)
 }

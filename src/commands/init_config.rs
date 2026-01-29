@@ -54,7 +54,7 @@ pub struct InitArgs {
 impl InitArgs {
     pub fn save_config(&self) -> anyhow::Result<()> {
         let warnings = health::check_git_config();
-        
+
         let user = match User::new(self.token.clone()) {
             Ok(user) => user,
             Err(e) => match e.downcast_ref::<github::Unauthorized>() {
@@ -71,7 +71,7 @@ impl InitArgs {
             self.use_https,
         );
         config.save_config()?;
-        
+
         health::print_warnings(&warnings);
         Ok(())
     }
