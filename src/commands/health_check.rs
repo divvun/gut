@@ -10,16 +10,41 @@ use std::path::{Path, PathBuf};
 use unicode_normalization::UnicodeNormalization;
 
 #[derive(Debug, Parser)]
-/// Check repositories for NFD normalization issues and case-duplicate filenames
+/// Comprehensive health check for repositories
 ///
-/// This command scans all files in local repositories and checks for:
+/// This command scans all files in local repositories and performs multiple checks:
 ///
-/// - NFD normalization issues: Filenames with decomposed Unicode characters that
-///   have a composed (NFC) equivalent, which can cause conflicts on macOS
+/// FILE CONTENT CHECKS:
+///
+/// - NFD normalization issues: Filenames with decomposed Unicode characters (NFD)
+///   that have a composed (NFC) equivalent, which can cause conflicts on macOS.
+///   The command detects such files and lists them. The target is to have all filenames
+///   encoded as NFC in the git repository index, and let the conversion to NFD happen
+///   on checkout on macOS systems.
 ///
 /// - Case-duplicate filenames: Files with identical names except for letter case
 ///   (e.g., File.txt and file.txt), which cause problems on case-insensitive
-///   filesystems like macOS and Windows
+///   filesystems like macOS and Windows. Such filenames are reported to help users
+///   identify and change filenames on a case-sensitive filesystem like Linux.
+///
+/// - Large files not tracked by LFS: Files exceeding size threshold (default 50 MB)
+///   that should be tracked by Git LFS, with separate detection for files that
+///   match .gitignore patterns (indicating they shouldn't be in Git at all)
+///
+/// - Long filenames and paths: Files with names or paths that may cause problems
+///   on systems with path length limits (especially Windows with 260 char limit)
+///
+/// SYSTEM CONFIGURATION CHECKS:
+///
+/// - Git version (minimum 1.7.10 required)
+///
+/// - core.precomposeUnicode setting (macOS)
+///
+/// - core.autocrlf setting (Unix systems)
+///
+/// - Git LFS installation status
+///
+/// The command provides detailed recommendations for fixing any issues found.
 pub struct HealthCheckArgs {
     #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
     /// Target owner (organisation or user) name
