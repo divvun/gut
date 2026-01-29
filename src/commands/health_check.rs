@@ -245,7 +245,7 @@ impl HealthCheckArgs {
     fn print_owner_summary(&self, summary: &OwnerSummary) {
         println!("{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
         
-        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() {
+        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() && summary.long_path_issues.is_empty() {
             println!("  {} All checks passed", "✓".green().bold());
         } else {
             // Report NFD issues
@@ -365,6 +365,43 @@ impl HealthCheckArgs {
                     }
                 }
             }
+            
+            // Report long paths/filenames
+            if !summary.long_path_issues.is_empty() {
+                let repo_count = summary.long_path_issues.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n  {} Found {} files with long paths or filenames in {} repositories", 
+                    "⚠".yellow().bold(),
+                    summary.long_path_issues.len(),
+                    repo_count
+                );
+                
+                // Group by repo
+                let mut by_repo: std::collections::HashMap<String, Vec<&LongPathIssue>> = 
+                    std::collections::HashMap::new();
+                
+                for issue in &summary.long_path_issues {
+                    by_repo.entry(issue.repo.clone()).or_default().push(issue);
+                }
+                
+                let mut repos: Vec<_> = by_repo.keys().collect();
+                repos.sort();
+                
+                for repo in repos {
+                    let issues = &by_repo[repo];
+                    println!("    {} {} ({} files)", "→".cyan(), repo.yellow(), issues.len());
+                    for issue in issues {
+                        println!("      {} (name: {}B, path: {}B)", 
+                            issue.file_path.dimmed(), 
+                            issue.filename_bytes, 
+                            issue.path_bytes
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -373,7 +410,7 @@ impl HealthCheckArgs {
         println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
         println!("{}", "═".repeat(80));
         
-        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() && summary.large_ignored_files.is_empty() {
+        if summary.nfd_issues.is_empty() && summary.case_duplicates.is_empty() && summary.large_files.is_empty() && summary.large_ignored_files.is_empty() && summary.long_path_issues.is_empty() {
             println!("{} All checks passed for {} repositories!", 
                 "✓".green().bold(),
                 summary.total_repos
@@ -499,7 +536,42 @@ impl HealthCheckArgs {
                 table.printstd();
             }
             
-            self.print_recommendations(!summary.nfd_issues.is_empty(), !summary.case_duplicates.is_empty(), !summary.large_files.is_empty(), !summary.large_ignored_files.is_empty());
+            // Long paths section
+            if !summary.long_path_issues.is_empty() {
+                let repo_count = summary.long_path_issues.iter()
+                    .map(|i| i.repo.as_str())
+                    .collect::<std::collections::HashSet<_>>()
+                    .len();
+                
+                println!("\n{} Found {} files with long paths or filenames (filename > {}B or path > {}B) in {} of {} repositories", 
+                    "⚠".yellow().bold(),
+                    summary.long_path_issues.len(),
+                    self.filename_length_bytes,
+                    self.path_length_bytes,
+                    repo_count,
+                    summary.total_repos
+                );
+                println!("{}", "Long paths can cause checkout problems, especially on Windows".dimmed());
+                
+                // Print detailed table
+                println!("\n{}", "Detailed list of long paths:".bold());
+                let mut table = Table::new();
+                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+                table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
+                
+                for issue in &summary.long_path_issues {
+                    table.add_row(row![
+                        cell!(b -> &issue.repo),
+                        cell!(&issue.file_path),
+                        cell!(r -> format!("{}B", issue.filename_bytes)),
+                        cell!(r -> format!("{}B", issue.path_bytes))
+                    ]);
+                }
+                
+                table.printstd();
+            }
+            
+            self.print_recommendations(!summary.nfd_issues.is_empty(), !summary.case_duplicates.is_empty(), !summary.large_files.is_empty(), !summary.large_ignored_files.is_empty(), !summary.long_path_issues.is_empty());
         }
         println!("{}", "═".repeat(80));
     }
@@ -514,8 +586,9 @@ impl HealthCheckArgs {
         let total_case_dups: usize = summaries.iter().map(|s| s.case_duplicates.len()).sum();
         let total_large_files: usize = summaries.iter().map(|s| s.large_files.len()).sum();
         let total_large_ignored: usize = summaries.iter().map(|s| s.large_ignored_files.len()).sum();
+        let total_long_paths: usize = summaries.iter().map(|s| s.long_path_issues.len()).sum();
         
-        if total_nfd == 0 && total_case_dups == 0 && total_large_files == 0 && total_large_ignored == 0 {
+        if total_nfd == 0 && total_case_dups == 0 && total_large_files == 0 && total_large_ignored == 0 && total_long_paths == 0 {
             println!("{} All checks passed for {} repositories across {} owners!", 
                 "✓".green().bold(),
                 total_repos,
@@ -556,13 +629,23 @@ impl HealthCheckArgs {
                 );
             }
             
-            self.print_recommendations(total_nfd > 0, total_case_dups > 0, total_large_files > 0, total_large_ignored > 0);
+            if total_long_paths > 0 {
+                println!("{} Found {} files with long paths or filenames (>{}B filename or >{}B path) across {} owners", 
+                    "⚠".yellow().bold(),
+                    total_long_paths,
+                    self.filename_length_bytes,
+                    self.path_length_bytes,
+                    summaries.len()
+                );
+            }
+            
+            self.print_recommendations(total_nfd > 0, total_case_dups > 0, total_large_files > 0, total_large_ignored > 0, total_long_paths > 0);
         }
         println!("{}", "═".repeat(80));
     }
 
-    fn print_recommendations(&self, has_nfd_issues: bool, has_case_duplicates: bool, has_large_files: bool, has_large_ignored: bool) {
-        if !has_nfd_issues && !has_case_duplicates && !has_large_files && !has_large_ignored {
+    fn print_recommendations(&self, has_nfd_issues: bool, has_case_duplicates: bool, has_large_files: bool, has_large_ignored: bool, has_long_paths: bool) {
+        if !has_nfd_issues && !has_case_duplicates && !has_large_files && !has_large_ignored && !has_long_paths {
             return;
         }
         
@@ -624,6 +707,31 @@ impl HealthCheckArgs {
             println!("     {}", "git filter-repo --path path/to/file --invert-paths".cyan());
             println!("     {} or use BFG Repo-Cleaner for multiple files", "OR".bold());
             println!("     {}", "Note: This rewrites history. All team members must re-clone.".red().dimmed());
+        }
+        
+        if has_long_paths {
+            println!("\n{}", "For files with long paths or filenames:".yellow());
+            println!("  {} Long paths can cause checkout problems, especially on Windows (260 char limit)", "⚠".yellow().bold());
+            println!("  {} NFD normalization makes paths appear shorter than they are in bytes", "Note:".dimmed());
+            println!();
+            println!("  {}", "Strategies to shorten paths:".bold());
+            println!("  1. Shorten directory names in deep hierarchies:");
+            println!("     {}", "tools/grammarcheckers/errordata/realworderrors/".dimmed());
+            println!("     {} {}", "→".cyan(), "tools/gc/errors/realword/".cyan());
+            println!("  2. Flatten directory structures where possible:");
+            println!("     {}", "src/components/common/utils/helpers/string/".dimmed());
+            println!("     {} {}", "→".cyan(), "src/utils/string/".cyan());
+            println!("  3. Shorten filenames, especially for files deep in the tree:");
+            println!("     {}", "very_long_descriptive_filename_with_many_words.txt".dimmed());
+            println!("     {} {}", "→".cyan(), "descriptive_file.txt".cyan());
+            println!("  4. Use abbreviations consistently:");
+            println!("     {}", "documentation/ → docs/".cyan());
+            println!("     {}", "configuration/ → config/".cyan());
+            println!("     {}", "resources/ → res/".cyan());
+            println!();
+            println!("  {}", "To rename and preserve history:".bold());
+            println!("     {}", "git mv old/very/long/path/file.txt shorter/path/file.txt".cyan());
+            println!("     {}", "git commit -m \"Shorten path for compatibility\"".cyan());
         }
     }
 
