@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
 use prettytable::{Table, cell, format, row};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use unicode_normalization::UnicodeNormalization;
 
@@ -171,14 +171,6 @@ impl OwnerSummary {
             .collect::<HashSet<_>>()
             .len()
     }
-
-    fn issues_by_repo(&self, kind: IssueKind) -> BTreeMap<&str, Vec<&Issue>> {
-        let mut grouped: BTreeMap<&str, Vec<&Issue>> = BTreeMap::new();
-        for issue in self.issues.iter().filter(|i| i.kind() == kind) {
-            grouped.entry(issue.repo()).or_default().push(issue);
-        }
-        grouped
-    }
 }
 
 /// Create a new table with standard formatting
@@ -301,29 +293,22 @@ impl HealthCheckArgs {
 
         let mut owner_summaries = Vec::new();
 
-        for (index, owner) in owners.iter().enumerate() {
-            // Add blank line before each owner (except first) when checking multiple
-            if self.all_owners && index > 0 {
-                println!();
-            }
-
+        for owner in &owners {
             let summary = self.check_owner(&root, owner)?;
-
-            // Print per-owner summary if checking multiple owners
-            if self.all_owners {
-                self.print_owner_summary(&summary);
-            }
-
             owner_summaries.push(summary);
         }
 
-        // Print final summary
+        // Print summaries
         if self.all_owners {
+            // Multi-owner: print each owner's details, then final summary with recommendations
+            for summary in &owner_summaries {
+                self.print_owner_summary(summary, false);
+            }
             self.print_final_summary(&owner_summaries);
         } else {
-            // Single owner - just print the summary
+            // Single owner: print details with recommendations
             if let Some(summary) = owner_summaries.first() {
-                self.print_single_owner_summary(summary);
+                self.print_owner_summary(summary, true);
             }
         }
 
@@ -381,176 +366,7 @@ impl HealthCheckArgs {
         })
     }
 
-    fn print_owner_summary(&self, summary: &OwnerSummary) {
-        println!("{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
-
-        if summary.is_clean() {
-            println!("  {} All checks passed", "✓".green().bold());
-            return;
-        }
-
-        // Report NFD issues
-        if summary.has_issue_kind(IssueKind::Nfd) {
-            let count = summary.count_of_kind(IssueKind::Nfd);
-            let repo_count = summary.affected_repos_for_kind(IssueKind::Nfd);
-
-            println!(
-                "  {} Found {} filenames with NFD normalization in {} repositories",
-                "⚠".yellow().bold(),
-                count,
-                repo_count
-            );
-
-            for (repo, issues) in summary.issues_by_repo(IssueKind::Nfd) {
-                println!(
-                    "    {} {} ({} files)",
-                    "→".cyan(),
-                    repo.yellow(),
-                    issues.len()
-                );
-                for issue in issues {
-                    if let Issue::Nfd { file_path, .. } = issue {
-                        println!("      {}", file_path.dimmed());
-                    }
-                }
-            }
-        }
-
-        // Report case duplicates
-        if summary.has_issue_kind(IssueKind::CaseDuplicate) {
-            let count = summary.count_of_kind(IssueKind::CaseDuplicate);
-
-            println!(
-                "\n  {} Found {} case-duplicate file groups (problematic on macOS/Windows)",
-                "⚠".yellow().bold(),
-                count
-            );
-
-            for (repo, issues) in summary.issues_by_repo(IssueKind::CaseDuplicate) {
-                for issue in issues {
-                    if let Issue::CaseDuplicate { files, .. } = issue {
-                        println!(
-                            "    {} {} ({} variants)",
-                            "→".cyan(),
-                            repo.yellow(),
-                            files.len()
-                        );
-                        for file in files {
-                            println!("      {}", file.dimmed());
-                        }
-                    }
-                }
-            }
-        }
-
-        // Report large files
-        if summary.has_issue_kind(IssueKind::LargeFile) {
-            let count = summary.count_of_kind(IssueKind::LargeFile);
-            let repo_count = summary.affected_repos_for_kind(IssueKind::LargeFile);
-
-            println!(
-                "\n  {} Found {} large files (> {} MB) not in LFS in {} repositories",
-                "⚠".yellow().bold(),
-                count,
-                self.large_file_mb,
-                repo_count
-            );
-
-            for (repo, issues) in summary.issues_by_repo(IssueKind::LargeFile) {
-                println!(
-                    "    {} {} ({} files)",
-                    "→".cyan(),
-                    repo.yellow(),
-                    issues.len()
-                );
-                for issue in issues {
-                    if let Issue::LargeFile {
-                        file_path,
-                        size_bytes,
-                        ..
-                    } = issue
-                    {
-                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
-                        println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
-                    }
-                }
-            }
-        }
-
-        // Large ignored files section (files that should be removed from git)
-        if summary.has_issue_kind(IssueKind::LargeIgnoredFile) {
-            let count = summary.count_of_kind(IssueKind::LargeIgnoredFile);
-            let repo_count = summary.affected_repos_for_kind(IssueKind::LargeIgnoredFile);
-
-            println!(
-                "\n  {} Found {} large files (> {} MB) that should be removed from git in {} repositories",
-                "⚠".red().bold(),
-                count,
-                self.large_file_mb,
-                repo_count
-            );
-
-            for (repo, issues) in summary.issues_by_repo(IssueKind::LargeIgnoredFile) {
-                println!(
-                    "    {} {} ({} files)",
-                    "→".red(),
-                    repo.yellow(),
-                    issues.len()
-                );
-                for issue in issues {
-                    if let Issue::LargeIgnoredFile {
-                        file_path,
-                        size_bytes,
-                        ..
-                    } = issue
-                    {
-                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
-                        println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
-                    }
-                }
-            }
-        }
-
-        // Report long paths/filenames
-        if summary.has_issue_kind(IssueKind::LongPath) {
-            let count = summary.count_of_kind(IssueKind::LongPath);
-            let repo_count = summary.affected_repos_for_kind(IssueKind::LongPath);
-
-            println!(
-                "\n  {} Found {} files with long paths or filenames in {} repositories",
-                "⚠".yellow().bold(),
-                count,
-                repo_count
-            );
-
-            for (repo, issues) in summary.issues_by_repo(IssueKind::LongPath) {
-                println!(
-                    "    {} {} ({} files)",
-                    "→".cyan(),
-                    repo.yellow(),
-                    issues.len()
-                );
-                for issue in issues {
-                    if let Issue::LongPath {
-                        file_path,
-                        path_bytes,
-                        filename_bytes,
-                        ..
-                    } = issue
-                    {
-                        println!(
-                            "      {} (name: {}B, path: {}B)",
-                            file_path.dimmed(),
-                            filename_bytes,
-                            path_bytes
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    fn print_single_owner_summary(&self, summary: &OwnerSummary) {
+    fn print_owner_summary(&self, summary: &OwnerSummary, include_recommendations: bool) {
         println!("\n{}", "═".repeat(LINE_WIDTH));
         println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
         println!("{}", "═".repeat(LINE_WIDTH));
@@ -652,7 +468,9 @@ impl HealthCheckArgs {
                 print_long_paths_table(&summary.issues);
             }
 
-            self.print_recommendations(summary);
+            if include_recommendations {
+                self.print_recommendations(summary);
+            }
         }
         println!("{}", "═".repeat(LINE_WIDTH));
     }
