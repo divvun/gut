@@ -10,6 +10,19 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use unicode_normalization::UnicodeNormalization;
 
+/// Width of separator lines in output
+const LINE_WIDTH: usize = 80;
+
+/// Bytes per megabyte for size conversions
+const BYTES_PER_MB: f64 = 1024.0 * 1024.0;
+
+/// Maximum size in bytes for a Git LFS pointer file.
+/// LFS pointer files are small text files that reference the actual content.
+const LFS_POINTER_MAX_BYTES: usize = 200;
+
+/// Magic prefix that identifies a Git LFS pointer file
+const LFS_POINTER_PREFIX: &[u8] = b"version https://git-lfs.github.com/spec/";
+
 #[derive(Debug, Parser)]
 /// Comprehensive health check for repositories
 ///
@@ -79,11 +92,30 @@ enum IssueKind {
 /// Unified issue type - all issue data in enum variants
 #[derive(Debug, Clone)]
 enum Issue {
-    Nfd { repo: String, file_path: String },
-    CaseDuplicate { repo: String, files: Vec<String> },
-    LargeFile { repo: String, file_path: String, size_bytes: u64 },
-    LargeIgnoredFile { repo: String, file_path: String, size_bytes: u64 },
-    LongPath { repo: String, file_path: String, path_bytes: usize, filename_bytes: usize },
+    Nfd {
+        repo: String,
+        file_path: String,
+    },
+    CaseDuplicate {
+        repo: String,
+        files: Vec<String>,
+    },
+    LargeFile {
+        repo: String,
+        file_path: String,
+        size_bytes: u64,
+    },
+    LargeIgnoredFile {
+        repo: String,
+        file_path: String,
+        size_bytes: u64,
+    },
+    LongPath {
+        repo: String,
+        file_path: String,
+        path_bytes: usize,
+        filename_bytes: usize,
+    },
 }
 
 impl Issue {
@@ -325,8 +357,13 @@ impl HealthCheckArgs {
                     issues.len()
                 );
                 for issue in issues {
-                    if let Issue::LargeFile { file_path, size_bytes, .. } = issue {
-                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                    if let Issue::LargeFile {
+                        file_path,
+                        size_bytes,
+                        ..
+                    } = issue
+                    {
+                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
                         println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
                     }
                 }
@@ -354,8 +391,13 @@ impl HealthCheckArgs {
                     issues.len()
                 );
                 for issue in issues {
-                    if let Issue::LargeIgnoredFile { file_path, size_bytes, .. } = issue {
-                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                    if let Issue::LargeIgnoredFile {
+                        file_path,
+                        size_bytes,
+                        ..
+                    } = issue
+                    {
+                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
                         println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
                     }
                 }
@@ -382,7 +424,13 @@ impl HealthCheckArgs {
                     issues.len()
                 );
                 for issue in issues {
-                    if let Issue::LongPath { file_path, path_bytes, filename_bytes, .. } = issue {
+                    if let Issue::LongPath {
+                        file_path,
+                        path_bytes,
+                        filename_bytes,
+                        ..
+                    } = issue
+                    {
                         println!(
                             "      {} (name: {}B, path: {}B)",
                             file_path.dimmed(),
@@ -396,9 +444,9 @@ impl HealthCheckArgs {
     }
 
     fn print_single_owner_summary(&self, summary: &OwnerSummary) {
-        println!("\n{}", "═".repeat(80));
+        println!("\n{}", "═".repeat(LINE_WIDTH));
         println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
-        println!("{}", "═".repeat(80));
+        println!("{}", "═".repeat(LINE_WIDTH));
 
         if summary.is_clean() {
             println!(
@@ -485,8 +533,13 @@ impl HealthCheckArgs {
                 table.set_titles(row!["Repository", "File Path", "Size"]);
 
                 for issue in &summary.issues {
-                    if let Issue::LargeFile { repo, file_path, size_bytes } = issue {
-                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                    if let Issue::LargeFile {
+                        repo,
+                        file_path,
+                        size_bytes,
+                    } = issue
+                    {
+                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
                         table.add_row(row![
                             cell!(b -> repo),
                             cell!(file_path),
@@ -524,8 +577,13 @@ impl HealthCheckArgs {
                 table.set_titles(row!["Repository", "File Path", "Size"]);
 
                 for issue in &summary.issues {
-                    if let Issue::LargeIgnoredFile { repo, file_path, size_bytes } = issue {
-                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                    if let Issue::LargeIgnoredFile {
+                        repo,
+                        file_path,
+                        size_bytes,
+                    } = issue
+                    {
+                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
                         table.add_row(row![
                             cell!(b -> repo),
                             cell!(file_path),
@@ -563,7 +621,13 @@ impl HealthCheckArgs {
                 table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
 
                 for issue in &summary.issues {
-                    if let Issue::LongPath { repo, file_path, filename_bytes, path_bytes } = issue {
+                    if let Issue::LongPath {
+                        repo,
+                        file_path,
+                        filename_bytes,
+                        path_bytes,
+                    } = issue
+                    {
                         table.add_row(row![
                             cell!(b -> repo),
                             cell!(file_path),
@@ -578,22 +642,37 @@ impl HealthCheckArgs {
 
             self.print_recommendations(summary);
         }
-        println!("{}", "═".repeat(80));
+        println!("{}", "═".repeat(LINE_WIDTH));
     }
 
     fn print_final_summary(&self, summaries: &[OwnerSummary]) {
-        println!("\n{}", "═".repeat(80));
+        println!("\n{}", "═".repeat(LINE_WIDTH));
         println!("{}", "FINAL SUMMARY".bold());
-        println!("{}", "═".repeat(80));
+        println!("{}", "═".repeat(LINE_WIDTH));
 
         let total_repos: usize = summaries.iter().map(|s| s.total_repos).sum();
 
         // Count issues by kind across all summaries
-        let total_nfd: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::Nfd)).sum();
-        let total_case_dups: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::CaseDuplicate)).sum();
-        let total_large_files: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LargeFile)).sum();
-        let total_large_ignored: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LargeIgnoredFile)).sum();
-        let total_long_paths: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LongPath)).sum();
+        let total_nfd: usize = summaries
+            .iter()
+            .map(|s| s.count_of_kind(IssueKind::Nfd))
+            .sum();
+        let total_case_dups: usize = summaries
+            .iter()
+            .map(|s| s.count_of_kind(IssueKind::CaseDuplicate))
+            .sum();
+        let total_large_files: usize = summaries
+            .iter()
+            .map(|s| s.count_of_kind(IssueKind::LargeFile))
+            .sum();
+        let total_large_ignored: usize = summaries
+            .iter()
+            .map(|s| s.count_of_kind(IssueKind::LargeIgnoredFile))
+            .sum();
+        let total_long_paths: usize = summaries
+            .iter()
+            .map(|s| s.count_of_kind(IssueKind::LongPath))
+            .sum();
 
         let all_clean = total_nfd == 0
             && total_case_dups == 0
@@ -670,7 +749,7 @@ impl HealthCheckArgs {
             };
             self.print_recommendations(&combined_summary);
         }
-        println!("{}", "═".repeat(80));
+        println!("{}", "═".repeat(LINE_WIDTH));
     }
 
     fn print_recommendations(&self, summary: &OwnerSummary) {
@@ -705,7 +784,9 @@ impl HealthCheckArgs {
                     println!(
                         "  1. These files have the same name with different case (e.g., File.txt and file.txt)"
                     );
-                    println!("  2. On case-insensitive filesystems (macOS/Windows), only one can exist");
+                    println!(
+                        "  2. On case-insensitive filesystems (macOS/Windows), only one can exist"
+                    );
                     println!("  3. Git-LFS gets confused and may check out the wrong version");
                     println!("  4. To fix: On a case-sensitive Linux system:");
                     println!("     - Identify which variant to keep");
@@ -741,7 +822,8 @@ impl HealthCheckArgs {
                     );
                     println!(
                         "     {}",
-                        "Note: This rewrites history. Coordinate with team before running.".dimmed()
+                        "Note: This rewrites history. Coordinate with team before running."
+                            .dimmed()
                     );
                 }
                 IssueKind::LargeIgnoredFile => {
@@ -830,9 +912,9 @@ impl HealthCheckArgs {
     }
 
     fn print_system_health_checks(&self) {
-        println!("\n{}", "═".repeat(80));
+        println!("\n{}", "═".repeat(LINE_WIDTH));
         println!("{}", "SYSTEM CONFIGURATION CHECKS".bold());
-        println!("{}", "═".repeat(80));
+        println!("{}", "═".repeat(LINE_WIDTH));
 
         let warnings = health::check_git_config();
 
@@ -943,7 +1025,7 @@ impl HealthCheckArgs {
             }
         }
 
-        println!("\n{}", "═".repeat(80));
+        println!("\n{}", "═".repeat(LINE_WIDTH));
     }
 }
 
@@ -980,6 +1062,22 @@ fn check_repo(
     issues
 }
 
+/// Build a full file path from tree walk path prefix and entry name
+fn build_full_path(path_prefix: &str, name: &str) -> String {
+    if path_prefix.is_empty() {
+        name.to_string()
+    } else {
+        format!("{}/{}", path_prefix.trim_end_matches('/'), name)
+    }
+}
+
+/// Get the HEAD tree from a repository, returning None for empty repos
+fn get_head_tree(repo: &git2::Repository) -> Option<git2::Tree<'_>> {
+    let head = repo.head().ok()?;
+    let commit = head.peel_to_commit().ok()?;
+    commit.tree().ok()
+}
+
 /// Check a single repository for NFC normalization issues
 ///
 /// This function walks the git tree and identifies filenames that are stored in NFD
@@ -992,14 +1090,10 @@ fn check_repo(
 fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Result<Vec<Issue>> {
     let mut issues = Vec::new();
 
-    // Get the HEAD tree
-    let head = match git_repo.head() {
-        Ok(h) => h,
-        Err(_) => return Ok(issues), // Empty repo or no commits
+    let tree = match get_head_tree(git_repo) {
+        Some(t) => t,
+        None => return Ok(issues), // Empty repo or no commits
     };
-
-    let commit = head.peel_to_commit()?;
-    let tree = commit.tree()?;
 
     let repo_name = repo_name.to_string();
 
@@ -1017,14 +1111,9 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
                 // Only flag as issue if NFC form differs from current form.
                 // This means an NFC equivalent exists but the file uses NFD.
                 if name_str != normalized.as_str() {
-                    let full_path = if path.is_empty() {
-                        name_str.to_string()
-                    } else {
-                        format!("{}/{}", path.trim_end_matches('/'), name_str)
-                    };
                     issues.push(Issue::Nfd {
                         repo: repo_name.clone(),
-                        file_path: full_path,
+                        file_path: build_full_path(path, name_str),
                     });
                 }
             }
@@ -1034,6 +1123,7 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
 
     Ok(issues)
 }
+
 /// Check a single repository for case-duplicate files
 ///
 /// This function walks the git tree and identifies files that have the same name
@@ -1043,28 +1133,23 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
 /// the wrong version.
 ///
 /// Example: "File.txt" and "file.txt" are different on Linux but the same on macOS.
-fn check_repo_for_case_duplicates(git_repo: &git2::Repository, repo_name: &str) -> Result<Vec<Issue>> {
+fn check_repo_for_case_duplicates(
+    git_repo: &git2::Repository,
+    repo_name: &str,
+) -> Result<Vec<Issue>> {
     // Map lowercase path -> list of actual paths
     let mut path_map: HashMap<String, Vec<String>> = HashMap::new();
 
-    // Get the HEAD tree
-    let head = match git_repo.head() {
-        Ok(h) => h,
-        Err(_) => return Ok(Vec::new()), // Empty repo or no commits
+    let tree = match get_head_tree(git_repo) {
+        Some(t) => t,
+        None => return Ok(Vec::new()), // Empty repo or no commits
     };
-
-    let commit = head.peel_to_commit()?;
-    let tree = commit.tree()?;
 
     // Walk the tree and collect all file paths
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
             if let Ok(name_str) = std::str::from_utf8(entry.name_bytes()) {
-                let full_path = if path.is_empty() {
-                    name_str.to_string()
-                } else {
-                    format!("{}/{}", path.trim_end_matches('/'), name_str)
-                };
+                let full_path = build_full_path(path, name_str);
 
                 // Use lowercase version as key for case-insensitive comparison
                 let lowercase_path = full_path.to_lowercase();
@@ -1109,14 +1194,10 @@ fn check_repo_for_large_files_and_long_paths(
 ) -> Result<Vec<Issue>> {
     let mut issues = Vec::new();
 
-    // Get the HEAD tree
-    let head = match git_repo.head() {
-        Ok(h) => h,
-        Err(_) => return Ok(issues), // Empty repo or no commits
+    let tree = match get_head_tree(git_repo) {
+        Some(t) => t,
+        None => return Ok(issues), // Empty repo or no commits
     };
-
-    let commit = head.peel_to_commit()?;
-    let tree = commit.tree()?;
 
     let repo_name = repo_name.to_string();
 
@@ -1129,11 +1210,7 @@ fn check_repo_for_large_files_and_long_paths(
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
             let name = std::str::from_utf8(entry.name_bytes()).unwrap_or("<invalid utf-8>");
-            let full_path = if path.is_empty() {
-                name.to_string()
-            } else {
-                format!("{}/{}", path.trim_end_matches('/'), name)
-            };
+            let full_path = build_full_path(path, name);
 
             // Check path and filename lengths
             let path_bytes_len = full_path.as_bytes().len();
@@ -1152,10 +1229,8 @@ fn check_repo_for_large_files_and_long_paths(
                 if size > threshold_bytes as usize {
                     // Check if it's an LFS pointer file
                     // LFS pointer files are small text files with specific format
-                    let is_lfs = blob.size() < 200
-                        && blob
-                            .content()
-                            .starts_with(b"version https://git-lfs.github.com/spec/");
+                    let is_lfs = size < LFS_POINTER_MAX_BYTES
+                        && blob.content().starts_with(LFS_POINTER_PREFIX);
 
                     if !is_lfs {
                         // Check if file should be ignored according to .gitignore
