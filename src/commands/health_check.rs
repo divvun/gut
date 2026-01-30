@@ -66,109 +66,87 @@ pub struct HealthCheckArgs {
     pub path_length_bytes: usize,
 }
 
-#[derive(Debug)]
-struct NormalizationIssue {
-    repo: String,
-    file_path: String,
+/// Lightweight tag for issue types - enables HashSet operations and exhaustive matching
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum IssueKind {
+    Nfd,
+    CaseDuplicate,
+    LargeFile,
+    LargeIgnoredFile,
+    LongPath,
 }
 
-#[derive(Debug)]
-struct CaseDuplicateIssue {
-    repo: String,
-    files: Vec<String>,
+/// Unified issue type - all issue data in enum variants
+#[derive(Debug, Clone)]
+enum Issue {
+    Nfd { repo: String, file_path: String },
+    CaseDuplicate { repo: String, files: Vec<String> },
+    LargeFile { repo: String, file_path: String, size_bytes: u64 },
+    LargeIgnoredFile { repo: String, file_path: String, size_bytes: u64 },
+    LongPath { repo: String, file_path: String, path_bytes: usize, filename_bytes: usize },
 }
 
-#[derive(Debug)]
-struct LargeFileIssue {
-    repo: String,
-    file_path: String,
-    size_bytes: u64,
-}
+impl Issue {
+    fn kind(&self) -> IssueKind {
+        match self {
+            Issue::Nfd { .. } => IssueKind::Nfd,
+            Issue::CaseDuplicate { .. } => IssueKind::CaseDuplicate,
+            Issue::LargeFile { .. } => IssueKind::LargeFile,
+            Issue::LargeIgnoredFile { .. } => IssueKind::LargeIgnoredFile,
+            Issue::LongPath { .. } => IssueKind::LongPath,
+        }
+    }
 
-#[derive(Debug)]
-struct LargeIgnoredFileIssue {
-    repo: String,
-    file_path: String,
-    size_bytes: u64,
-}
-
-#[derive(Debug)]
-struct LongPathIssue {
-    repo: String,
-    file_path: String,
-    path_bytes: usize,
-    filename_bytes: usize,
-}
-
-struct RepoCheckResult {
-    repo_name: String,
-    nfd_issues: Vec<String>,
-    case_duplicates: Vec<Vec<String>>,
-    large_files: Vec<(String, u64)>,
-    large_ignored_files: Vec<(String, u64)>,
-    long_paths: Vec<(String, usize, usize)>, // (path, path_bytes, filename_bytes)
+    fn repo(&self) -> &str {
+        match self {
+            Issue::Nfd { repo, .. } => repo,
+            Issue::CaseDuplicate { repo, .. } => repo,
+            Issue::LargeFile { repo, .. } => repo,
+            Issue::LargeIgnoredFile { repo, .. } => repo,
+            Issue::LongPath { repo, .. } => repo,
+        }
+    }
 }
 
 struct OwnerSummary {
     owner: String,
     total_repos: usize,
-    nfd_issues: Vec<NormalizationIssue>,
-    case_duplicates: Vec<CaseDuplicateIssue>,
-    large_files: Vec<LargeFileIssue>,
-    large_ignored_files: Vec<LargeIgnoredFileIssue>,
-    long_path_issues: Vec<LongPathIssue>,
+    issues: Vec<Issue>,
 }
 
-// Trait for displaying issues in a generic way
-trait IssueDisplay {
-    fn repo(&self) -> &str;
-}
-
-impl IssueDisplay for NormalizationIssue {
-    fn repo(&self) -> &str {
-        &self.repo
-    }
-}
-
-impl IssueDisplay for LargeFileIssue {
-    fn repo(&self) -> &str {
-        &self.repo
-    }
-}
-
-impl IssueDisplay for LargeIgnoredFileIssue {
-    fn repo(&self) -> &str {
-        &self.repo
-    }
-}
-
-impl IssueDisplay for LongPathIssue {
-    fn repo(&self) -> &str {
-        &self.repo
-    }
-}
-
-// Generic helper functions
-fn count_affected_repos<T: IssueDisplay>(issues: &[T]) -> usize {
-    issues
-        .iter()
-        .map(|i| i.repo())
-        .collect::<HashSet<_>>()
-        .len()
-}
-
-fn group_by_repo<T: IssueDisplay>(issues: &[T]) -> BTreeMap<String, Vec<&T>> {
-    let mut by_repo: HashMap<String, Vec<&T>> = HashMap::new();
-
-    for issue in issues {
-        by_repo
-            .entry(issue.repo().to_string())
-            .or_default()
-            .push(issue);
+impl OwnerSummary {
+    fn is_clean(&self) -> bool {
+        self.issues.is_empty()
     }
 
-    // Convert to BTreeMap for sorted keys
-    by_repo.into_iter().collect()
+    fn issue_kinds(&self) -> HashSet<IssueKind> {
+        self.issues.iter().map(|i| i.kind()).collect()
+    }
+
+    fn has_issue_kind(&self, kind: IssueKind) -> bool {
+        self.issues.iter().any(|i| i.kind() == kind)
+    }
+
+    fn count_of_kind(&self, kind: IssueKind) -> usize {
+        self.issues.iter().filter(|i| i.kind() == kind).count()
+    }
+
+    fn affected_repos_for_kind(&self, kind: IssueKind) -> usize {
+        self.issues
+            .iter()
+            .filter(|i| i.kind() == kind)
+            .map(|i| i.repo())
+            .collect::<HashSet<_>>()
+            .len()
+    }
+
+    fn issues_by_repo(&self, kind: IssueKind) -> BTreeMap<&str, Vec<&Issue>> {
+        let mut grouped: BTreeMap<&str, Vec<&Issue>> = BTreeMap::new();
+        for issue in self.issues.iter().filter(|i| i.kind() == kind) {
+            grouped.entry(issue.repo()).or_default().push(issue);
+        }
+        grouped
+    }
 }
 
 impl HealthCheckArgs {
@@ -222,11 +200,7 @@ impl HealthCheckArgs {
             return Ok(OwnerSummary {
                 owner: owner.to_string(),
                 total_repos: 0,
-                nfd_issues: Vec::new(),
-                case_duplicates: Vec::new(),
-                large_files: Vec::new(),
-                large_ignored_files: Vec::new(),
-                long_path_issues: Vec::new(),
+                issues: Vec::new(),
             });
         }
 
@@ -244,7 +218,7 @@ impl HealthCheckArgs {
         let threshold_bytes = self.large_file_mb * 1024 * 1024;
         let filename_threshold = self.filename_length_bytes;
         let path_threshold = self.path_length_bytes;
-        let results = common::process_with_progress(
+        let results: Vec<Vec<Issue>> = common::process_with_progress(
             &progress_message,
             &repos,
             |repo_path| {
@@ -255,207 +229,165 @@ impl HealthCheckArgs {
                     path_threshold,
                 )
             },
-            |result| result.repo_name.clone(),
+            |_issues| String::new(), // Progress display doesn't need repo name from result
         );
 
-        // Collect all issues
-        let mut all_nfd_issues = Vec::new();
-        let mut all_case_duplicates = Vec::new();
-        let mut all_large_files = Vec::new();
-        let mut all_large_ignored_files = Vec::new();
-        let mut all_long_paths = Vec::new();
-
-        for result in results {
-            for file_path in result.nfd_issues {
-                all_nfd_issues.push(NormalizationIssue {
-                    repo: result.repo_name.clone(),
-                    file_path,
-                });
-            }
-
-            for duplicate_group in result.case_duplicates {
-                all_case_duplicates.push(CaseDuplicateIssue {
-                    repo: result.repo_name.clone(),
-                    files: duplicate_group,
-                });
-            }
-
-            for (file_path, size_bytes) in result.large_files {
-                all_large_files.push(LargeFileIssue {
-                    repo: result.repo_name.clone(),
-                    file_path,
-                    size_bytes,
-                });
-            }
-
-            for (file_path, size_bytes) in result.large_ignored_files {
-                all_large_ignored_files.push(LargeIgnoredFileIssue {
-                    repo: result.repo_name.clone(),
-                    file_path,
-                    size_bytes,
-                });
-            }
-
-            for (file_path, path_bytes, filename_bytes) in result.long_paths {
-                all_long_paths.push(LongPathIssue {
-                    repo: result.repo_name.clone(),
-                    file_path,
-                    path_bytes,
-                    filename_bytes,
-                });
-            }
-        }
+        // Flatten all issues from all repos
+        let issues: Vec<Issue> = results.into_iter().flatten().collect();
 
         Ok(OwnerSummary {
             owner: owner.to_string(),
             total_repos,
-            nfd_issues: all_nfd_issues,
-            case_duplicates: all_case_duplicates,
-            large_files: all_large_files,
-            large_ignored_files: all_large_ignored_files,
-            long_path_issues: all_long_paths,
+            issues,
         })
     }
 
     fn print_owner_summary(&self, summary: &OwnerSummary) {
         println!("{} {}:", "Owner:".bold(), summary.owner.cyan().bold());
 
-        if summary.nfd_issues.is_empty()
-            && summary.case_duplicates.is_empty()
-            && summary.large_files.is_empty()
-            && summary.long_path_issues.is_empty()
-        {
+        if summary.is_clean() {
             println!("  {} All checks passed", "✓".green().bold());
-        } else {
-            // Report NFD issues
-            if !summary.nfd_issues.is_empty() {
-                let repo_count = count_affected_repos(&summary.nfd_issues);
+            return;
+        }
 
+        // Report NFD issues
+        if summary.has_issue_kind(IssueKind::Nfd) {
+            let count = summary.count_of_kind(IssueKind::Nfd);
+            let repo_count = summary.affected_repos_for_kind(IssueKind::Nfd);
+
+            println!(
+                "  {} Found {} filenames with NFD normalization in {} repositories",
+                "⚠".yellow().bold(),
+                count,
+                repo_count
+            );
+
+            for (repo, issues) in summary.issues_by_repo(IssueKind::Nfd) {
                 println!(
-                    "  {} Found {} filenames with NFD normalization in {} repositories",
-                    "⚠".yellow().bold(),
-                    summary.nfd_issues.len(),
-                    repo_count
+                    "    {} {} ({} files)",
+                    "→".cyan(),
+                    repo.yellow(),
+                    issues.len()
                 );
-
-                let by_repo = group_by_repo(&summary.nfd_issues);
-
-                for (repo, issues) in by_repo {
-                    println!(
-                        "    {} {} ({} files)",
-                        "→".cyan(),
-                        repo.yellow(),
-                        issues.len()
-                    );
-                    for issue in issues {
-                        println!("      {}", issue.file_path.dimmed());
+                for issue in issues {
+                    if let Issue::Nfd { file_path, .. } = issue {
+                        println!("      {}", file_path.dimmed());
                     }
                 }
             }
+        }
 
-            // Report case duplicates
-            if !summary.case_duplicates.is_empty() {
-                println!(
-                    "\n  {} Found {} case-duplicate file groups (problematic on macOS/Windows)",
-                    "⚠".yellow().bold(),
-                    summary.case_duplicates.len()
-                );
+        // Report case duplicates
+        if summary.has_issue_kind(IssueKind::CaseDuplicate) {
+            let count = summary.count_of_kind(IssueKind::CaseDuplicate);
 
-                for dup in &summary.case_duplicates {
-                    println!(
-                        "    {} {} ({} variants)",
-                        "→".cyan(),
-                        dup.repo.yellow(),
-                        dup.files.len()
-                    );
-                    for file in &dup.files {
-                        println!("      {}", file.dimmed());
+            println!(
+                "\n  {} Found {} case-duplicate file groups (problematic on macOS/Windows)",
+                "⚠".yellow().bold(),
+                count
+            );
+
+            for (repo, issues) in summary.issues_by_repo(IssueKind::CaseDuplicate) {
+                for issue in issues {
+                    if let Issue::CaseDuplicate { files, .. } = issue {
+                        println!(
+                            "    {} {} ({} variants)",
+                            "→".cyan(),
+                            repo.yellow(),
+                            files.len()
+                        );
+                        for file in files {
+                            println!("      {}", file.dimmed());
+                        }
                     }
                 }
             }
+        }
 
-            // Report large files
-            if !summary.large_files.is_empty() {
-                let repo_count = count_affected_repos(&summary.large_files);
+        // Report large files
+        if summary.has_issue_kind(IssueKind::LargeFile) {
+            let count = summary.count_of_kind(IssueKind::LargeFile);
+            let repo_count = summary.affected_repos_for_kind(IssueKind::LargeFile);
 
+            println!(
+                "\n  {} Found {} large files (> {} MB) not in LFS in {} repositories",
+                "⚠".yellow().bold(),
+                count,
+                self.large_file_mb,
+                repo_count
+            );
+
+            for (repo, issues) in summary.issues_by_repo(IssueKind::LargeFile) {
                 println!(
-                    "\n  {} Found {} large files (> {} MB) not in LFS in {} repositories",
-                    "⚠".yellow().bold(),
-                    summary.large_files.len(),
-                    self.large_file_mb,
-                    repo_count
+                    "    {} {} ({} files)",
+                    "→".cyan(),
+                    repo.yellow(),
+                    issues.len()
                 );
-
-                let by_repo = group_by_repo(&summary.large_files);
-
-                for (repo, issues) in by_repo {
-                    println!(
-                        "    {} {} ({} files)",
-                        "→".cyan(),
-                        repo.yellow(),
-                        issues.len()
-                    );
-                    for issue in issues {
-                        let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
-                        println!("      {} ({:.1} MB)", issue.file_path.dimmed(), size_mb);
+                for issue in issues {
+                    if let Issue::LargeFile { file_path, size_bytes, .. } = issue {
+                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                        println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
                     }
                 }
             }
+        }
 
-            // Large ignored files section (files that should be removed from git)
-            if !summary.large_ignored_files.is_empty() {
-                let repo_count = count_affected_repos(&summary.large_ignored_files);
+        // Large ignored files section (files that should be removed from git)
+        if summary.has_issue_kind(IssueKind::LargeIgnoredFile) {
+            let count = summary.count_of_kind(IssueKind::LargeIgnoredFile);
+            let repo_count = summary.affected_repos_for_kind(IssueKind::LargeIgnoredFile);
 
+            println!(
+                "\n  {} Found {} large files (> {} MB) that should be removed from git in {} repositories",
+                "⚠".red().bold(),
+                count,
+                self.large_file_mb,
+                repo_count
+            );
+
+            for (repo, issues) in summary.issues_by_repo(IssueKind::LargeIgnoredFile) {
                 println!(
-                    "\n  {} Found {} large files (> {} MB) that should be removed from git in {} repositories",
-                    "⚠".red().bold(),
-                    summary.large_ignored_files.len(),
-                    self.large_file_mb,
-                    repo_count
+                    "    {} {} ({} files)",
+                    "→".red(),
+                    repo.yellow(),
+                    issues.len()
                 );
-
-                let by_repo = group_by_repo(&summary.large_ignored_files);
-
-                for (repo, issues) in by_repo {
-                    println!(
-                        "    {} {} ({} files)",
-                        "→".red(),
-                        repo.yellow(),
-                        issues.len()
-                    );
-                    for issue in issues {
-                        let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
-                        println!("      {} ({:.1} MB)", issue.file_path.dimmed(), size_mb);
+                for issue in issues {
+                    if let Issue::LargeIgnoredFile { file_path, size_bytes, .. } = issue {
+                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                        println!("      {} ({:.1} MB)", file_path.dimmed(), size_mb);
                     }
                 }
             }
+        }
 
-            // Report long paths/filenames
-            if !summary.long_path_issues.is_empty() {
-                let repo_count = count_affected_repos(&summary.long_path_issues);
+        // Report long paths/filenames
+        if summary.has_issue_kind(IssueKind::LongPath) {
+            let count = summary.count_of_kind(IssueKind::LongPath);
+            let repo_count = summary.affected_repos_for_kind(IssueKind::LongPath);
 
+            println!(
+                "\n  {} Found {} files with long paths or filenames in {} repositories",
+                "⚠".yellow().bold(),
+                count,
+                repo_count
+            );
+
+            for (repo, issues) in summary.issues_by_repo(IssueKind::LongPath) {
                 println!(
-                    "\n  {} Found {} files with long paths or filenames in {} repositories",
-                    "⚠".yellow().bold(),
-                    summary.long_path_issues.len(),
-                    repo_count
+                    "    {} {} ({} files)",
+                    "→".cyan(),
+                    repo.yellow(),
+                    issues.len()
                 );
-
-                let by_repo = group_by_repo(&summary.long_path_issues);
-
-                for (repo, issues) in by_repo {
-                    println!(
-                        "    {} {} ({} files)",
-                        "→".cyan(),
-                        repo.yellow(),
-                        issues.len()
-                    );
-                    for issue in issues {
+                for issue in issues {
+                    if let Issue::LongPath { file_path, path_bytes, filename_bytes, .. } = issue {
                         println!(
                             "      {} (name: {}B, path: {}B)",
-                            issue.file_path.dimmed(),
-                            issue.filename_bytes,
-                            issue.path_bytes
+                            file_path.dimmed(),
+                            filename_bytes,
+                            path_bytes
                         );
                     }
                 }
@@ -468,12 +400,7 @@ impl HealthCheckArgs {
         println!("{} {}", "Owner:".bold(), summary.owner.cyan().bold());
         println!("{}", "═".repeat(80));
 
-        if summary.nfd_issues.is_empty()
-            && summary.case_duplicates.is_empty()
-            && summary.large_files.is_empty()
-            && summary.large_ignored_files.is_empty()
-            && summary.long_path_issues.is_empty()
-        {
+        if summary.is_clean() {
             println!(
                 "{} All checks passed for {} repositories!",
                 "✓".green().bold(),
@@ -481,13 +408,14 @@ impl HealthCheckArgs {
             );
         } else {
             // NFD issues section
-            if !summary.nfd_issues.is_empty() {
-                let repo_count = count_affected_repos(&summary.nfd_issues);
+            if summary.has_issue_kind(IssueKind::Nfd) {
+                let count = summary.count_of_kind(IssueKind::Nfd);
+                let repo_count = summary.affected_repos_for_kind(IssueKind::Nfd);
 
                 println!(
                     "{} Found {} filenames with NFD normalization in {} of {} repositories",
                     "⚠".yellow().bold(),
-                    summary.nfd_issues.len(),
+                    count,
                     repo_count,
                     summary.total_repos
                 );
@@ -498,19 +426,23 @@ impl HealthCheckArgs {
                 table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
                 table.set_titles(row!["Repository", "File Path"]);
 
-                for issue in &summary.nfd_issues {
-                    table.add_row(row![cell!(b -> &issue.repo), cell!(&issue.file_path)]);
+                for issue in &summary.issues {
+                    if let Issue::Nfd { repo, file_path } = issue {
+                        table.add_row(row![cell!(b -> repo), cell!(file_path)]);
+                    }
                 }
 
                 table.printstd();
             }
 
             // Case duplicate section
-            if !summary.case_duplicates.is_empty() {
+            if summary.has_issue_kind(IssueKind::CaseDuplicate) {
+                let count = summary.count_of_kind(IssueKind::CaseDuplicate);
+
                 println!(
                     "\n{} Found {} case-duplicate file groups",
                     "⚠".yellow().bold(),
-                    summary.case_duplicates.len()
+                    count
                 );
                 println!(
                     "{}",
@@ -523,21 +455,24 @@ impl HealthCheckArgs {
                 table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
                 table.set_titles(row!["Repository", "Conflicting Files"]);
 
-                for dup in &summary.case_duplicates {
-                    table.add_row(row![cell!(b -> &dup.repo), cell!(dup.files.join("\n"))]);
+                for issue in &summary.issues {
+                    if let Issue::CaseDuplicate { repo, files } = issue {
+                        table.add_row(row![cell!(b -> repo), cell!(files.join("\n"))]);
+                    }
                 }
 
                 table.printstd();
             }
 
             // Large files section
-            if !summary.large_files.is_empty() {
-                let repo_count = count_affected_repos(&summary.large_files);
+            if summary.has_issue_kind(IssueKind::LargeFile) {
+                let count = summary.count_of_kind(IssueKind::LargeFile);
+                let repo_count = summary.affected_repos_for_kind(IssueKind::LargeFile);
 
                 println!(
                     "\n{} Found {} large files (> {} MB) not tracked by LFS in {} of {} repositories",
                     "⚠".yellow().bold(),
-                    summary.large_files.len(),
+                    count,
                     self.large_file_mb,
                     repo_count,
                     summary.total_repos
@@ -549,26 +484,29 @@ impl HealthCheckArgs {
                 table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
                 table.set_titles(row!["Repository", "File Path", "Size"]);
 
-                for issue in &summary.large_files {
-                    let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
-                    table.add_row(row![
-                        cell!(b -> &issue.repo),
-                        cell!(&issue.file_path),
-                        cell!(r -> format!("{:.1} MB", size_mb))
-                    ]);
+                for issue in &summary.issues {
+                    if let Issue::LargeFile { repo, file_path, size_bytes } = issue {
+                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                        table.add_row(row![
+                            cell!(b -> repo),
+                            cell!(file_path),
+                            cell!(r -> format!("{:.1} MB", size_mb))
+                        ]);
+                    }
                 }
 
                 table.printstd();
             }
 
             // Large ignored files section (more serious - should be removed from git)
-            if !summary.large_ignored_files.is_empty() {
-                let repo_count = count_affected_repos(&summary.large_ignored_files);
+            if summary.has_issue_kind(IssueKind::LargeIgnoredFile) {
+                let count = summary.count_of_kind(IssueKind::LargeIgnoredFile);
+                let repo_count = summary.affected_repos_for_kind(IssueKind::LargeIgnoredFile);
 
                 println!(
                     "\n{} Found {} large files (> {} MB) that should be removed from git in {} of {} repositories",
                     "⚠".red().bold(),
-                    summary.large_ignored_files.len(),
+                    count,
                     self.large_file_mb,
                     repo_count,
                     summary.total_repos
@@ -585,26 +523,29 @@ impl HealthCheckArgs {
                 table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
                 table.set_titles(row!["Repository", "File Path", "Size"]);
 
-                for issue in &summary.large_ignored_files {
-                    let size_mb = issue.size_bytes as f64 / (1024.0 * 1024.0);
-                    table.add_row(row![
-                        cell!(b -> &issue.repo),
-                        cell!(&issue.file_path),
-                        cell!(r -> format!("{:.1} MB", size_mb))
-                    ]);
+                for issue in &summary.issues {
+                    if let Issue::LargeIgnoredFile { repo, file_path, size_bytes } = issue {
+                        let size_mb = *size_bytes as f64 / (1024.0 * 1024.0);
+                        table.add_row(row![
+                            cell!(b -> repo),
+                            cell!(file_path),
+                            cell!(r -> format!("{:.1} MB", size_mb))
+                        ]);
+                    }
                 }
 
                 table.printstd();
             }
 
             // Long paths section
-            if !summary.long_path_issues.is_empty() {
-                let repo_count = count_affected_repos(&summary.long_path_issues);
+            if summary.has_issue_kind(IssueKind::LongPath) {
+                let count = summary.count_of_kind(IssueKind::LongPath);
+                let repo_count = summary.affected_repos_for_kind(IssueKind::LongPath);
 
                 println!(
                     "\n{} Found {} files with long paths or filenames (filename > {}B or path > {}B) in {} of {} repositories",
                     "⚠".yellow().bold(),
-                    summary.long_path_issues.len(),
+                    count,
                     self.filename_length_bytes,
                     self.path_length_bytes,
                     repo_count,
@@ -621,25 +562,21 @@ impl HealthCheckArgs {
                 table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
                 table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
 
-                for issue in &summary.long_path_issues {
-                    table.add_row(row![
-                        cell!(b -> &issue.repo),
-                        cell!(&issue.file_path),
-                        cell!(r -> format!("{}B", issue.filename_bytes)),
-                        cell!(r -> format!("{}B", issue.path_bytes))
-                    ]);
+                for issue in &summary.issues {
+                    if let Issue::LongPath { repo, file_path, filename_bytes, path_bytes } = issue {
+                        table.add_row(row![
+                            cell!(b -> repo),
+                            cell!(file_path),
+                            cell!(r -> format!("{}B", filename_bytes)),
+                            cell!(r -> format!("{}B", path_bytes))
+                        ]);
+                    }
                 }
 
                 table.printstd();
             }
 
-            self.print_recommendations(
-                !summary.nfd_issues.is_empty(),
-                !summary.case_duplicates.is_empty(),
-                !summary.large_files.is_empty(),
-                !summary.large_ignored_files.is_empty(),
-                !summary.long_path_issues.is_empty(),
-            );
+            self.print_recommendations(summary);
         }
         println!("{}", "═".repeat(80));
     }
@@ -650,19 +587,21 @@ impl HealthCheckArgs {
         println!("{}", "═".repeat(80));
 
         let total_repos: usize = summaries.iter().map(|s| s.total_repos).sum();
-        let total_nfd: usize = summaries.iter().map(|s| s.nfd_issues.len()).sum();
-        let total_case_dups: usize = summaries.iter().map(|s| s.case_duplicates.len()).sum();
-        let total_large_files: usize = summaries.iter().map(|s| s.large_files.len()).sum();
-        let total_large_ignored: usize =
-            summaries.iter().map(|s| s.large_ignored_files.len()).sum();
-        let total_long_paths: usize = summaries.iter().map(|s| s.long_path_issues.len()).sum();
 
-        if total_nfd == 0
+        // Count issues by kind across all summaries
+        let total_nfd: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::Nfd)).sum();
+        let total_case_dups: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::CaseDuplicate)).sum();
+        let total_large_files: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LargeFile)).sum();
+        let total_large_ignored: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LargeIgnoredFile)).sum();
+        let total_long_paths: usize = summaries.iter().map(|s| s.count_of_kind(IssueKind::LongPath)).sum();
+
+        let all_clean = total_nfd == 0
             && total_case_dups == 0
             && total_large_files == 0
             && total_large_ignored == 0
-            && total_long_paths == 0
-        {
+            && total_long_paths == 0;
+
+        if all_clean {
             println!(
                 "{} All checks passed for {} repositories across {} owners!",
                 "✓".green().bold(),
@@ -719,180 +658,174 @@ impl HealthCheckArgs {
                 );
             }
 
-            self.print_recommendations(
-                total_nfd > 0,
-                total_case_dups > 0,
-                total_large_files > 0,
-                total_large_ignored > 0,
-                total_long_paths > 0,
-            );
+            // Create a combined summary for recommendations
+            let combined_issues: Vec<Issue> = summaries
+                .iter()
+                .flat_map(|s| s.issues.iter().cloned())
+                .collect();
+            let combined_summary = OwnerSummary {
+                owner: String::new(),
+                total_repos,
+                issues: combined_issues,
+            };
+            self.print_recommendations(&combined_summary);
         }
         println!("{}", "═".repeat(80));
     }
 
-    fn print_recommendations(
-        &self,
-        has_nfd_issues: bool,
-        has_case_duplicates: bool,
-        has_large_files: bool,
-        has_large_ignored: bool,
-        has_long_paths: bool,
-    ) {
-        if !has_nfd_issues
-            && !has_case_duplicates
-            && !has_large_files
-            && !has_large_ignored
-            && !has_long_paths
-        {
+    fn print_recommendations(&self, summary: &OwnerSummary) {
+        if summary.is_clean() {
             return;
         }
 
         println!("\n{}", "Recommendations:".bold());
 
-        if has_nfd_issues {
-            println!("\n{}", "For NFD normalization issues:".yellow());
-            println!(
-                "  1. Ensure {} is set on macOS:",
-                "git config --global core.precomposeUnicode true".cyan()
-            );
-            println!(
-                "     {}",
-                "git config --global core.precomposeUnicode true".cyan()
-            );
-            println!(
-                "  2. Use {} to fix affected repositories:",
-                "nfd-fixer".cyan()
-            );
-            println!("     {}", "https://github.com/divvun/nfd-fixer".cyan());
-        }
+        let kinds = summary.issue_kinds();
 
-        if has_case_duplicates {
-            println!("\n{}", "For case-duplicate issues:".yellow());
-            println!(
-                "  1. These files have the same name with different case (e.g., File.txt and file.txt)"
-            );
-            println!("  2. On case-insensitive filesystems (macOS/Windows), only one can exist");
-            println!("  3. Git-LFS gets confused and may check out the wrong version");
-            println!("  4. To fix: On a case-sensitive Linux system:");
-            println!("     - Identify which variant to keep");
-            println!(
-                "     - Delete the unwanted variant(s): {}",
-                "git rm <unwanted_file>".cyan()
-            );
-            println!("     - Commit and push the change");
-        }
-
-        if has_large_files {
-            println!("\n{}", "For large files not tracked by LFS:".yellow());
-            println!("  1. Install Git LFS if not already installed:");
-            println!("     {}", "brew install git-lfs && git lfs install".cyan());
-            println!("  2. Navigate to the repository and track the file type:");
-            println!("     {}", "git lfs track \"*.extension\"".cyan());
-            println!(
-                "     (Replace .extension with the actual file extension, e.g., .zip, .pdf, .bin)"
-            );
-            println!("  3. Or track a specific file:");
-            println!("     {}", "git lfs track \"path/to/large/file.ext\"".cyan());
-            println!("  4. Add the .gitattributes file:");
-            println!("     {}", "git add .gitattributes".cyan());
-            println!("  5. Remove the file from Git's object database and re-add it:");
-            println!("     {}", "git rm --cached path/to/large/file.ext".cyan());
-            println!("     {}", "git add path/to/large/file.ext".cyan());
-            println!("  6. Commit and push:");
-            println!("     {}", "git commit -m \"Move large file to LFS\"".cyan());
-            println!("     {}", "git push".cyan());
-            println!("  7. To clean up old large files from history, use:");
-            println!(
-                "     {}",
-                "git lfs migrate import --include=\"*.extension\" --everything".cyan()
-            );
-            println!(
-                "     {}",
-                "Note: This rewrites history. Coordinate with team before running.".dimmed()
-            );
-        }
-
-        if has_large_ignored {
-            println!(
-                "\n{}",
-                "For large files that should be removed from git:".red()
-            );
-            println!(
-                "  {} These files match .gitignore patterns and should never have been committed",
-                "!".red().bold()
-            );
-            println!("  1. Remove the file from git (but keep it locally):");
-            println!("     {}", "git rm --cached path/to/file".cyan());
-            println!("  2. Verify the file is now in .gitignore:");
-            println!("     {}", "git check-ignore path/to/file".cyan());
-            println!("     (Should output the file path if properly ignored)");
-            println!("  3. Commit the removal:");
-            println!(
-                "     {}",
-                "git commit -m \"Remove generated file from git\"".cyan()
-            );
-            println!("     {}", "git push".cyan());
-            println!("  4. To completely remove from history (reduces repo size):");
-            println!(
-                "     {}",
-                "git filter-repo --path path/to/file --invert-paths".cyan()
-            );
-            println!(
-                "     {} or use BFG Repo-Cleaner for multiple files",
-                "OR".bold()
-            );
-            println!(
-                "     {}",
-                "Note: This rewrites history. All team members must re-clone."
-                    .red()
-                    .dimmed()
-            );
-        }
-
-        if has_long_paths {
-            println!("\n{}", "For files with long paths or filenames:".yellow());
-            println!(
-                "  {} Long paths can cause checkout problems, especially on Windows (260 char limit)",
-                "⚠".yellow().bold()
-            );
-            println!(
-                "  {} NFD normalization makes paths appear shorter than they are in bytes",
-                "Note:".dimmed()
-            );
-            println!();
-            println!("  {}", "Strategies to shorten paths:".bold());
-            println!("  1. Shorten directory names in deep hierarchies:");
-            println!(
-                "     {}",
-                "tools/grammarcheckers/errordata/realworderrors/".dimmed()
-            );
-            println!("     {} {}", "→".cyan(), "tools/gc/errors/realword/".cyan());
-            println!("  2. Flatten directory structures where possible:");
-            println!(
-                "     {}",
-                "src/components/common/utils/helpers/string/".dimmed()
-            );
-            println!("     {} {}", "→".cyan(), "src/utils/string/".cyan());
-            println!("  3. Shorten filenames, especially for files deep in the tree:");
-            println!(
-                "     {}",
-                "very_long_descriptive_filename_with_many_words.txt".dimmed()
-            );
-            println!("     {} {}", "→".cyan(), "descriptive_file.txt".cyan());
-            println!("  4. Use abbreviations consistently:");
-            println!("     {}", "documentation/ → docs/".cyan());
-            println!("     {}", "configuration/ → config/".cyan());
-            println!("     {}", "resources/ → res/".cyan());
-            println!();
-            println!("  {}", "To rename and preserve history:".bold());
-            println!(
-                "     {}",
-                "git mv old/very/long/path/file.txt shorter/path/file.txt".cyan()
-            );
-            println!(
-                "     {}",
-                "git commit -m \"Shorten path for compatibility\"".cyan()
-            );
+        for kind in &kinds {
+            match kind {
+                IssueKind::Nfd => {
+                    println!("\n{}", "For NFD normalization issues:".yellow());
+                    println!(
+                        "  1. Ensure {} is set on macOS:",
+                        "git config --global core.precomposeUnicode true".cyan()
+                    );
+                    println!(
+                        "     {}",
+                        "git config --global core.precomposeUnicode true".cyan()
+                    );
+                    println!(
+                        "  2. Use {} to fix affected repositories:",
+                        "nfd-fixer".cyan()
+                    );
+                    println!("     {}", "https://github.com/divvun/nfd-fixer".cyan());
+                }
+                IssueKind::CaseDuplicate => {
+                    println!("\n{}", "For case-duplicate issues:".yellow());
+                    println!(
+                        "  1. These files have the same name with different case (e.g., File.txt and file.txt)"
+                    );
+                    println!("  2. On case-insensitive filesystems (macOS/Windows), only one can exist");
+                    println!("  3. Git-LFS gets confused and may check out the wrong version");
+                    println!("  4. To fix: On a case-sensitive Linux system:");
+                    println!("     - Identify which variant to keep");
+                    println!(
+                        "     - Delete the unwanted variant(s): {}",
+                        "git rm <unwanted_file>".cyan()
+                    );
+                    println!("     - Commit and push the change");
+                }
+                IssueKind::LargeFile => {
+                    println!("\n{}", "For large files not tracked by LFS:".yellow());
+                    println!("  1. Install Git LFS if not already installed:");
+                    println!("     {}", "brew install git-lfs && git lfs install".cyan());
+                    println!("  2. Navigate to the repository and track the file type:");
+                    println!("     {}", "git lfs track \"*.extension\"".cyan());
+                    println!(
+                        "     (Replace .extension with the actual file extension, e.g., .zip, .pdf, .bin)"
+                    );
+                    println!("  3. Or track a specific file:");
+                    println!("     {}", "git lfs track \"path/to/large/file.ext\"".cyan());
+                    println!("  4. Add the .gitattributes file:");
+                    println!("     {}", "git add .gitattributes".cyan());
+                    println!("  5. Remove the file from Git's object database and re-add it:");
+                    println!("     {}", "git rm --cached path/to/large/file.ext".cyan());
+                    println!("     {}", "git add path/to/large/file.ext".cyan());
+                    println!("  6. Commit and push:");
+                    println!("     {}", "git commit -m \"Move large file to LFS\"".cyan());
+                    println!("     {}", "git push".cyan());
+                    println!("  7. To clean up old large files from history, use:");
+                    println!(
+                        "     {}",
+                        "git lfs migrate import --include=\"*.extension\" --everything".cyan()
+                    );
+                    println!(
+                        "     {}",
+                        "Note: This rewrites history. Coordinate with team before running.".dimmed()
+                    );
+                }
+                IssueKind::LargeIgnoredFile => {
+                    println!(
+                        "\n{}",
+                        "For large files that should be removed from git:".red()
+                    );
+                    println!(
+                        "  {} These files match .gitignore patterns and should never have been committed",
+                        "!".red().bold()
+                    );
+                    println!("  1. Remove the file from git (but keep it locally):");
+                    println!("     {}", "git rm --cached path/to/file".cyan());
+                    println!("  2. Verify the file is now in .gitignore:");
+                    println!("     {}", "git check-ignore path/to/file".cyan());
+                    println!("     (Should output the file path if properly ignored)");
+                    println!("  3. Commit the removal:");
+                    println!(
+                        "     {}",
+                        "git commit -m \"Remove generated file from git\"".cyan()
+                    );
+                    println!("     {}", "git push".cyan());
+                    println!("  4. To completely remove from history (reduces repo size):");
+                    println!(
+                        "     {}",
+                        "git filter-repo --path path/to/file --invert-paths".cyan()
+                    );
+                    println!(
+                        "     {} or use BFG Repo-Cleaner for multiple files",
+                        "OR".bold()
+                    );
+                    println!(
+                        "     {}",
+                        "Note: This rewrites history. All team members must re-clone."
+                            .red()
+                            .dimmed()
+                    );
+                }
+                IssueKind::LongPath => {
+                    println!("\n{}", "For files with long paths or filenames:".yellow());
+                    println!(
+                        "  {} Long paths can cause checkout problems, especially on Windows (260 char limit)",
+                        "⚠".yellow().bold()
+                    );
+                    println!(
+                        "  {} NFD normalization makes paths appear shorter than they are in bytes",
+                        "Note:".dimmed()
+                    );
+                    println!();
+                    println!("  {}", "Strategies to shorten paths:".bold());
+                    println!("  1. Shorten directory names in deep hierarchies:");
+                    println!(
+                        "     {}",
+                        "tools/grammarcheckers/errordata/realworderrors/".dimmed()
+                    );
+                    println!("     {} {}", "→".cyan(), "tools/gc/errors/realword/".cyan());
+                    println!("  2. Flatten directory structures where possible:");
+                    println!(
+                        "     {}",
+                        "src/components/common/utils/helpers/string/".dimmed()
+                    );
+                    println!("     {} {}", "→".cyan(), "src/utils/string/".cyan());
+                    println!("  3. Shorten filenames, especially for files deep in the tree:");
+                    println!(
+                        "     {}",
+                        "very_long_descriptive_filename_with_many_words.txt".dimmed()
+                    );
+                    println!("     {} {}", "→".cyan(), "descriptive_file.txt".cyan());
+                    println!("  4. Use abbreviations consistently:");
+                    println!("     {}", "documentation/ → docs/".cyan());
+                    println!("     {}", "configuration/ → config/".cyan());
+                    println!("     {}", "resources/ → res/".cyan());
+                    println!();
+                    println!("  {}", "To rename and preserve history:".bold());
+                    println!(
+                        "     {}",
+                        "git mv old/very/long/path/file.txt shorter/path/file.txt".cyan()
+                    );
+                    println!(
+                        "     {}",
+                        "git commit -m \"Shorten path for compatibility\"".cyan()
+                    );
+                }
+            }
         }
     }
 
@@ -1014,48 +947,37 @@ impl HealthCheckArgs {
     }
 }
 
-/// Check a single repository for NFC normalization issues
+/// Check a single repository for all issue types
 fn check_repo(
     repo_path: &PathBuf,
     large_file_threshold: u64,
     filename_threshold: usize,
     path_threshold: usize,
-) -> RepoCheckResult {
+) -> Vec<Issue> {
     let repo_name = path::dir_name(repo_path).unwrap_or_default();
 
     // Try to open as git repo
     let git_repo = match git::open(repo_path) {
         Ok(r) => r,
-        Err(_) => {
-            return RepoCheckResult {
-                repo_name,
-                nfd_issues: Vec::new(),
-                case_duplicates: Vec::new(),
-                large_files: Vec::new(),
-                large_ignored_files: Vec::new(),
-                long_paths: Vec::new(),
-            };
-        }
+        Err(_) => return Vec::new(),
     };
 
-    let nfd_issues = check_repo_for_nfc_issues(&git_repo).unwrap_or_default();
-    let case_duplicates = check_repo_for_case_duplicates(&git_repo).unwrap_or_default();
-    let (large_files, large_ignored_files, long_paths) = check_repo_for_large_files(
-        &git_repo,
-        large_file_threshold,
-        filename_threshold,
-        path_threshold,
-    )
-    .unwrap_or_default();
+    let mut issues = Vec::new();
 
-    RepoCheckResult {
-        repo_name,
-        nfd_issues,
-        case_duplicates,
-        large_files,
-        large_ignored_files,
-        long_paths,
-    }
+    issues.extend(check_repo_for_nfc_issues(&git_repo, &repo_name).unwrap_or_default());
+    issues.extend(check_repo_for_case_duplicates(&git_repo, &repo_name).unwrap_or_default());
+    issues.extend(
+        check_repo_for_large_files_and_long_paths(
+            &git_repo,
+            &repo_name,
+            large_file_threshold,
+            filename_threshold,
+            path_threshold,
+        )
+        .unwrap_or_default(),
+    );
+
+    issues
 }
 
 /// Check a single repository for NFC normalization issues
@@ -1067,7 +989,7 @@ fn check_repo(
 /// have NO precomposed NFC form in Unicode. These are correctly stored in NFD form and will
 /// NOT be flagged as issues. The function only reports files where an NFC equivalent exists
 /// but the filename uses NFD instead.
-fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>> {
+fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Result<Vec<Issue>> {
     let mut issues = Vec::new();
 
     // Get the HEAD tree
@@ -1078,6 +1000,8 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>>
 
     let commit = head.peel_to_commit()?;
     let tree = commit.tree()?;
+
+    let repo_name = repo_name.to_string();
 
     // Walk the tree recursively
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
@@ -1098,7 +1022,10 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>>
                     } else {
                         format!("{}/{}", path.trim_end_matches('/'), name_str)
                     };
-                    issues.push(full_path);
+                    issues.push(Issue::Nfd {
+                        repo: repo_name.clone(),
+                        file_path: full_path,
+                    });
                 }
             }
         }
@@ -1116,9 +1043,7 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository) -> Result<Vec<String>>
 /// the wrong version.
 ///
 /// Example: "File.txt" and "file.txt" are different on Linux but the same on macOS.
-fn check_repo_for_case_duplicates(git_repo: &git2::Repository) -> Result<Vec<Vec<String>>> {
-    use std::collections::HashMap;
-
+fn check_repo_for_case_duplicates(git_repo: &git2::Repository, repo_name: &str) -> Result<Vec<Issue>> {
     // Map lowercase path -> list of actual paths
     let mut path_map: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -1149,48 +1074,56 @@ fn check_repo_for_case_duplicates(git_repo: &git2::Repository) -> Result<Vec<Vec
         git2::TreeWalkResult::Ok
     })?;
 
-    // Find entries with more than one variant
-    let mut duplicates = Vec::new();
-    for (_, paths) in path_map {
-        if paths.len() > 1 {
-            duplicates.push(paths);
-        }
-    }
+    // Find entries with more than one variant and convert to Issues
+    let mut issues = Vec::new();
+    let mut duplicates: Vec<Vec<String>> = path_map
+        .into_values()
+        .filter(|paths| paths.len() > 1)
+        .collect();
 
     // Sort for consistent output
     duplicates.sort();
 
-    Ok(duplicates)
+    for files in duplicates {
+        issues.push(Issue::CaseDuplicate {
+            repo: repo_name.to_string(),
+            files,
+        });
+    }
+
+    Ok(issues)
 }
 
-/// Check a single repository for large files not tracked by LFS
+/// Check a single repository for large files not tracked by LFS and long paths
 ///
-/// This function walks the git tree and identifies files that exceed the size threshold
-/// but are not tracked by Git LFS (i.e., not pointer files). Returns two lists:
-/// 1. Regular large files that should be tracked by LFS
+/// This function walks the git tree and identifies:
+/// 1. Large files that should be tracked by LFS
 /// 2. Large files that match .gitignore patterns (should be removed from git entirely)
-fn check_repo_for_large_files(
+/// 3. Files with long paths or filenames
+fn check_repo_for_large_files_and_long_paths(
     git_repo: &git2::Repository,
+    repo_name: &str,
     threshold_bytes: u64,
     filename_threshold: usize,
     path_threshold: usize,
-) -> Result<(
-    Vec<(String, u64)>,
-    Vec<(String, u64)>,
-    Vec<(String, usize, usize)>,
-)> {
-    let mut large_files = Vec::new();
-    let mut large_ignored_files = Vec::new();
-    let mut long_paths = Vec::new();
+) -> Result<Vec<Issue>> {
+    let mut issues = Vec::new();
 
     // Get the HEAD tree
     let head = match git_repo.head() {
         Ok(h) => h,
-        Err(_) => return Ok((large_files, large_ignored_files, long_paths)), // Empty repo or no commits
+        Err(_) => return Ok(issues), // Empty repo or no commits
     };
 
     let commit = head.peel_to_commit()?;
     let tree = commit.tree()?;
+
+    let repo_name = repo_name.to_string();
+
+    // Collect issues during tree walk, then sort after
+    let mut large_files: Vec<(String, u64)> = Vec::new();
+    let mut large_ignored_files: Vec<(String, u64)> = Vec::new();
+    let mut long_paths: Vec<(String, usize, usize)> = Vec::new();
 
     // Walk the tree recursively
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
@@ -1203,11 +1136,11 @@ fn check_repo_for_large_files(
             };
 
             // Check path and filename lengths
-            let path_bytes = full_path.as_bytes().len();
-            let filename_bytes = name.as_bytes().len();
+            let path_bytes_len = full_path.as_bytes().len();
+            let filename_bytes_len = name.as_bytes().len();
 
-            if filename_bytes > filename_threshold || path_bytes > path_threshold {
-                long_paths.push((full_path.clone(), path_bytes, filename_bytes));
+            if filename_bytes_len > filename_threshold || path_bytes_len > path_threshold {
+                long_paths.push((full_path.clone(), path_bytes_len, filename_bytes_len));
             }
 
             // Get the blob object to check its size
@@ -1242,12 +1175,35 @@ fn check_repo_for_large_files(
         git2::TreeWalkResult::Ok
     })?;
 
-    // Sort by size (largest first)
+    // Sort by size (largest first) and convert to Issues
     large_files.sort_by(|a, b| b.1.cmp(&a.1));
+    for (file_path, size_bytes) in large_files {
+        issues.push(Issue::LargeFile {
+            repo: repo_name.clone(),
+            file_path,
+            size_bytes,
+        });
+    }
+
     large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
+    for (file_path, size_bytes) in large_ignored_files {
+        issues.push(Issue::LargeIgnoredFile {
+            repo: repo_name.clone(),
+            file_path,
+            size_bytes,
+        });
+    }
 
     // Sort long paths by path length (longest first)
     long_paths.sort_by(|a, b| b.1.cmp(&a.1));
+    for (file_path, path_bytes, filename_bytes) in long_paths {
+        issues.push(Issue::LongPath {
+            repo: repo_name.clone(),
+            file_path,
+            path_bytes,
+            filename_bytes,
+        });
+    }
 
-    Ok((large_files, large_ignored_files, long_paths))
+    Ok(issues)
 }
