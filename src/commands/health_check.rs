@@ -181,9 +181,116 @@ impl OwnerSummary {
     }
 }
 
+/// Create a new table with standard formatting
+fn create_table() -> Table {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table
+}
+
+fn print_nfd_table(issues: &[Issue]) {
+    println!("\n{}", "Detailed list of affected files:".bold());
+    let mut table = create_table();
+    table.set_titles(row!["Repository", "File Path"]);
+
+    for issue in issues {
+        if let Issue::Nfd { repo, file_path } = issue {
+            table.add_row(row![cell!(b -> repo), cell!(file_path)]);
+        }
+    }
+
+    table.printstd();
+}
+
+fn print_case_duplicate_table(issues: &[Issue]) {
+    println!("\n{}", "Detailed list of case-duplicates:".bold());
+    let mut table = create_table();
+    table.set_titles(row!["Repository", "Conflicting Files"]);
+
+    for issue in issues {
+        if let Issue::CaseDuplicate { repo, files } = issue {
+            table.add_row(row![cell!(b -> repo), cell!(files.join("\n"))]);
+        }
+    }
+
+    table.printstd();
+}
+
+fn print_large_files_table(issues: &[Issue]) {
+    println!("\n{}", "Detailed list of large files:".bold());
+    let mut table = create_table();
+    table.set_titles(row!["Repository", "File Path", "Size"]);
+
+    for issue in issues {
+        if let Issue::LargeFile {
+            repo,
+            file_path,
+            size_bytes,
+        } = issue
+        {
+            let size_mb = *size_bytes as f64 / BYTES_PER_MB;
+            table.add_row(row![
+                cell!(b -> repo),
+                cell!(file_path),
+                cell!(r -> format!("{:.1} MB", size_mb))
+            ]);
+        }
+    }
+
+    table.printstd();
+}
+
+fn print_large_ignored_table(issues: &[Issue]) {
+    println!("\n{}", "Detailed list of files to remove:".bold());
+    let mut table = create_table();
+    table.set_titles(row!["Repository", "File Path", "Size"]);
+
+    for issue in issues {
+        if let Issue::LargeIgnoredFile {
+            repo,
+            file_path,
+            size_bytes,
+        } = issue
+        {
+            let size_mb = *size_bytes as f64 / BYTES_PER_MB;
+            table.add_row(row![
+                cell!(b -> repo),
+                cell!(file_path),
+                cell!(r -> format!("{:.1} MB", size_mb))
+            ]);
+        }
+    }
+
+    table.printstd();
+}
+
+fn print_long_paths_table(issues: &[Issue]) {
+    println!("\n{}", "Detailed list of long paths:".bold());
+    let mut table = create_table();
+    table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
+
+    for issue in issues {
+        if let Issue::LongPath {
+            repo,
+            file_path,
+            filename_bytes,
+            path_bytes,
+        } = issue
+        {
+            table.add_row(row![
+                cell!(b -> repo),
+                cell!(file_path),
+                cell!(r -> format!("{}B", filename_bytes)),
+                cell!(r -> format!("{}B", path_bytes))
+            ]);
+        }
+    }
+
+    table.printstd();
+}
+
 impl HealthCheckArgs {
     pub fn run(&self) -> Result<()> {
-        let _user = common::user()?;
         let root = common::root()?;
 
         let owners = if self.all_owners {
@@ -467,20 +574,7 @@ impl HealthCheckArgs {
                     repo_count,
                     summary.total_repos
                 );
-
-                // Print detailed table
-                println!("\n{}", "Detailed list of affected files:".bold());
-                let mut table = Table::new();
-                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-                table.set_titles(row!["Repository", "File Path"]);
-
-                for issue in &summary.issues {
-                    if let Issue::Nfd { repo, file_path } = issue {
-                        table.add_row(row![cell!(b -> repo), cell!(file_path)]);
-                    }
-                }
-
-                table.printstd();
+                print_nfd_table(&summary.issues);
             }
 
             // Case duplicate section
@@ -497,19 +591,7 @@ impl HealthCheckArgs {
                     "These will cause problems on case-insensitive filesystems (macOS/Windows)"
                         .dimmed()
                 );
-
-                println!("\n{}", "Detailed list of case-duplicates:".bold());
-                let mut table = Table::new();
-                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-                table.set_titles(row!["Repository", "Conflicting Files"]);
-
-                for issue in &summary.issues {
-                    if let Issue::CaseDuplicate { repo, files } = issue {
-                        table.add_row(row![cell!(b -> repo), cell!(files.join("\n"))]);
-                    }
-                }
-
-                table.printstd();
+                print_case_duplicate_table(&summary.issues);
             }
 
             // Large files section
@@ -525,30 +607,7 @@ impl HealthCheckArgs {
                     repo_count,
                     summary.total_repos
                 );
-
-                // Print detailed table
-                println!("\n{}", "Detailed list of large files:".bold());
-                let mut table = Table::new();
-                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-                table.set_titles(row!["Repository", "File Path", "Size"]);
-
-                for issue in &summary.issues {
-                    if let Issue::LargeFile {
-                        repo,
-                        file_path,
-                        size_bytes,
-                    } = issue
-                    {
-                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
-                        table.add_row(row![
-                            cell!(b -> repo),
-                            cell!(file_path),
-                            cell!(r -> format!("{:.1} MB", size_mb))
-                        ]);
-                    }
-                }
-
-                table.printstd();
+                print_large_files_table(&summary.issues);
             }
 
             // Large ignored files section (more serious - should be removed from git)
@@ -569,30 +628,7 @@ impl HealthCheckArgs {
                     "These files match .gitignore patterns and should never have been committed"
                         .dimmed()
                 );
-
-                // Print detailed table
-                println!("\n{}", "Detailed list of files to remove:".bold());
-                let mut table = Table::new();
-                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-                table.set_titles(row!["Repository", "File Path", "Size"]);
-
-                for issue in &summary.issues {
-                    if let Issue::LargeIgnoredFile {
-                        repo,
-                        file_path,
-                        size_bytes,
-                    } = issue
-                    {
-                        let size_mb = *size_bytes as f64 / BYTES_PER_MB;
-                        table.add_row(row![
-                            cell!(b -> repo),
-                            cell!(file_path),
-                            cell!(r -> format!("{:.1} MB", size_mb))
-                        ]);
-                    }
-                }
-
-                table.printstd();
+                print_large_ignored_table(&summary.issues);
             }
 
             // Long paths section
@@ -613,31 +649,7 @@ impl HealthCheckArgs {
                     "{}",
                     "Long paths can cause checkout problems, especially on Windows".dimmed()
                 );
-
-                // Print detailed table
-                println!("\n{}", "Detailed list of long paths:".bold());
-                let mut table = Table::new();
-                table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-                table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
-
-                for issue in &summary.issues {
-                    if let Issue::LongPath {
-                        repo,
-                        file_path,
-                        filename_bytes,
-                        path_bytes,
-                    } = issue
-                    {
-                        table.add_row(row![
-                            cell!(b -> repo),
-                            cell!(file_path),
-                            cell!(r -> format!("{}B", filename_bytes)),
-                            cell!(r -> format!("{}B", path_bytes))
-                        ]);
-                    }
-                }
-
-                table.printstd();
+                print_long_paths_table(&summary.issues);
             }
 
             self.print_recommendations(summary);
@@ -1041,23 +1053,38 @@ fn check_repo(
     // Try to open as git repo
     let git_repo = match git::open(repo_path) {
         Ok(r) => r,
-        Err(_) => return Vec::new(),
+        Err(e) => {
+            log::debug!("Skipping {}: not a git repository ({})", repo_name, e);
+            return Vec::new();
+        }
     };
 
     let mut issues = Vec::new();
 
-    issues.extend(check_repo_for_nfc_issues(&git_repo, &repo_name).unwrap_or_default());
-    issues.extend(check_repo_for_case_duplicates(&git_repo, &repo_name).unwrap_or_default());
-    issues.extend(
-        check_repo_for_large_files_and_long_paths(
-            &git_repo,
-            &repo_name,
-            large_file_threshold,
-            filename_threshold,
-            path_threshold,
-        )
-        .unwrap_or_default(),
-    );
+    match check_repo_for_nfc_issues(&git_repo, &repo_name) {
+        Ok(nfc_issues) => issues.extend(nfc_issues),
+        Err(e) => log::debug!("NFC check failed for {}: {}", repo_name, e),
+    }
+
+    match check_repo_for_case_duplicates(&git_repo, &repo_name) {
+        Ok(case_issues) => issues.extend(case_issues),
+        Err(e) => log::debug!("Case duplicate check failed for {}: {}", repo_name, e),
+    }
+
+    match check_repo_for_large_files_and_long_paths(
+        &git_repo,
+        &repo_name,
+        large_file_threshold,
+        filename_threshold,
+        path_threshold,
+    ) {
+        Ok(large_path_issues) => issues.extend(large_path_issues),
+        Err(e) => log::debug!(
+            "Large files/long paths check failed for {}: {}",
+            repo_name,
+            e
+        ),
+    }
 
     issues
 }
