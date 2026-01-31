@@ -21,11 +21,7 @@ pub struct HealthWarning {
 
 impl HealthWarning {
     pub fn print(&self) {
-        eprintln!(
-            "\n{} {}",
-            "⚠️  Warning:".yellow().bold(),
-            self.title.yellow()
-        );
+        eprintln!("\n{} {}", "⚠ Warning:".yellow().bold(), self.title.yellow());
         eprintln!("   {}", self.message);
         if let Some(suggestion) = &self.suggestion {
             eprintln!("   {}", suggestion.bright_black());
