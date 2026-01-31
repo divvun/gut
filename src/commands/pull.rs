@@ -5,6 +5,7 @@ use crate::git;
 use crate::git::GitCredential;
 use crate::git::PullStatus;
 use crate::path;
+use crate::system_health;
 use crate::user::User;
 use anyhow::{Context, Error, Result};
 use clap::Parser;
@@ -44,13 +45,18 @@ pub struct PullArgs {
 
 impl PullArgs {
     pub fn run(&self, format: Option<OutputFormat>) -> Result<()> {
+        let warnings = system_health::check_git_config();
+
         let format = format.unwrap_or(OutputFormat::Table);
-        common::run_for_owners_with_summary(
+        let result = common::run_for_owners_with_summary(
             self.all_owners,
             self.owner.as_deref(),
             |owner| self.run_for_owner(format, owner),
             print_pull_summary,
-        )
+        );
+
+        system_health::print_warnings(&warnings);
+        result
     }
 
     fn run_for_owner(&self, format: OutputFormat, owner: &str) -> Result<OrgResult> {

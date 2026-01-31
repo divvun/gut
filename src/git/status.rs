@@ -87,9 +87,6 @@ pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStat
 
     for entry in git_statuses.iter() {
         let status = &entry.status();
-        //if let Some(path) = entry.path() {
-        //log::debug!("entry {:?} {}", entry.status(), path);
-        //}
 
         if Status::is_wt_new(status) {
             if let Some(path) = entry.path() {
@@ -157,6 +154,50 @@ pub fn status(repo: &Repository, recurse_untracked_dirs: bool) -> Result<GitStat
         is_ahead,
         is_behind,
     };
+
+    // WORKAROUND for NFD/NFC issues on macOS:
+    // libgit2 can report files as "deleted" when they actually exist on disk but have
+    // different Unicode normalization (NFD vs NFC). Check if "deleted" files actually
+    // exist on disk and reclassify them as "modified" instead.
+    let status = fix_nfd_status_issues(repo, status)?;
+
+    Ok(status)
+}
+
+/// Fix status misclassifications caused by NFD/NFC normalization differences.
+///
+/// On macOS, when `core.precomposeUnicode=true` but the git tree contains NFD-normalized
+/// filenames (from commits made before the setting was enabled), libgit2 will report these
+/// files as "deleted" because it can't find them on disk (it's looking for NFC names).
+///
+/// This function checks if any "deleted" files actually exist on disk (with NFD names)
+/// and reclassifies them as "modified" instead, matching git CLI behavior.
+fn fix_nfd_status_issues(repo: &Repository, mut status: GitStatus) -> Result<GitStatus, Error> {
+    let workdir = match repo.workdir() {
+        Some(dir) => dir,
+        None => return Ok(status), // Bare repo, no working directory
+    };
+
+    let mut actually_modified = Vec::new();
+    let mut truly_deleted = Vec::new();
+
+    for deleted_path in &status.deleted {
+        let full_path = workdir.join(deleted_path);
+
+        // Check if file exists on disk
+        if full_path.exists() {
+            // File exists! This is likely an NFD/NFC mismatch.
+            // Reclassify as modified.
+            actually_modified.push(deleted_path.clone());
+        } else {
+            // File doesn't exist, it's truly deleted
+            truly_deleted.push(deleted_path.clone());
+        }
+    }
+
+    // Update status with corrected classifications
+    status.deleted = truly_deleted;
+    status.modified.extend(actually_modified);
 
     Ok(status)
 }
