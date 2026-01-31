@@ -4,6 +4,11 @@ use crate::system_health::{self, WarningKind};
 use colored::*;
 use prettytable::{Table, cell, format, row};
 
+/// Sum issue counts of a specific kind across all owner summaries
+fn total_of_kind(summaries: &[OwnerSummary], kind: IssueKind) -> usize {
+    summaries.iter().map(|s| s.count_of_kind(kind)).sum()
+}
+
 /// Create a new table with standard formatting
 fn create_table() -> Table {
     let mut table = Table::new();
@@ -230,26 +235,11 @@ pub fn print_final_summary(args: &RepoHealthArgs, summaries: &[OwnerSummary]) {
     let total_repos: usize = summaries.iter().map(|s| s.total_repos).sum();
 
     // Count issues by kind across all summaries
-    let total_nfd: usize = summaries
-        .iter()
-        .map(|s| s.count_of_kind(IssueKind::Nfd))
-        .sum();
-    let total_case_dups: usize = summaries
-        .iter()
-        .map(|s| s.count_of_kind(IssueKind::CaseDuplicate))
-        .sum();
-    let total_large_files: usize = summaries
-        .iter()
-        .map(|s| s.count_of_kind(IssueKind::LargeFile))
-        .sum();
-    let total_large_ignored: usize = summaries
-        .iter()
-        .map(|s| s.count_of_kind(IssueKind::LargeIgnoredFile))
-        .sum();
-    let total_long_paths: usize = summaries
-        .iter()
-        .map(|s| s.count_of_kind(IssueKind::LongPath))
-        .sum();
+    let total_nfd = total_of_kind(summaries, IssueKind::Nfd);
+    let total_case_dups = total_of_kind(summaries, IssueKind::CaseDuplicate);
+    let total_large_files = total_of_kind(summaries, IssueKind::LargeFile);
+    let total_large_ignored = total_of_kind(summaries, IssueKind::LargeIgnoredFile);
+    let total_long_paths = total_of_kind(summaries, IssueKind::LongPath);
 
     let all_clean = total_nfd == 0
         && total_case_dups == 0
