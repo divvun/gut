@@ -54,7 +54,28 @@ pub fn check_git_config() -> Vec<HealthWarning> {
     warnings
 }
 
-/// Check if Git version meets minimum requirements (>= 1.7.10)
+/// Minimum required Git version
+const MIN_GIT_VERSION: (u32, u32, u32) = (1, 7, 10);
+
+/// Parse a Git version string into (major, minor, patch) tuple.
+/// Returns None if parsing fails. Missing patch version defaults to 0.
+fn parse_git_version(version_str: &str) -> Option<(u32, u32, u32)> {
+    let parts: Vec<&str> = version_str.split('.').collect();
+    if parts.len() < 2 {
+        return None;
+    }
+
+    let major = parts[0].parse::<u32>().ok()?;
+    let minor = parts[1].parse::<u32>().ok()?;
+    let patch = parts
+        .get(2)
+        .and_then(|p| p.parse::<u32>().ok())
+        .unwrap_or(0);
+
+    Some((major, minor, patch))
+}
+
+/// Check if Git version meets minimum requirements
 fn check_git_version() -> Option<HealthWarning> {
     let output = Command::new("git").args(["--version"]).output().ok()?;
 
@@ -62,49 +83,28 @@ fn check_git_version() -> Option<HealthWarning> {
 
     // Parse version from output like "git version 2.39.3 (Apple Git-146)"
     let version_str = version_output.split_whitespace().nth(2)?;
+    let (major, minor, patch) = parse_git_version(version_str)?;
 
-    let parts: Vec<&str> = version_str.split('.').collect();
-    if parts.len() >= 2 {
-        let major = parts[0].parse::<u32>().ok()?;
-        let minor = parts[1].parse::<u32>().ok()?;
+    if (major, minor, patch) < MIN_GIT_VERSION {
+        let installed_version = if patch == 0 {
+            format!("{}.{}", major, minor)
+        } else {
+            format!("{}.{}.{}", major, minor, patch)
+        };
 
-        // Require Git >= 1.7.10
-        // Check: version is 1.7.x where x < 10, or version is 1.x where x < 7, or version is 0.x
-        if major < 1 || (major == 1 && minor < 7) {
-            return Some(HealthWarning {
-                title: "Git version too old".to_string(),
-                message: format!(
-                    "Git version {}.{} is too old. Minimum required is 1.7.10.",
-                    major, minor
-                ),
-                suggestion: Some(
-                    "Update Git to version 1.7.10 or newer:\n   \
-                    macOS: brew upgrade git\n   \
-                    Linux: Use your distribution's package manager to update git"
-                        .to_string(),
-                ),
-            });
-        } else if major == 1 && minor == 7 {
-            // For 1.7.x, check the patch version
-            if parts.len() >= 3 {
-                let patch = parts[2].parse::<u32>().ok().unwrap_or(0);
-                if patch < 10 {
-                    return Some(HealthWarning {
-                        title: "Git version too old".to_string(),
-                        message: format!(
-                            "Git version {}.{}.{} is too old. Minimum required is 1.7.10.",
-                            major, minor, patch
-                        ),
-                        suggestion: Some(
-                            "Update Git to version 1.7.10 or newer:\n   \
-                            macOS: brew upgrade git\n   \
-                            Linux: Use your distribution's package manager to update git"
-                                .to_string(),
-                        ),
-                    });
-                }
-            }
-        }
+        return Some(HealthWarning {
+            title: "Git version too old".to_string(),
+            message: format!(
+                "Git version {} is too old. Minimum required is {}.{}.{}.",
+                installed_version, MIN_GIT_VERSION.0, MIN_GIT_VERSION.1, MIN_GIT_VERSION.2
+            ),
+            suggestion: Some(format!(
+                "Update Git to version {}.{}.{} or newer:\n   \
+                macOS: brew upgrade git\n   \
+                Linux: Use your distribution's package manager to update git",
+                MIN_GIT_VERSION.0, MIN_GIT_VERSION.1, MIN_GIT_VERSION.2
+            )),
+        });
     }
 
     None
