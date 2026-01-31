@@ -6,7 +6,7 @@ use super::common;
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::Path;
-use types::{Issue, OwnerSummary};
+use types::{Issue, OwnerSummary, RepoCheckResult};
 
 #[derive(Debug, Parser)]
 /// Comprehensive health check for repositories
@@ -125,7 +125,7 @@ impl RepoHealthArgs {
         let threshold_bytes = self.large_file_mb * 1024 * 1024;
         let filename_threshold = self.filename_length_bytes;
         let path_threshold = self.path_length_bytes;
-        let results: Vec<Vec<Issue>> = common::process_with_progress(
+        let results: Vec<RepoCheckResult> = common::process_with_progress(
             &progress_message,
             &repos,
             |repo_path| {
@@ -136,11 +136,11 @@ impl RepoHealthArgs {
                     path_threshold,
                 )
             },
-            |_issues| String::new(), // Progress display doesn't need repo name from result
+            |result| result.repo_name.clone(),
         );
 
         // Flatten all issues from all repos
-        let issues: Vec<Issue> = results.into_iter().flatten().collect();
+        let issues: Vec<Issue> = results.into_iter().flat_map(|r| r.issues).collect();
 
         Ok(OwnerSummary {
             owner: owner.to_string(),

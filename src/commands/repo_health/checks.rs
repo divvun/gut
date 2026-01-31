@@ -1,4 +1,4 @@
-use super::types::{Issue, IssueData, LFS_POINTER_MAX_BYTES, LFS_POINTER_PREFIX};
+use super::types::{Issue, IssueData, LFS_POINTER_MAX_BYTES, LFS_POINTER_PREFIX, RepoCheckResult};
 use crate::git;
 use crate::path;
 use anyhow::Result;
@@ -12,7 +12,7 @@ pub fn check_repo(
     large_file_threshold: u64,
     filename_threshold: usize,
     path_threshold: usize,
-) -> Vec<Issue> {
+) -> RepoCheckResult {
     let repo_name = path::dir_name(repo_path).unwrap_or_default();
 
     // Try to open as git repo
@@ -20,7 +20,10 @@ pub fn check_repo(
         Ok(r) => r,
         Err(e) => {
             log::debug!("Skipping {}: not a git repository ({})", repo_name, e);
-            return Vec::new();
+            return RepoCheckResult {
+                repo_name,
+                issues: Vec::new(),
+            };
         }
     };
 
@@ -51,7 +54,7 @@ pub fn check_repo(
         ),
     }
 
-    issues
+    RepoCheckResult { repo_name, issues }
 }
 
 /// Build a full file path from tree walk path prefix and entry name
@@ -142,13 +145,14 @@ fn check_repo_for_case_duplicates(
     // Walk the tree and collect all file paths
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob)
-            && let Ok(name_str) = std::str::from_utf8(entry.name_bytes()) {
-                let full_path = build_full_path(path, name_str);
+            && let Ok(name_str) = std::str::from_utf8(entry.name_bytes())
+        {
+            let full_path = build_full_path(path, name_str);
 
-                // Use lowercase version as key for case-insensitive comparison
-                let lowercase_path = full_path.to_lowercase();
-                path_map.entry(lowercase_path).or_default().push(full_path);
-            }
+            // Use lowercase version as key for case-insensitive comparison
+            let lowercase_path = full_path.to_lowercase();
+            path_map.entry(lowercase_path).or_default().push(full_path);
+        }
         git2::TreeWalkResult::Ok
     })?;
 

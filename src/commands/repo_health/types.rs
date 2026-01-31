@@ -54,6 +54,12 @@ pub struct Issue {
     pub data: IssueData,
 }
 
+/// Result of checking a single repository
+pub struct RepoCheckResult {
+    pub repo_name: String,
+    pub issues: Vec<Issue>,
+}
+
 impl Issue {
     pub fn kind(&self) -> IssueKind {
         match &self.data {
