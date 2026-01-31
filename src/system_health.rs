@@ -57,6 +57,36 @@ pub fn check_git_config() -> Vec<HealthWarning> {
 /// Minimum required Git version
 const MIN_GIT_VERSION: (u32, u32, u32) = (1, 7, 10);
 
+/// Get the current Git version as a string (e.g., "2.39.3")
+pub fn get_git_version() -> Option<String> {
+    let output = Command::new("git").args(["--version"]).output().ok()?;
+    let version_output = String::from_utf8_lossy(&output.stdout);
+    version_output
+        .split_whitespace()
+        .nth(2)
+        .map(|s| s.to_string())
+}
+
+/// Get a git config value, returning None if not set or on error
+fn get_git_config(key: &str) -> Option<String> {
+    let output = Command::new("git")
+        .args(["config", "--get", key])
+        .output()
+        .ok()?;
+
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
+}
+
+/// Check if Git LFS is installed
+fn is_git_lfs_installed() -> bool {
+    Command::new("git")
+        .args(["lfs", "version"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
 /// Parse a Git version string into (major, minor, patch) tuple.
 /// Returns None if parsing fails. Missing patch version defaults to 0.
 fn parse_git_version(version_str: &str) -> Option<(u32, u32, u32)> {
@@ -75,15 +105,12 @@ fn parse_git_version(version_str: &str) -> Option<(u32, u32, u32)> {
     Some((major, minor, patch))
 }
 
+// ─── Check functions (return warnings if issues found) ───
+
 /// Check if Git version meets minimum requirements
 fn check_git_version() -> Option<HealthWarning> {
-    let output = Command::new("git").args(["--version"]).output().ok()?;
-
-    let version_output = String::from_utf8_lossy(&output.stdout);
-
-    // Parse version from output like "git version 2.39.3 (Apple Git-146)"
-    let version_str = version_output.split_whitespace().nth(2)?;
-    let (major, minor, patch) = parse_git_version(version_str)?;
+    let version_str = get_git_version()?;
+    let (major, minor, patch) = parse_git_version(&version_str)?;
 
     if (major, minor, patch) < MIN_GIT_VERSION {
         let installed_version = if patch == 0 {
@@ -116,17 +143,10 @@ fn check_git_version() -> Option<HealthWarning> {
 /// so it's OK if this setting is not explicitly set. We only warn if it's explicitly
 /// set to false.
 fn check_precompose_unicode() -> Option<HealthWarning> {
-    let output = Command::new("git")
-        .args(["config", "--get", "core.precomposeUnicode"])
-        .output()
-        .ok()?;
-
-    let value = String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .to_lowercase();
+    let value = get_git_config("core.precomposeUnicode")?;
 
     // Only warn if explicitly set to false (empty/unset is OK as default is true since Git 1.7.10)
-    if value == "false" {
+    if value.to_lowercase() == "false" {
         return Some(HealthWarning {
             title: "core.precomposeUnicode disabled".to_string(),
             message: "Git setting 'core.precomposeUnicode' is explicitly disabled.".to_string(),
@@ -150,18 +170,11 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
 /// - Is user-specific rather than repository-specific
 /// Best practice: Use .gitattributes files in repositories instead
 fn check_autocrlf() -> Option<HealthWarning> {
-    let output = Command::new("git")
-        .args(["config", "--get", "core.autocrlf"])
-        .output()
-        .ok()?;
-
-    let value = String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .to_lowercase();
+    let value = get_git_config("core.autocrlf")?;
 
     // Warn if set to "true" on Unix systems (problematic)
     // "false", "input", or empty (unset) are all OK
-    if value == "true" {
+    if value.to_lowercase() == "true" {
         return Some(HealthWarning {
             title: "core.autocrlf enabled on Unix system".to_string(),
             message: "Git setting 'core.autocrlf' is set to 'true', which can cause problems on Unix systems.".to_string(),
@@ -186,9 +199,7 @@ fn check_autocrlf() -> Option<HealthWarning> {
 
 /// Check if Git LFS is installed
 fn check_git_lfs_installed() -> Option<HealthWarning> {
-    let output = Command::new("git").args(["lfs", "version"]).output().ok()?;
-
-    if !output.status.success() {
+    if !is_git_lfs_installed() {
         return Some(HealthWarning {
             title: "Git LFS not installed".to_string(),
             message: "Git LFS is not installed or not properly configured.".to_string(),
@@ -204,55 +215,16 @@ fn check_git_lfs_installed() -> Option<HealthWarning> {
     None
 }
 
-/// Get the current Git version as a string
-pub fn get_git_version() -> Option<String> {
-    let output = Command::new("git").args(["--version"]).output().ok()?;
+// ─── Public getters for display purposes ───
 
-    let version_output = String::from_utf8_lossy(&output.stdout);
-
-    // Parse version from output like "git version 2.39.3 (Apple Git-146)"
-    version_output
-        .split_whitespace()
-        .nth(2)
-        .map(|v| v.to_string())
-}
-
-/// Get the current core.precomposeUnicode setting value
+/// Get the current core.precomposeUnicode setting value for display
 pub fn get_precompose_unicode_value() -> String {
-    let output = Command::new("git")
-        .args(["config", "--get", "core.precomposeUnicode"])
-        .output();
-
-    match output {
-        Ok(out) => {
-            let value = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if value.is_empty() {
-                "default: true".to_string()
-            } else {
-                value
-            }
-        }
-        Err(_) => "not set".to_string(),
-    }
+    get_git_config("core.precomposeUnicode").unwrap_or_else(|| "default: true".to_string())
 }
 
-/// Get the current core.autocrlf setting value
+/// Get the current core.autocrlf setting value for display
 pub fn get_autocrlf_value() -> String {
-    let output = Command::new("git")
-        .args(["config", "--get", "core.autocrlf"])
-        .output();
-
-    match output {
-        Ok(out) => {
-            let value = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if value.is_empty() {
-                "default: false".to_string()
-            } else {
-                value
-            }
-        }
-        Err(_) => "not set".to_string(),
-    }
+    get_git_config("core.autocrlf").unwrap_or_else(|| "default: false".to_string())
 }
 
 /// Print all health warnings at the end of command execution
