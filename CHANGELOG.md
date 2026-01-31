@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0] - 2026-01-31
+
+### Added
+
+- **`gut health` command**: Comprehensive health check for repositories and system configuration
+  - **NFD/NFC normalization detection**: Finds filenames stored in decomposed Unicode form that have precomposed equivalents, which cause conflicts on macOS
+  - **Case-duplicate detection**: Finds files differing only in letter case (e.g., `File.txt` vs `file.txt`) that cause issues on case-insensitive filesystems
+  - **Large file detection**: Identifies files exceeding threshold (default 50 MB) that should be tracked by Git LFS, with separate handling for files matching `.gitignore`
+  - **Long path detection**: Warns about filenames and paths exceeding length limits for Windows compatibility
+  - **System configuration checks**: Git version (min 1.7.10), `core.precomposeUnicode` (macOS), `core.autocrlf` (Unix), Git LFS installation
+  - Per-owner summaries with repo counts and issue breakdowns
+  - Actionable recommendations for fixing each issue type
+  - Configurable thresholds: `--large-file-mb`, `--filename-length-bytes`, `--path-length-bytes`
+  - Single owner (`-o`) or all owners (`-a`) mode
+
+### Fixed
+
+- **`status` command**: Now properly handles NFD-encoded filenames in git status output
+
 ## [0.5.0] - 2026-01-21
 
 ### Added
