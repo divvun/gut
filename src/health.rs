@@ -56,7 +56,7 @@ pub fn check_git_config() -> Vec<HealthWarning> {
 
 /// Check if Git version meets minimum requirements (>= 1.7.10)
 fn check_git_version() -> Option<HealthWarning> {
-    let output = Command::new("git").args(&["--version"]).output().ok()?;
+    let output = Command::new("git").args(["--version"]).output().ok()?;
 
     let version_output = String::from_utf8_lossy(&output.stdout);
 
@@ -117,7 +117,7 @@ fn check_git_version() -> Option<HealthWarning> {
 /// set to false.
 fn check_precompose_unicode() -> Option<HealthWarning> {
     let output = Command::new("git")
-        .args(&["config", "--get", "core.precomposeUnicode"])
+        .args(["config", "--get", "core.precomposeUnicode"])
         .output()
         .ok()?;
 
@@ -151,7 +151,7 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
 /// Best practice: Use .gitattributes files in repositories instead
 fn check_autocrlf() -> Option<HealthWarning> {
     let output = Command::new("git")
-        .args(&["config", "--get", "core.autocrlf"])
+        .args(["config", "--get", "core.autocrlf"])
         .output()
         .ok()?;
 
@@ -186,10 +186,7 @@ fn check_autocrlf() -> Option<HealthWarning> {
 
 /// Check if Git LFS is installed
 fn check_git_lfs_installed() -> Option<HealthWarning> {
-    let output = Command::new("git")
-        .args(&["lfs", "version"])
-        .output()
-        .ok()?;
+    let output = Command::new("git").args(["lfs", "version"]).output().ok()?;
 
     if !output.status.success() {
         return Some(HealthWarning {
@@ -209,7 +206,7 @@ fn check_git_lfs_installed() -> Option<HealthWarning> {
 
 /// Get the current Git version as a string
 pub fn get_git_version() -> Option<String> {
-    let output = Command::new("git").args(&["--version"]).output().ok()?;
+    let output = Command::new("git").args(["--version"]).output().ok()?;
 
     let version_output = String::from_utf8_lossy(&output.stdout);
 
@@ -223,7 +220,7 @@ pub fn get_git_version() -> Option<String> {
 /// Get the current core.precomposeUnicode setting value
 pub fn get_precompose_unicode_value() -> String {
     let output = Command::new("git")
-        .args(&["config", "--get", "core.precomposeUnicode"])
+        .args(["config", "--get", "core.precomposeUnicode"])
         .output();
 
     match output {
@@ -242,7 +239,7 @@ pub fn get_precompose_unicode_value() -> String {
 /// Get the current core.autocrlf setting value
 pub fn get_autocrlf_value() -> String {
     let output = Command::new("git")
-        .args(&["config", "--get", "core.autocrlf"])
+        .args(["config", "--get", "core.autocrlf"])
         .output();
 
     match output {
