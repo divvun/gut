@@ -213,28 +213,38 @@ fn check_repo_for_large_files_and_long_paths(
 
             // Get the blob object to check its size
             let oid: git2::Oid = entry.id().into();
-            if let Ok(blob) = git_repo.find_blob(oid) {
-                let size = blob.size();
+            match git_repo.find_blob(oid) {
+                Ok(blob) => {
+                    let size = blob.size();
 
-                // Check if file exceeds threshold
-                if size > threshold_bytes as usize {
-                    // Check if it's an LFS pointer file
-                    // LFS pointer files are small text files with specific format
-                    let is_lfs = size < LFS_POINTER_MAX_BYTES
-                        && blob.content().starts_with(LFS_POINTER_PREFIX);
+                    // Check if file exceeds threshold
+                    if size > threshold_bytes as usize {
+                        // Check if it's an LFS pointer file
+                        // LFS pointer files are small text files with specific format
+                        let is_lfs = size < LFS_POINTER_MAX_BYTES
+                            && blob.content().starts_with(LFS_POINTER_PREFIX);
 
-                    if !is_lfs {
-                        // Check if file should be ignored according to .gitignore
-                        let should_ignore = git_repo
-                            .status_should_ignore(std::path::Path::new(&full_path))
-                            .unwrap_or(false);
+                        if !is_lfs {
+                            // Check if file should be ignored according to .gitignore
+                            let should_ignore = git_repo
+                                .status_should_ignore(std::path::Path::new(&full_path))
+                                .unwrap_or(false);
 
-                        if should_ignore {
-                            large_ignored_files.push((full_path, size as u64));
-                        } else {
-                            large_files.push((full_path, size as u64));
+                            if should_ignore {
+                                large_ignored_files.push((full_path, size as u64));
+                            } else {
+                                large_files.push((full_path, size as u64));
+                            }
                         }
                     }
+                }
+                Err(e) => {
+                    log::debug!(
+                        "Failed to read blob for '{}' in {}: {}",
+                        full_path,
+                        repo_name,
+                        e
+                    );
                 }
             }
         }
