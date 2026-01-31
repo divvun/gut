@@ -5,8 +5,8 @@ mod convert;
 mod filter;
 mod git;
 mod github;
-mod health;
 mod path;
+mod system_health;
 mod toml;
 mod user;
 

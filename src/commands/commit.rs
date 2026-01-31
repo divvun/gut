@@ -1,8 +1,8 @@
 use super::common::{self, OrgResult};
 use crate::filter::Filter;
 use crate::git;
-use crate::health;
 use crate::path;
+use crate::system_health;
 use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
@@ -33,7 +33,7 @@ pub struct CommitArgs {
 
 impl CommitArgs {
     pub fn run(&self) -> Result<()> {
-        let warnings = health::check_git_config();
+        let warnings = system_health::check_git_config();
 
         let result = common::run_for_owners(
             self.all_owners,
@@ -42,7 +42,7 @@ impl CommitArgs {
             "Committed",
         );
 
-        health::print_warnings(&warnings);
+        system_health::print_warnings(&warnings);
         result
     }
 

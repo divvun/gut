@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::github;
-use crate::health;
+use crate::system_health;
 use crate::user::User;
 use clap::Parser;
 use std::path::PathBuf;
@@ -53,7 +53,7 @@ pub struct InitArgs {
 
 impl InitArgs {
     pub fn save_config(&self) -> anyhow::Result<()> {
-        let warnings = health::check_git_config();
+        let warnings = system_health::check_git_config();
 
         let user = match User::new(self.token.clone()) {
             Ok(user) => user,
@@ -72,7 +72,7 @@ impl InitArgs {
         );
         config.save_config()?;
 
-        health::print_warnings(&warnings);
+        system_health::print_warnings(&warnings);
         Ok(())
     }
 }
