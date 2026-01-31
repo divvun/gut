@@ -89,53 +89,45 @@ enum IssueKind {
     LongPath,
 }
 
-/// Unified issue type - all issue data in enum variants
+/// Issue-specific data for each issue type
 #[derive(Debug, Clone)]
-enum Issue {
+enum IssueData {
     Nfd {
-        repo: String,
         file_path: String,
     },
     CaseDuplicate {
-        repo: String,
         files: Vec<String>,
     },
     LargeFile {
-        repo: String,
         file_path: String,
         size_bytes: u64,
     },
     LargeIgnoredFile {
-        repo: String,
         file_path: String,
         size_bytes: u64,
     },
     LongPath {
-        repo: String,
         file_path: String,
         path_bytes: usize,
         filename_bytes: usize,
     },
 }
 
+/// An issue found during health check
+#[derive(Debug, Clone)]
+struct Issue {
+    repo: String,
+    data: IssueData,
+}
+
 impl Issue {
     fn kind(&self) -> IssueKind {
-        match self {
-            Issue::Nfd { .. } => IssueKind::Nfd,
-            Issue::CaseDuplicate { .. } => IssueKind::CaseDuplicate,
-            Issue::LargeFile { .. } => IssueKind::LargeFile,
-            Issue::LargeIgnoredFile { .. } => IssueKind::LargeIgnoredFile,
-            Issue::LongPath { .. } => IssueKind::LongPath,
-        }
-    }
-
-    fn repo(&self) -> &str {
-        match self {
-            Issue::Nfd { repo, .. } => repo,
-            Issue::CaseDuplicate { repo, .. } => repo,
-            Issue::LargeFile { repo, .. } => repo,
-            Issue::LargeIgnoredFile { repo, .. } => repo,
-            Issue::LongPath { repo, .. } => repo,
+        match &self.data {
+            IssueData::Nfd { .. } => IssueKind::Nfd,
+            IssueData::CaseDuplicate { .. } => IssueKind::CaseDuplicate,
+            IssueData::LargeFile { .. } => IssueKind::LargeFile,
+            IssueData::LargeIgnoredFile { .. } => IssueKind::LargeIgnoredFile,
+            IssueData::LongPath { .. } => IssueKind::LongPath,
         }
     }
 }
@@ -167,7 +159,7 @@ impl OwnerSummary {
         self.issues
             .iter()
             .filter(|i| i.kind() == kind)
-            .map(|i| i.repo())
+            .map(|i| i.repo.as_str())
             .collect::<HashSet<_>>()
             .len()
     }
@@ -186,8 +178,8 @@ fn print_nfd_table(issues: &[Issue]) {
     table.set_titles(row!["Repository", "File Path"]);
 
     for issue in issues {
-        if let Issue::Nfd { repo, file_path } = issue {
-            table.add_row(row![cell!(b -> repo), cell!(file_path)]);
+        if let IssueData::Nfd { file_path } = &issue.data {
+            table.add_row(row![cell!(b -> &issue.repo), cell!(file_path)]);
         }
     }
 
@@ -200,8 +192,8 @@ fn print_case_duplicate_table(issues: &[Issue]) {
     table.set_titles(row!["Repository", "Conflicting Files"]);
 
     for issue in issues {
-        if let Issue::CaseDuplicate { repo, files } = issue {
-            table.add_row(row![cell!(b -> repo), cell!(files.join("\n"))]);
+        if let IssueData::CaseDuplicate { files } = &issue.data {
+            table.add_row(row![cell!(b -> &issue.repo), cell!(files.join("\n"))]);
         }
     }
 
@@ -214,15 +206,14 @@ fn print_large_files_table(issues: &[Issue]) {
     table.set_titles(row!["Repository", "File Path", "Size"]);
 
     for issue in issues {
-        if let Issue::LargeFile {
-            repo,
+        if let IssueData::LargeFile {
             file_path,
             size_bytes,
-        } = issue
+        } = &issue.data
         {
             let size_mb = *size_bytes as f64 / BYTES_PER_MB;
             table.add_row(row![
-                cell!(b -> repo),
+                cell!(b -> &issue.repo),
                 cell!(file_path),
                 cell!(r -> format!("{:.1}MB", size_mb))
             ]);
@@ -238,15 +229,14 @@ fn print_large_ignored_table(issues: &[Issue]) {
     table.set_titles(row!["Repository", "File Path", "Size"]);
 
     for issue in issues {
-        if let Issue::LargeIgnoredFile {
-            repo,
+        if let IssueData::LargeIgnoredFile {
             file_path,
             size_bytes,
-        } = issue
+        } = &issue.data
         {
             let size_mb = *size_bytes as f64 / BYTES_PER_MB;
             table.add_row(row![
-                cell!(b -> repo),
+                cell!(b -> &issue.repo),
                 cell!(file_path),
                 cell!(r -> format!("{:.1}MB", size_mb))
             ]);
@@ -262,15 +252,14 @@ fn print_long_paths_table(issues: &[Issue]) {
     table.set_titles(row!["Repository", "File Path", "Filename", "Path"]);
 
     for issue in issues {
-        if let Issue::LongPath {
-            repo,
+        if let IssueData::LongPath {
             file_path,
-            filename_bytes,
             path_bytes,
-        } = issue
+            filename_bytes,
+        } = &issue.data
         {
             table.add_row(row![
-                cell!(b -> repo),
+                cell!(b -> &issue.repo),
                 cell!(file_path),
                 cell!(r -> format!("{}B", filename_bytes)),
                 cell!(r -> format!("{}B", path_bytes))
@@ -956,9 +945,11 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
                 // Only flag as issue if NFC form differs from current form.
                 // This means an NFC equivalent exists but the file uses NFD.
                 if name_str != normalized.as_str() {
-                    issues.push(Issue::Nfd {
+                    issues.push(Issue {
                         repo: repo_name.clone(),
-                        file_path: build_full_path(path, name_str),
+                        data: IssueData::Nfd {
+                            file_path: build_full_path(path, name_str),
+                        },
                     });
                 }
             }
@@ -1015,9 +1006,9 @@ fn check_repo_for_case_duplicates(
     duplicates.sort();
 
     for files in duplicates {
-        issues.push(Issue::CaseDuplicate {
+        issues.push(Issue {
             repo: repo_name.to_string(),
-            files,
+            data: IssueData::CaseDuplicate { files },
         });
     }
 
@@ -1098,30 +1089,36 @@ fn check_repo_for_large_files_and_long_paths(
     // Sort by size (largest first) and convert to Issues
     large_files.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, size_bytes) in large_files {
-        issues.push(Issue::LargeFile {
+        issues.push(Issue {
             repo: repo_name.clone(),
-            file_path,
-            size_bytes,
+            data: IssueData::LargeFile {
+                file_path,
+                size_bytes,
+            },
         });
     }
 
     large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, size_bytes) in large_ignored_files {
-        issues.push(Issue::LargeIgnoredFile {
+        issues.push(Issue {
             repo: repo_name.clone(),
-            file_path,
-            size_bytes,
+            data: IssueData::LargeIgnoredFile {
+                file_path,
+                size_bytes,
+            },
         });
     }
 
     // Sort long paths by path length (longest first)
     long_paths.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, path_bytes, filename_bytes) in long_paths {
-        issues.push(Issue::LongPath {
+        issues.push(Issue {
             repo: repo_name.clone(),
-            file_path,
-            path_bytes,
-            filename_bytes,
+            data: IssueData::LongPath {
+                file_path,
+                path_bytes,
+                filename_bytes,
+            },
         });
     }
 
