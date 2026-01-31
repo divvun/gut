@@ -224,7 +224,7 @@ fn print_large_files_table(issues: &[Issue]) {
             table.add_row(row![
                 cell!(b -> repo),
                 cell!(file_path),
-                cell!(r -> format!("{:.1} MB", size_mb))
+                cell!(r -> format!("{:.1}MB", size_mb))
             ]);
         }
     }
@@ -248,7 +248,7 @@ fn print_large_ignored_table(issues: &[Issue]) {
             table.add_row(row![
                 cell!(b -> repo),
                 cell!(file_path),
-                cell!(r -> format!("{:.1} MB", size_mb))
+                cell!(r -> format!("{:.1}MB", size_mb))
             ]);
         }
     }
@@ -416,7 +416,7 @@ impl HealthCheckArgs {
                 let repo_count = summary.affected_repos_for_kind(IssueKind::LargeFile);
 
                 println!(
-                    "\n{} Found {} large files (> {} MB) not tracked by LFS in {} of {} repositories",
+                    "\n{} Found {} large files (> {}MB) not tracked by LFS in {} of {} repositories",
                     "⚠".yellow().bold(),
                     count,
                     self.large_file_mb,
@@ -432,7 +432,7 @@ impl HealthCheckArgs {
                 let repo_count = summary.affected_repos_for_kind(IssueKind::LargeIgnoredFile);
 
                 println!(
-                    "\n{} Found {} large files (> {} MB) that should be removed from git in {} of {} repositories",
+                    "\n{} Found {} large files (> {}MB) that should be removed from git in {} of {} repositories",
                     "⚠".red().bold(),
                     count,
                     self.large_file_mb,
@@ -538,7 +538,7 @@ impl HealthCheckArgs {
 
             if total_large_files > 0 {
                 println!(
-                    "{} Found {} large files (> {} MB) not tracked by LFS across {} owners",
+                    "{} Found {} large files (> {}MB) not tracked by LFS across {} owners",
                     "⚠".yellow().bold(),
                     total_large_files,
                     self.large_file_mb,
@@ -548,7 +548,7 @@ impl HealthCheckArgs {
 
             if total_large_ignored > 0 {
                 println!(
-                    "{} Found {} large files (> {} MB) that should be removed from git across {} owners",
+                    "{} Found {} large files (> {}MB) that should be removed from git across {} owners",
                     "⚠".red().bold(),
                     total_large_ignored,
                     self.large_file_mb,
