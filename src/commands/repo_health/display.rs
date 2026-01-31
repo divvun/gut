@@ -1,6 +1,6 @@
 use super::RepoHealthArgs;
 use super::types::{BYTES_PER_MB, Issue, IssueData, IssueKind, LINE_WIDTH, OwnerSummary};
-use crate::system_health;
+use crate::system_health::{self, WarningKind};
 use colored::*;
 use prettytable::{Table, cell, format, row};
 
@@ -498,7 +498,7 @@ pub fn print_system_health_checks() {
     println!("\n{}", "System configuration status:".bold());
 
     // Check 1: Git version
-    let has_git_version_issue = warnings.iter().any(|w| w.title.contains("Git version"));
+    let has_git_version_issue = warnings.iter().any(|w| w.kind == WarningKind::GitVersion);
 
     let git_version = system_health::get_git_version().unwrap_or_else(|| "unknown".to_string());
 
@@ -522,7 +522,7 @@ pub fn print_system_health_checks() {
     if cfg!(target_os = "macos") {
         let has_precompose_issue = warnings
             .iter()
-            .any(|w| w.title.contains("precomposeUnicode"));
+            .any(|w| w.kind == WarningKind::PrecomposeUnicode);
 
         let precompose_value = system_health::get_precompose_unicode_value();
 
@@ -545,7 +545,7 @@ pub fn print_system_health_checks() {
 
     // Check 3: core.autocrlf (Unix systems only)
     if cfg!(unix) {
-        let has_autocrlf_issue = warnings.iter().any(|w| w.title.contains("autocrlf"));
+        let has_autocrlf_issue = warnings.iter().any(|w| w.kind == WarningKind::Autocrlf);
 
         let autocrlf_value = system_health::get_autocrlf_value();
 
@@ -567,7 +567,7 @@ pub fn print_system_health_checks() {
     }
 
     // Check 4: Git LFS installation
-    let has_lfs_issue = warnings.iter().any(|w| w.title.contains("Git LFS"));
+    let has_lfs_issue = warnings.iter().any(|w| w.kind == WarningKind::GitLfs);
 
     if has_lfs_issue {
         println!(

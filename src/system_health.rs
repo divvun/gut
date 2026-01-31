@@ -1,9 +1,19 @@
 use colored::*;
 use std::process::Command;
 
+/// Types of health warnings for type-safe matching
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WarningKind {
+    GitVersion,
+    PrecomposeUnicode,
+    Autocrlf,
+    GitLfs,
+}
+
 /// Health check warnings that should be displayed to the user
 #[derive(Debug, Clone)]
 pub struct HealthWarning {
+    pub kind: WarningKind,
     pub title: String,
     pub message: String,
     pub suggestion: Option<String>,
@@ -120,6 +130,7 @@ fn check_git_version() -> Option<HealthWarning> {
         };
 
         return Some(HealthWarning {
+            kind: WarningKind::GitVersion,
             title: "Git version too old".to_string(),
             message: format!(
                 "Git version {} is too old. Minimum required is {}.{}.{}.",
@@ -148,6 +159,7 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
     // Only warn if explicitly set to false (empty/unset is OK as default is true since Git 1.7.10)
     if value.to_lowercase() == "false" {
         return Some(HealthWarning {
+            kind: WarningKind::PrecomposeUnicode,
             title: "core.precomposeUnicode disabled".to_string(),
             message: "Git setting 'core.precomposeUnicode' is explicitly disabled.".to_string(),
             suggestion: Some(
@@ -176,6 +188,7 @@ fn check_autocrlf() -> Option<HealthWarning> {
     // "false", "input", or empty (unset) are all OK
     if value.to_lowercase() == "true" {
         return Some(HealthWarning {
+            kind: WarningKind::Autocrlf,
             title: "core.autocrlf enabled on Unix system".to_string(),
             message: "Git setting 'core.autocrlf' is set to 'true', which can cause problems on Unix systems.".to_string(),
             suggestion: Some(
@@ -201,6 +214,7 @@ fn check_autocrlf() -> Option<HealthWarning> {
 fn check_git_lfs_installed() -> Option<HealthWarning> {
     if !is_git_lfs_installed() {
         return Some(HealthWarning {
+            kind: WarningKind::GitLfs,
             title: "Git LFS not installed".to_string(),
             message: "Git LFS is not installed or not properly configured.".to_string(),
             suggestion: Some(
