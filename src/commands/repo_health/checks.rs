@@ -141,15 +141,14 @@ fn check_repo_for_case_duplicates(
 
     // Walk the tree and collect all file paths
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
-        if entry.kind() == Some(git2::ObjectType::Blob) {
-            if let Ok(name_str) = std::str::from_utf8(entry.name_bytes()) {
+        if entry.kind() == Some(git2::ObjectType::Blob)
+            && let Ok(name_str) = std::str::from_utf8(entry.name_bytes()) {
                 let full_path = build_full_path(path, name_str);
 
                 // Use lowercase version as key for case-insensitive comparison
                 let lowercase_path = full_path.to_lowercase();
                 path_map.entry(lowercase_path).or_default().push(full_path);
             }
-        }
         git2::TreeWalkResult::Ok
     })?;
 
@@ -204,15 +203,15 @@ fn check_repo_for_large_files_and_long_paths(
             let full_path = build_full_path(path, name);
 
             // Check path and filename lengths
-            let path_bytes_len = full_path.as_bytes().len();
-            let filename_bytes_len = name.as_bytes().len();
+            let path_bytes_len = full_path.len();
+            let filename_bytes_len = name.len();
 
             if filename_bytes_len > filename_threshold || path_bytes_len > path_threshold {
                 long_paths.push((full_path.clone(), path_bytes_len, filename_bytes_len));
             }
 
             // Get the blob object to check its size
-            let oid: git2::Oid = entry.id().into();
+            let oid: git2::Oid = entry.id();
             match git_repo.find_blob(oid) {
                 Ok(blob) => {
                     let size = blob.size();

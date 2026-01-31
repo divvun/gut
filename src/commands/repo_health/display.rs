@@ -501,9 +501,8 @@ pub fn print_system_health_checks() {
         );
     } else {
         println!(
-            "  {} {} ({})",
+            "  {} Git version ({})",
             "✓".green().bold(),
-            "Git version",
             git_version.bright_black()
         );
     }
@@ -525,9 +524,8 @@ pub fn print_system_health_checks() {
             );
         } else {
             println!(
-                "  {} {} ({})",
+                "  {} core.precomposeUnicode setting ({})",
                 "✓".green().bold(),
-                "core.precomposeUnicode setting",
                 precompose_value.bright_black()
             );
         }
@@ -548,9 +546,8 @@ pub fn print_system_health_checks() {
             );
         } else {
             println!(
-                "  {} {} ({})",
+                "  {} core.autocrlf setting ({})",
                 "✓".green().bold(),
-                "core.autocrlf setting",
                 autocrlf_value.bright_black()
             );
         }
@@ -568,9 +565,8 @@ pub fn print_system_health_checks() {
         );
     } else {
         println!(
-            "  {} {} ({})",
+            "  {} Git LFS installation ({})",
             "✓".green().bold(),
-            "Git LFS installation",
             "installed".bright_black()
         );
     }

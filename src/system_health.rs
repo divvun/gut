@@ -39,17 +39,17 @@ pub fn check_git_config() -> Vec<HealthWarning> {
     }
 
     // Check core.precomposeUnicode on macOS
-    if cfg!(target_os = "macos") {
-        if let Some(warning) = check_precompose_unicode() {
-            warnings.push(warning);
-        }
+    if cfg!(target_os = "macos")
+        && let Some(warning) = check_precompose_unicode()
+    {
+        warnings.push(warning);
     }
 
     // Check core.autocrlf on Unix systems (macOS/Linux)
-    if cfg!(unix) {
-        if let Some(warning) = check_autocrlf() {
-            warnings.push(warning);
-        }
+    if cfg!(unix)
+        && let Some(warning) = check_autocrlf()
+    {
+        warnings.push(warning);
     }
 
     // Check if Git LFS is installed
@@ -176,6 +176,7 @@ fn check_precompose_unicode() -> Option<HealthWarning> {
 /// - Automatic CRLF conversion can corrupt binary files
 /// - Can cause Git to report changes that don't actually exist
 /// - Is user-specific rather than repository-specific
+///
 /// Best practice: Use .gitattributes files in repositories instead
 fn check_autocrlf() -> Option<HealthWarning> {
     let value = get_git_config("core.autocrlf")?;
