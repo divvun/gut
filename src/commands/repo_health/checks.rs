@@ -87,8 +87,6 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
         None => return Ok(issues), // Empty repo or no commits
     };
 
-    let repo_name = repo_name.to_string();
-
     // Walk the tree recursively
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
         if entry.kind() == Some(git2::ObjectType::Blob) {
@@ -104,7 +102,7 @@ fn check_repo_for_nfc_issues(git_repo: &git2::Repository, repo_name: &str) -> Re
                 // This means an NFC equivalent exists but the file uses NFD.
                 if name_str != normalized.as_str() {
                     issues.push(Issue {
-                        repo: repo_name.clone(),
+                        repo: repo_name.to_owned(),
                         data: IssueData::Nfd {
                             file_path: build_full_path(path, name_str),
                         },
@@ -131,13 +129,15 @@ fn check_repo_for_case_duplicates(
     git_repo: &git2::Repository,
     repo_name: &str,
 ) -> Result<Vec<Issue>> {
-    // Map lowercase path -> list of actual paths
-    let mut path_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut issues = Vec::new();
 
     let tree = match get_head_tree(git_repo) {
         Some(t) => t,
-        None => return Ok(Vec::new()), // Empty repo or no commits
+        None => return Ok(issues), // Empty repo or no commits
     };
+
+    // Map lowercase path -> list of actual paths
+    let mut path_map: HashMap<String, Vec<String>> = HashMap::new();
 
     // Walk the tree and collect all file paths
     tree.walk(git2::TreeWalkMode::PreOrder, |path, entry| {
@@ -154,7 +154,6 @@ fn check_repo_for_case_duplicates(
     })?;
 
     // Find entries with more than one variant and convert to Issues
-    let mut issues = Vec::new();
     let mut duplicates: Vec<Vec<String>> = path_map
         .into_values()
         .filter(|paths| paths.len() > 1)
@@ -192,8 +191,6 @@ fn check_repo_for_large_files_and_long_paths(
         Some(t) => t,
         None => return Ok(issues), // Empty repo or no commits
     };
-
-    let repo_name = repo_name.to_string();
 
     // Collect issues during tree walk, then sort after
     let mut large_files: Vec<(String, u64)> = Vec::new();
@@ -248,7 +245,7 @@ fn check_repo_for_large_files_and_long_paths(
     large_files.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, size_bytes) in large_files {
         issues.push(Issue {
-            repo: repo_name.clone(),
+            repo: repo_name.to_owned(),
             data: IssueData::LargeFile {
                 file_path,
                 size_bytes,
@@ -259,7 +256,7 @@ fn check_repo_for_large_files_and_long_paths(
     large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, size_bytes) in large_ignored_files {
         issues.push(Issue {
-            repo: repo_name.clone(),
+            repo: repo_name.to_owned(),
             data: IssueData::LargeIgnoredFile {
                 file_path,
                 size_bytes,
@@ -271,7 +268,7 @@ fn check_repo_for_large_files_and_long_paths(
     long_paths.sort_by(|a, b| b.1.cmp(&a.1));
     for (file_path, path_bytes, filename_bytes) in long_paths {
         issues.push(Issue {
-            repo: repo_name.clone(),
+            repo: repo_name.to_owned(),
             data: IssueData::LongPath {
                 file_path,
                 path_bytes,
