@@ -69,20 +69,20 @@ pub fn dir_name(path: &PathBuf) -> anyhow::Result<String> {
     Ok(dir_name)
 }
 
-pub fn parrent(path: &PathBuf) -> anyhow::Result<String> {
-    let parrent = path
+pub fn parent(path: &PathBuf) -> anyhow::Result<String> {
+    let parent = path
         .parent()
         .with_context(|| format!("{:?}, there is no parent for this path", path))?
         .to_str()
         .with_context(|| format!("{:?}, directory name must be in utf-8", path))?
         .to_string();
 
-    Ok(parrent)
+    Ok(parent)
 }
 
 pub fn write_content(file_path: &PathBuf, content: &str) -> anyhow::Result<()> {
-    let parrent = parrent(file_path)?;
-    create_dir_all(parrent)?;
+    let parent = parent(file_path)?;
+    create_dir_all(parent)?;
     write(file_path, content)?;
     Ok(())
 }

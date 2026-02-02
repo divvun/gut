@@ -64,8 +64,8 @@ fn generate(template_dir: &PathBuf, target_dir: &PathBuf, no_init: bool) -> Resu
             let target_content = generate_string(&target_info.reps, original_content.as_str())?;
             path::write_content(&target_path, &target_content)?;
         } else {
-            let parrent = path::parrent(&target_path)?;
-            create_dir_all(&parrent)?;
+            let parent = path::parent(&target_path)?;
+            create_dir_all(&parent)?;
             copy(original_path, target_path)?;
         }
     }
