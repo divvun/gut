@@ -3,7 +3,6 @@ use super::path::user_path;
 use super::toml::{read_file, write_to_file};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
@@ -20,22 +19,15 @@ impl User {
     }
 
     pub fn save_user(&self) -> Result<()> {
-        write_to_file(
-            path().ok_or_else(|| anyhow::anyhow!("No user path found"))?,
-            self,
-        )
+        write_to_file(user_path()?, self)
     }
 
     pub fn from_config() -> Result<User> {
-        read_file(path().ok_or_else(|| anyhow::anyhow!("No user path found"))?)
+        read_file(user_path()?)
     }
 
     pub fn token() -> Result<String> {
         let user = User::from_config()?;
         Ok(user.token)
     }
-}
-
-fn path() -> Option<PathBuf> {
-    user_path()
 }
