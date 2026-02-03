@@ -1,8 +1,10 @@
 use super::common;
 use crate::github;
+use crate::github::models::Unsuccessful;
 use anyhow::Result;
 use clap::Parser;
 use prettytable::{Cell, Row, Table, format, row};
+use reqwest::StatusCode;
 
 #[derive(Debug, Parser)]
 /// Show all teams in an organisation
@@ -23,7 +25,21 @@ impl ShowTeamsArgs {
 
         match result {
             Ok(teams) => print_results(&organisation, &teams),
-            Err(e) => println!("Show teams failed because {:?}", e),
+            Err(e) => {
+                if let Some(unsuccessful) = e.downcast_ref::<Unsuccessful>()
+                    && unsuccessful.0 == StatusCode::NOT_FOUND
+                {
+                    println!("Could not find teams for '{}'.", organisation);
+                    println!("Note: Teams only exist in organisations, not personal accounts.");
+                    if self.organisation.is_none() {
+                        println!(
+                            "If you meant a different organisation, use: gut show teams -o <organisation>"
+                        );
+                    }
+                    return Ok(());
+                }
+                println!("Show teams failed: {:?}", e);
+            }
         }
 
         Ok(())

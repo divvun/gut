@@ -1,9 +1,11 @@
 use super::common;
 use crate::github;
+use crate::github::models::Unsuccessful;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, format, row};
+use reqwest::StatusCode;
 
 #[derive(Debug, Parser)]
 /// Show details of a specific team
@@ -26,7 +28,26 @@ impl ShowTeamArgs {
         let team_slug = &self.team_slug;
 
         // Get team info from the list (to get name and description)
-        let teams = github::get_teams(&organisation, &user_token)?;
+        let teams = match github::get_teams(&organisation, &user_token) {
+            Ok(teams) => teams,
+            Err(e) => {
+                if let Some(unsuccessful) = e.downcast_ref::<Unsuccessful>()
+                    && unsuccessful.0 == StatusCode::NOT_FOUND
+                {
+                    println!("Could not find teams for '{}'.", organisation);
+                    println!("Note: Teams only exist in organisations, not personal accounts.");
+                    if self.organisation.is_none() {
+                        println!(
+                            "If you meant a different organisation, use: gut show team {} -o <organisation>",
+                            team_slug
+                        );
+                    }
+                    return Ok(());
+                }
+                return Err(e);
+            }
+        };
+
         let team = teams.iter().find(|t| t.slug == *team_slug);
 
         match team {
@@ -35,8 +56,18 @@ impl ShowTeamArgs {
             }
             None => {
                 println!(
-                    "Team '{}' not found in organisation '{}'",
+                    "Team '{}' not found in organisation '{}'.",
                     team_slug, organisation
+                );
+                if self.organisation.is_none() {
+                    println!(
+                        "If this team belongs to a different organisation, use: gut show team {} -o <organisation>",
+                        team_slug
+                    );
+                }
+                println!(
+                    "Use 'gut show teams -o {}' to list available teams.",
+                    organisation
                 );
                 return Ok(());
             }
