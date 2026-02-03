@@ -84,18 +84,11 @@ pub fn is_valid_token(token: &str) -> anyhow::Result<String> {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct OrgMember {
     pub login: String,
-    pub url: String,
-    //pub role: String,
+    pub role: String,
+    pub has_two_factor_enabled: Option<bool>,
 }
-
-//#[derive(Debug)]
-//pub enum OrgRole {
-//Member,
-//Admin
-//}
 
 pub fn get_org_members(org: &str, token: &str) -> anyhow::Result<Vec<OrgMember>> {
     get_org_members_rec(org, token, None)
@@ -128,15 +121,22 @@ fn get_org_members_rec(
         .as_ref()
         .ok_or(InvalidRepoResponse)?;
 
-    let members = org_data.members_with_role.nodes.as_ref();
+    let edges = org_data.members_with_role.edges.as_ref();
 
-    let mut list_member: Vec<OrgMember> = members
+    let mut list_member: Vec<OrgMember> = edges
         .ok_or(NoMembersFound)?
         .iter()
-        .filter_map(|user| user.as_ref())
-        .map(|x| OrgMember {
-            login: x.login.to_string(),
-            url: x.url.to_string(),
+        .filter_map(|edge| edge.as_ref())
+        .filter_map(|edge| {
+            edge.node.as_ref().map(|user| OrgMember {
+                login: user.login.to_string(),
+                role: edge
+                    .role
+                    .as_ref()
+                    .map(|r| format!("{:?}", r).to_lowercase())
+                    .unwrap_or_else(|| "unknown".to_string()),
+                has_two_factor_enabled: edge.has_two_factor_enabled,
+            })
         })
         .collect();
 

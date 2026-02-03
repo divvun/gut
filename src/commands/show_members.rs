@@ -2,6 +2,7 @@ use super::common;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use colored::*;
 use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
@@ -38,20 +39,28 @@ impl ShowMembersArgs {
     }
 }
 
-fn print_results(organisation: &str, users: &[github::OrgMember]) {
+fn print_results(organisation: &str, members: &[github::OrgMember]) {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Username", "URL"]);
+    table.set_titles(row!["Username", "Role", "2FA"]);
 
-    for user in users {
-        table.add_row(row![user.login, user.url]);
+    for member in members {
+        let two_factor = match member.has_two_factor_enabled {
+            Some(true) => "yes".green(),
+            Some(false) => "no".red(),
+            None => "-".normal(),
+        };
+        let role = match member.role.as_str() {
+            "admin" => member.role.yellow(),
+            _ => member.role.normal(),
+        };
+        table.add_row(row![member.login, role, two_factor]);
     }
-
-    table.add_empty_row();
-    table.add_row(row!["Total", users.len()]);
 
     println!("Members of {}:", organisation);
     table.printstd();
+
+    println!("{} members", members.len());
 }
 
 //fn parse_role(src: &str) -> Result<String> {

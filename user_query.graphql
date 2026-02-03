@@ -63,9 +63,12 @@ query OwnerRepositoriesWithTopics($login: String!, $after: String) {
 query OrganizationMembers($login: String!, $after: String) {
   organization(login: $login) {
     membersWithRole(first: 30, after: $after) {
-      nodes {
-        login,
-        url,
+      edges {
+        node {
+          login
+        }
+        role
+        hasTwoFactorEnabled
       }
       pageInfo {
         endCursor
