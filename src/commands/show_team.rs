@@ -97,11 +97,13 @@ impl ShowTeamArgs {
 
 fn print_team_header(team: &github::Team) {
     println!("Team: {} ({})", team.slug.bold().cyan(), team.name.bold());
-    if let Some(desc) = &team.description
-        && !desc.is_empty()
-    {
-        println!("Description: {}", desc);
-    }
+    let description = team
+        .description
+        .as_ref()
+        .filter(|d| !d.is_empty())
+        .map(|d| d.as_str())
+        .unwrap_or("");
+    println!("Description: {}", description);
     println!();
 }
 
