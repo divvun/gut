@@ -2,6 +2,7 @@ use super::common;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use prettytable::{Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Show all members in an organisation
@@ -29,7 +30,7 @@ impl ShowUsersArgs {
         let result = github::get_org_members(organisation, &user_token);
 
         match result {
-            Ok(users) => print_results(&users),
+            Ok(users) => print_results(organisation, &users),
             Err(e) => println!("Show users failed because {:?}", e),
         }
 
@@ -37,11 +38,20 @@ impl ShowUsersArgs {
     }
 }
 
-fn print_results(users: &[github::OrgMember]) {
-    println!("List of users: ");
+fn print_results(organisation: &str, users: &[github::OrgMember]) {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+    table.set_titles(row!["Username", "URL"]);
+
     for user in users {
-        println!("{:?}", user.login);
+        table.add_row(row![user.login, user.url]);
     }
+
+    table.add_empty_row();
+    table.add_row(row!["Total", users.len()]);
+
+    println!("Members of {}:", organisation);
+    table.printstd();
 }
 
 //fn parse_role(src: &str) -> Result<String> {
