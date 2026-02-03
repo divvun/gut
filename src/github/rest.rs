@@ -341,6 +341,90 @@ pub struct Team {
     pub id: i32,
     pub slug: String,
     pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TeamMember {
+    pub login: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TeamMembership {
+    pub role: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
+pub struct TeamRepo {
+    pub name: String,
+    pub full_name: String,
+    pub permissions: TeamRepoPermissions,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TeamRepoPermissions {
+    pub admin: bool,
+    pub maintain: bool,
+    pub push: bool,
+    pub triage: bool,
+    pub pull: bool,
+}
+
+impl TeamRepoPermissions {
+    pub fn to_permission_string(&self) -> &'static str {
+        if self.admin {
+            "admin"
+        } else if self.maintain {
+            "maintain"
+        } else if self.push {
+            "write"
+        } else if self.triage {
+            "triage"
+        } else if self.pull {
+            "read"
+        } else {
+            "none"
+        }
+    }
+}
+
+pub fn get_team_members(org: &str, team_slug: &str, token: &str) -> Result<Vec<TeamMember>> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/members",
+        org, team_slug
+    );
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
+pub fn get_team_membership(
+    org: &str,
+    team_slug: &str,
+    username: &str,
+    token: &str,
+) -> Result<TeamMembership> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/memberships/{}",
+        org, team_slug, username
+    );
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
+pub fn get_team_repos(org: &str, team_slug: &str, token: &str) -> Result<Vec<TeamRepo>> {
+    let url = format!(
+        "https://api.github.com/orgs/{}/teams/{}/repos",
+        org, team_slug
+    );
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
 }
 
 pub fn invite_user_to_org(
