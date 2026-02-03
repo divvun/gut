@@ -6,6 +6,7 @@ use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, format, row};
 use rayon::prelude::*;
+use std::collections::HashMap;
 
 #[derive(Debug, Parser)]
 /// Show repositories accessible by specified user(s) in an organisation
@@ -22,11 +23,15 @@ pub struct ShowAccessArgs {
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
+    #[arg(long, short)]
+    /// Long output with one row per user/repo combination
+    pub long: bool,
 }
 
 #[derive(Debug, Clone)]
 struct RepoPermission {
     repo_name: String,
+    username: String,
     permission: String,
 }
 
@@ -52,15 +57,20 @@ impl ShowAccessArgs {
             return Ok(());
         }
 
-        for username in &self.users {
-            let permissions = self.get_user_permissions(
-                username,
-                organisation,
-                &repos.iter().map(|r| r.name.clone()).collect::<Vec<_>>(),
-                &user_token,
-            );
+        let repo_names: Vec<String> = repos.iter().map(|r| r.name.clone()).collect();
 
-            self.print_user_table(username, organisation, &permissions);
+        // Collect permissions for all users
+        let mut all_permissions: Vec<RepoPermission> = Vec::new();
+        for username in &self.users {
+            let permissions =
+                self.get_user_permissions(username, organisation, &repo_names, &user_token);
+            all_permissions.extend(permissions);
+        }
+
+        if self.long {
+            self.print_long_table(organisation, &all_permissions);
+        } else {
+            self.print_compact_table(organisation, &repo_names, &all_permissions);
         }
 
         Ok(())
@@ -95,74 +105,114 @@ impl ShowAccessArgs {
 
                 RepoPermission {
                     repo_name: repo_name.clone(),
+                    username: username.to_string(),
                     permission,
                 }
             })
             .collect();
 
         pb.finish_and_clear();
-
-        // Sort by repo name
-        let mut sorted = results;
-        sorted.sort_by(|a, b| a.repo_name.cmp(&b.repo_name));
-
-        sorted
+        results
     }
 
-    fn print_user_table(&self, username: &str, organisation: &str, permissions: &[RepoPermission]) {
-        self.print_header(organisation);
+    fn print_long_table(&self, organisation: &str, permissions: &[RepoPermission]) {
+        // Sort by username, then by repo_name
+        let mut sorted = permissions.to_vec();
+        sorted.sort_by(|a, b| {
+            a.username
+                .cmp(&b.username)
+                .then(a.repo_name.cmp(&b.repo_name))
+        });
 
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
         table.set_titles(row!["Repository", "User", "Access"]);
 
-        for perm in permissions {
-            let access_cell = match perm.permission.as_str() {
-                "admin" => Cell::new(&perm.permission).style_spec("Fy"),
-                "write" => Cell::new(&perm.permission).style_spec("Fg"),
-                "read" => Cell::new(&perm.permission).style_spec("Fc"),
-                "none" => Cell::new(&perm.permission).style_spec("Fr"),
-                _ => Cell::new(&perm.permission).style_spec("Fr"),
-            };
+        for perm in &sorted {
             table.add_row(Row::new(vec![
                 Cell::new(&perm.repo_name),
-                Cell::new(username),
-                access_cell,
+                Cell::new(&perm.username),
+                self.permission_cell(&perm.permission),
             ]));
         }
 
         table.printstd();
 
-        self.print_footer(username, organisation, permissions.len());
-
+        // Count unique repos
+        let unique_repos: std::collections::HashSet<&str> =
+            sorted.iter().map(|p| p.repo_name.as_str()).collect();
+        self.print_footer(organisation, unique_repos.len());
         println!();
     }
 
-    fn print_header(&self, organisation: &str) {
-        let header = match &self.regex {
-            Some(filter) => format!(
-                "Repos in {} matching {}",
-                organisation.bold().cyan(),
-                filter.to_string().bold().cyan()
-            ),
-            None => format!("Repos in {}", organisation.bold().cyan()),
-        };
-        println!("\n{}", header);
+    fn print_compact_table(
+        &self,
+        organisation: &str,
+        repo_names: &[String],
+        permissions: &[RepoPermission],
+    ) {
+        // Build a map: (repo, user) -> permission
+        let perm_map: HashMap<(&str, &str), &str> = permissions
+            .iter()
+            .map(|p| {
+                (
+                    (p.repo_name.as_str(), p.username.as_str()),
+                    p.permission.as_str(),
+                )
+            })
+            .collect();
+
+        let mut table = Table::new();
+        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+
+        // Header row: Repository, user1, user2, ...
+        let mut title_cells = vec![Cell::new("Repository")];
+        for user in &self.users {
+            title_cells.push(Cell::new(user));
+        }
+        table.set_titles(Row::new(title_cells));
+
+        // Sort repo names
+        let mut sorted_repos = repo_names.to_vec();
+        sorted_repos.sort();
+
+        for repo in &sorted_repos {
+            let mut row_cells = vec![Cell::new(repo)];
+            for user in &self.users {
+                let permission = perm_map
+                    .get(&(repo.as_str(), user.as_str()))
+                    .unwrap_or(&"?");
+                row_cells.push(self.permission_cell(permission));
+            }
+            table.add_row(Row::new(row_cells));
+        }
+
+        table.printstd();
+        self.print_footer(organisation, sorted_repos.len());
+        println!();
     }
 
-    fn print_footer(&self, username: &str, organisation: &str, count: usize) {
+    fn permission_cell(&self, permission: &str) -> Cell {
+        match permission {
+            "admin" => Cell::new(permission).style_spec("Fy"),
+            "write" => Cell::new(permission).style_spec("Fg"),
+            "read" => Cell::new(permission).style_spec("Fc"),
+            "none" => Cell::new(permission).style_spec("Fr"),
+            _ => Cell::new(permission).style_spec("Fr"),
+        }
+    }
+
+    fn print_footer(&self, organisation: &str, count: usize) {
         let footer = match &self.regex {
             Some(filter) => format!(
-                "{} repos for {} in {} matching {}",
+                "{} repos in {} matching {}",
                 count.to_string().bold(),
-                username.bold().cyan(),
                 organisation.bold().cyan(),
                 filter.to_string().bold().cyan()
             ),
             None => format!(
-                "{} repos for {} in {}",
+                "{} repos in {}",
                 count.to_string().bold(),
-                username.bold().cyan(),
                 organisation.bold().cyan()
             ),
         };
