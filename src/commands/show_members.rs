@@ -64,4 +64,6 @@ fn print_results(organisation: &str, members: &[github::OrgMember]) {
     table.printstd();
 
     println!("{} members", members.len());
+
+    println!("DELETE ME, TESTING CI");
 }
