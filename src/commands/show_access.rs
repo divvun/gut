@@ -4,7 +4,7 @@ use crate::github;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
-use prettytable::{Table, format, row};
+use prettytable::{Cell, Row, Table, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
@@ -117,7 +117,18 @@ impl ShowAccessArgs {
         table.set_titles(row!["Repository", "User", "Access"]);
 
         for perm in permissions {
-            table.add_row(row![perm.repo_name, username, perm.permission]);
+            let access_cell = match perm.permission.as_str() {
+                "admin" => Cell::new(&perm.permission).style_spec("Fy"),
+                "write" => Cell::new(&perm.permission).style_spec("Fg"),
+                "read" => Cell::new(&perm.permission).style_spec("Fc"),
+                "none" => Cell::new(&perm.permission).style_spec("Fr"),
+                _ => Cell::new(&perm.permission).style_spec("Fr"),
+            };
+            table.add_row(Row::new(vec![
+                Cell::new(&perm.repo_name),
+                Cell::new(username),
+                access_cell,
+            ]));
         }
 
         table.printstd();
