@@ -65,7 +65,6 @@ query OrganizationMembers($login: String!, $after: String) {
     membersWithRole(first: 30, after: $after) {
       nodes {
         login,
-        email,
         url,
       }
       pageInfo {
