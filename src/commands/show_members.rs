@@ -65,13 +65,3 @@ fn print_results(organisation: &str, members: &[github::OrgMember]) {
 
     println!("{} members", members.len());
 }
-
-//fn parse_role(src: &str) -> Result<String> {
-//let roles = ["all", "admin", "member"];
-//let src = src.to_lowercase();
-//if roles.contains(&src.as_str()) {
-//return Ok(src);
-//}
-
-//Err(anyhow!("role must be one of {:?}", roles))
-//}
