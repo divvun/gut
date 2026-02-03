@@ -2,8 +2,7 @@ use super::common;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
-use colored::*;
-use prettytable::{Table, format, row};
+use prettytable::{Cell, Row, Table, format, row};
 
 #[derive(Debug, Parser)]
 /// Show all members in an organisation
@@ -45,16 +44,20 @@ fn print_results(organisation: &str, members: &[github::OrgMember]) {
     table.set_titles(row!["Username", "Role", "2FA"]);
 
     for member in members {
-        let two_factor = match member.has_two_factor_enabled {
-            Some(true) => "yes".green(),
-            Some(false) => "no".red(),
-            None => "-".normal(),
+        let two_factor_cell = match member.has_two_factor_enabled {
+            Some(true) => Cell::new("yes").style_spec("Fg"),
+            Some(false) => Cell::new("no").style_spec("Fr"),
+            None => Cell::new("-"),
         };
-        let role = match member.role.as_str() {
-            "admin" => member.role.yellow(),
-            _ => member.role.normal(),
+        let role_cell = match member.role.as_str() {
+            "admin" => Cell::new(&member.role).style_spec("Fy"),
+            _ => Cell::new(&member.role),
         };
-        table.add_row(row![member.login, role, two_factor]);
+        table.add_row(Row::new(vec![
+            Cell::new(&member.login),
+            role_cell,
+            two_factor_cell,
+        ]));
     }
 
     println!("Members of {}:", organisation);
