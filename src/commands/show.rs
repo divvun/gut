@@ -1,5 +1,6 @@
 use super::show_config::*;
 use super::show_repos::*;
+use super::show_user::*;
 use super::show_users::*;
 use anyhow::Result;
 use clap::Parser;
@@ -24,6 +25,8 @@ pub enum ShowCommand {
     Config,
     #[command(name = "repositories", visible_aliases = &["repos"])]
     Repos(ShowReposArgs),
+    #[command(name = "user")]
+    User(ShowUserArgs),
     #[command(name = "users")]
     Users(ShowUsersArgs),
 }
@@ -33,6 +36,7 @@ impl ShowCommand {
         match self {
             Self::Config => show_config(),
             Self::Repos(args) => args.show(),
+            Self::User(args) => args.run(),
             Self::Users(args) => args.run(),
         }
     }
