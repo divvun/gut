@@ -102,14 +102,11 @@ impl ShowUserArgs {
 
         pb.finish_and_clear();
 
-        // Sort by repo name and filter out "none" permissions
-        let mut filtered: Vec<_> = results
-            .into_iter()
-            .filter(|r| r.permission != "none")
-            .collect();
-        filtered.sort_by(|a, b| a.repo_name.cmp(&b.repo_name));
+        // Sort by repo name
+        let mut sorted = results;
+        sorted.sort_by(|a, b| a.repo_name.cmp(&b.repo_name));
 
-        filtered
+        sorted
     }
 
     fn print_user_table(&self, username: &str, organisation: &str, permissions: &[RepoPermission]) {
