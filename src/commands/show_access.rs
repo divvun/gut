@@ -12,7 +12,7 @@ use rayon::prelude::*;
 ///
 /// Lists all repositories that the specified user(s) have access to,
 /// along with their permission level (admin, write, read).
-pub struct ShowUserArgs {
+pub struct ShowAccessArgs {
     #[arg(value_name = "USERNAME", required = true)]
     /// One or more GitHub usernames to check
     pub users: Vec<String>,
@@ -30,7 +30,7 @@ struct RepoPermission {
     permission: String,
 }
 
-impl ShowUserArgs {
+impl ShowAccessArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = &self.organisation;

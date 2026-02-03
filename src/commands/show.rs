@@ -1,7 +1,7 @@
+use super::show_access::*;
 use super::show_config::*;
+use super::show_members::*;
 use super::show_repos::*;
-use super::show_user::*;
-use super::show_users::*;
 use anyhow::Result;
 use clap::Parser;
 
@@ -26,9 +26,9 @@ pub enum ShowCommand {
     #[command(name = "repositories", visible_aliases = &["repos"])]
     Repos(ShowReposArgs),
     #[command(name = "access")]
-    Access(ShowUserArgs),
+    Access(ShowAccessArgs),
     #[command(name = "members", visible_aliases = &["users"])]
-    Members(ShowUsersArgs),
+    Members(ShowMembersArgs),
 }
 
 impl ShowCommand {

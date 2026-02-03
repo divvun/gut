@@ -8,7 +8,7 @@ use prettytable::{Table, format, row};
 /// Show all members in an organisation
 ///
 /// This command only works with GitHub organisations, not user accounts.
-pub struct ShowUsersArgs {
+pub struct ShowMembersArgs {
     #[arg(long, short)]
     /// Target organisation name
     pub organisation: String,
@@ -22,7 +22,7 @@ pub struct ShowUsersArgs {
     //pub role: String,
 }
 
-impl ShowUsersArgs {
+impl ShowMembersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
         let organisation = &self.organisation;
@@ -31,7 +31,7 @@ impl ShowUsersArgs {
 
         match result {
             Ok(users) => print_results(organisation, &users),
-            Err(e) => println!("Show users failed because {:?}", e),
+            Err(e) => println!("Show members failed because {:?}", e),
         }
 
         Ok(())
