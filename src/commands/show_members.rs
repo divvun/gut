@@ -4,6 +4,8 @@ use anyhow::Result;
 use clap::Parser;
 use prettytable::{Cell, Row, Table, format, row};
 
+// DELETE ME, TESTING CI
+
 #[derive(Debug, Parser)]
 /// Show all members in an organisation
 ///
