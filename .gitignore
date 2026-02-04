@@ -1,4 +1,7 @@
 /target
+config.toml
+user.toml
+
 Session.vim
 .DS_Store
 
