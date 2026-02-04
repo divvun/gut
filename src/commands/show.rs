@@ -1,11 +1,12 @@
+use super::show_access::*;
 use super::show_config::*;
+use super::show_members::*;
 use super::show_repos::*;
-use super::show_users::*;
 use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Show config, list of repositories or users
+/// Show config, repositories, members, or user access
 pub struct ShowArgs {
     #[command(subcommand)]
     command: ShowCommand,
@@ -24,8 +25,10 @@ pub enum ShowCommand {
     Config,
     #[command(name = "repositories", visible_aliases = &["repos"])]
     Repos(ShowReposArgs),
-    #[command(name = "users")]
-    Users(ShowUsersArgs),
+    #[command(name = "access")]
+    Access(ShowAccessArgs),
+    #[command(name = "members", visible_aliases = &["users"])]
+    Members(ShowMembersArgs),
 }
 
 impl ShowCommand {
@@ -33,7 +36,8 @@ impl ShowCommand {
         match self {
             Self::Config => show_config(),
             Self::Repos(args) => args.show(),
-            Self::Users(args) => args.run(),
+            Self::Access(args) => args.run(),
+            Self::Members(args) => args.run(),
         }
     }
 }

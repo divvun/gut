@@ -891,3 +891,41 @@ fn process_response(response: &req::Response) -> Result<&req::Response> {
 
     Ok(response)
 }
+
+#[derive(Deserialize, Debug)]
+struct PermissionResponse {
+    permission: String,
+}
+
+/// Get a user's permission level for a repository.
+/// Returns "admin", "write", "read", or "none".
+pub fn get_user_repo_permission(
+    owner: &str,
+    repo: &str,
+    username: &str,
+    token: &str,
+) -> Result<String> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/collaborators/{}/permission",
+        owner, repo, username
+    );
+
+    let response = get(&url, token, None)?;
+    let status = response.status();
+
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(models::Unauthorized.into());
+    }
+
+    // 404 means user has no direct access to the repo
+    if status == StatusCode::NOT_FOUND {
+        return Ok("none".to_string());
+    }
+
+    if !status.is_success() {
+        return Err(models::Unsuccessful(status).into());
+    }
+
+    let response_body: PermissionResponse = response.json()?;
+    Ok(response_body.permission)
+}
