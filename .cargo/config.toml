@@ -1,0 +1,7 @@
+[target.x86_64-unknown-linux-musl]
+rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=-static-pie"]
+
+[target.aarch64-unknown-linux-musl]
+# rust-lld produces working plain static binaries (no-pie); musl.cc's static-pie crashes on Alpine
+linker = "rust-lld"
+rustflags = ["-C", "target-feature=+crt-static"]
