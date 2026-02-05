@@ -2,6 +2,8 @@ use super::show_access::*;
 use super::show_config::*;
 use super::show_members::*;
 use super::show_repos::*;
+use super::show_team::*;
+use super::show_teams::*;
 use anyhow::Result;
 use clap::Parser;
 
@@ -29,6 +31,10 @@ pub enum ShowCommand {
     Access(ShowAccessArgs),
     #[command(name = "members", visible_aliases = &["users"])]
     Members(ShowMembersArgs),
+    #[command(name = "teams")]
+    Teams(ShowTeamsArgs),
+    #[command(name = "team")]
+    Team(ShowTeamArgs),
 }
 
 impl ShowCommand {
@@ -38,6 +44,8 @@ impl ShowCommand {
             Self::Repos(args) => args.show(),
             Self::Access(args) => args.run(),
             Self::Members(args) => args.run(),
+            Self::Teams(args) => args.run(),
+            Self::Team(args) => args.run(),
         }
     }
 }
