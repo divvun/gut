@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.7.0] - 2026-02-05
+
+### Added
+
+- **`gut show teams` command**: Lists all teams in an organisation with slug, name, and description
+- **`gut show team <slug>` command**: Shows detailed information about a specific team including:
+  - Team members with their roles (member/maintainer)
+  - Repositories accessible by the team with permission levels (admin/maintain/write/triage/read)
+  - Color-coded output for roles and permissions
+- **`gut show access` command**: Shows user access levels across repositories in a compact table format (#207)
+  - Single line per repo with columns for each user's access level
+  - `--long` (`-l`) flag for detailed per-user tables
+  - Color-coded permission levels
+- **`gut show members` command**: Renamed from `show users`, shows organisation members with permissions and 2FA status (#207)
+- **Static Linux musl builds**: Added configuration for fully static Linux binaries (#210)
+
+### Changed
+
+- **`show users` renamed to `show members`**: Better reflects that it shows organisation membership (#207)
+
+### Fixed
+
+- **`clone` command**: Now filters out repos that don't belong to the current owner (#206)
+- **`show users` command**: Fixed broken command that required unnecessary `user:email` permission (#207)
+- **Local path error handling**: Improved error messages for path-related issues (#47)
+
 ## [0.6.0] - 2026-01-31
 
 ### Added
