@@ -152,6 +152,13 @@ fn get_org_members_rec(
     Ok(list_member)
 }
 
+fn filter_by_owner<'a>(name_with_owner: &'a str, expected_owner: &str) -> Option<&'a str> {
+    let repo_owner = name_with_owner.split('/').next()?;
+    repo_owner
+        .eq_ignore_ascii_case(expected_owner)
+        .then_some(repo_owner)
+}
+
 fn list_owner_repos_rec(
     token: &str,
     owner: &str,
@@ -185,17 +192,15 @@ fn list_owner_repos_rec(
         .ok_or(NoReposFound)?
         .iter()
         .filter_map(|repo| repo.as_ref())
-        .map(|x| RemoteRepo {
-            name: x.name.to_string(),
-            ssh_url: x.ssh_url.to_string(),
-            owner: x
-                .name_with_owner
-                .split('/')
-                .next()
-                .unwrap_or(owner)
-                .to_string(),
-            https_url: x.url.to_string(),
-            default_branch: x.default_branch_ref.as_ref().map(|b| b.name.to_string()),
+        .filter_map(|x| {
+            let repo_owner = filter_by_owner(&x.name_with_owner, owner)?;
+            Some(RemoteRepo {
+                name: x.name.to_string(),
+                ssh_url: x.ssh_url.to_string(),
+                owner: repo_owner.to_string(),
+                https_url: x.url.to_string(),
+                default_branch: x.default_branch_ref.as_ref().map(|b| b.name.to_string()),
+            })
         })
         .collect();
 
@@ -249,28 +254,26 @@ fn list_owner_repos_with_topics_rec(
         .ok_or(NoReposFound)?
         .iter()
         .filter_map(|repo| repo.as_ref())
-        .map(|x| RemoteRepoWithTopics {
-            repo: RemoteRepo {
-                name: x.name.to_string(),
-                ssh_url: x.ssh_url.to_string(),
-                owner: x
-                    .name_with_owner
-                    .split('/')
-                    .next()
-                    .unwrap_or(owner)
-                    .to_string(),
-                https_url: x.url.to_string(),
-                default_branch: None,
-            },
-            topics: x
-                .repository_topics
-                .nodes
-                .as_ref()
-                .unwrap_or(&temp)
-                .iter()
-                .filter_map(|t| t.as_ref())
-                .map(|x| x.topic.name.to_string())
-                .collect(),
+        .filter_map(|x| {
+            let repo_owner = filter_by_owner(&x.name_with_owner, owner)?;
+            Some(RemoteRepoWithTopics {
+                repo: RemoteRepo {
+                    name: x.name.to_string(),
+                    ssh_url: x.ssh_url.to_string(),
+                    owner: repo_owner.to_string(),
+                    https_url: x.url.to_string(),
+                    default_branch: None,
+                },
+                topics: x
+                    .repository_topics
+                    .nodes
+                    .as_ref()
+                    .unwrap_or(&temp)
+                    .iter()
+                    .filter_map(|t| t.as_ref())
+                    .map(|x| x.topic.name.to_string())
+                    .collect(),
+            })
         })
         .collect();
 
