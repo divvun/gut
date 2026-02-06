@@ -3,9 +3,11 @@ use crate::github;
 use crate::github::models::Unsuccessful;
 use anyhow::Result;
 use clap::Parser;
+use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Cell, Row, Table, format, row};
 use reqwest::StatusCode;
 use std::collections::HashSet;
+use std::time::Duration;
 
 #[derive(Debug, Parser)]
 /// Show access details for a specific repository
@@ -53,26 +55,32 @@ impl ShowRepoArgs {
 
         println!();
 
-        match github::get_repo_collaborators(&organisation, repo_name, &user_token, None) {
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.green} {msg}")
+                .unwrap(),
+        );
+        spinner.set_message("Fetching collaborators...");
+        spinner.enable_steady_tick(Duration::from_millis(100));
+
+        let collaborators_result =
+            github::get_repo_collaborators(&organisation, repo_name, &user_token, None);
+        let direct_result =
+            github::get_repo_collaborators(&organisation, repo_name, &user_token, Some("direct"));
+        let outside_result =
+            github::get_repo_collaborators(&organisation, repo_name, &user_token, Some("outside"));
+
+        spinner.finish_and_clear();
+
+        match collaborators_result {
             Ok(collaborators) => {
-                let direct_users: HashSet<String> = match github::get_repo_collaborators(
-                    &organisation,
-                    repo_name,
-                    &user_token,
-                    Some("direct"),
-                ) {
-                    Ok(direct) => direct.into_iter().map(|c| c.login).collect(),
-                    Err(_) => HashSet::new(),
-                };
-                let outside_users: HashSet<String> = match github::get_repo_collaborators(
-                    &organisation,
-                    repo_name,
-                    &user_token,
-                    Some("outside"),
-                ) {
-                    Ok(outside) => outside.into_iter().map(|c| c.login).collect(),
-                    Err(_) => HashSet::new(),
-                };
+                let direct_users: HashSet<String> = direct_result
+                    .map(|d| d.into_iter().map(|c| c.login).collect())
+                    .unwrap_or_default();
+                let outside_users: HashSet<String> = outside_result
+                    .map(|o| o.into_iter().map(|c| c.login).collect())
+                    .unwrap_or_default();
                 print_collaborators(&collaborators, &direct_users, &outside_users);
             }
             Err(e) => println!("Could not fetch collaborators: {:?}", e),
