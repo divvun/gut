@@ -148,6 +148,11 @@ fn print_collaborators(
     println!("Collaborators:");
     table.printstd();
     println!("{} collaborators", collaborators.len());
+    println!();
+    println!("Affiliation key:");
+    println!("  org     - org member, access granted through organisation or team membership");
+    println!("  direct  - org member, explicitly added to this repository (e.g. for elevated permissions)");
+    println!("  outside - not an org member, explicitly added to this repository as an outside collaborator");
 }
 
 fn permission_cell(permission: &str) -> Cell {
