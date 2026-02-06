@@ -1,6 +1,6 @@
 # gut
 
-Pronounced `gʉːt`.
+Pronounced `/gʉːt/`, as in the Norwegian word for *boy*.
 
 [![](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/badge.svg)](https://divvun-tc.thetc.se/api/github/v1/repository/divvun/gut/main/latest)
 
