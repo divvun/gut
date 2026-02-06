@@ -108,8 +108,8 @@ fn print_teams(teams: &[github::RepoTeam]) {
 
 fn print_collaborators(
     collaborators: &[github::RepoCollaborator],
-    direct_logins: &HashSet<String>,
-    outside_logins: &HashSet<String>,
+    direct_users: &HashSet<String>,
+    outside_users: &HashSet<String>,
 ) {
     if collaborators.is_empty() {
         println!("No collaborators have access to this repository");
@@ -124,9 +124,9 @@ fn print_collaborators(
         let permission = collaborator.permissions.to_permission_string();
         let permission_cell = permission_cell(permission);
 
-        let affiliation = if outside_logins.contains(&collaborator.login) {
+        let affiliation = if outside_users.contains(&collaborator.login) {
             "outside"
-        } else if direct_logins.contains(&collaborator.login) {
+        } else if direct_users.contains(&collaborator.login) {
             "direct"
         } else {
             "org"
