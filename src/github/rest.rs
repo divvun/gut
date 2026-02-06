@@ -963,6 +963,76 @@ struct DispatchBody {
     event_type: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct RepoCollaborator {
+    pub login: String,
+    pub permissions: CollaboratorPermissions,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CollaboratorPermissions {
+    pub admin: bool,
+    pub maintain: bool,
+    pub push: bool,
+    pub triage: bool,
+    pub pull: bool,
+}
+
+impl CollaboratorPermissions {
+    pub fn to_permission_string(&self) -> &'static str {
+        if self.admin {
+            "admin"
+        } else if self.maintain {
+            "maintain"
+        } else if self.push {
+            "write"
+        } else if self.triage {
+            "triage"
+        } else if self.pull {
+            "read"
+        } else {
+            "none"
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RepoTeam {
+    pub slug: String,
+    pub name: String,
+    pub permission: String,
+}
+
+pub fn get_repo_collaborators(
+    owner: &str,
+    repo: &str,
+    token: &str,
+    affiliation: Option<&str>,
+) -> Result<Vec<RepoCollaborator>> {
+    let url = match affiliation {
+        Some(aff) => format!(
+            "https://api.github.com/repos/{}/{}/collaborators?affiliation={}",
+            owner, repo, aff
+        ),
+        None => format!(
+            "https://api.github.com/repos/{}/{}/collaborators",
+            owner, repo
+        ),
+    };
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
+pub fn get_repo_teams(owner: &str, repo: &str, token: &str) -> Result<Vec<RepoTeam>> {
+    let url = format!("https://api.github.com/repos/{}/{}/teams", owner, repo);
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
 fn process_response(response: &req::Response) -> Result<&req::Response> {
     let status = response.status();
 

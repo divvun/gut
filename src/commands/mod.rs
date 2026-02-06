@@ -44,6 +44,7 @@ pub mod show;
 pub mod show_access;
 pub mod show_config;
 pub mod show_members;
+pub mod show_repo;
 pub mod show_repos;
 pub mod show_team;
 pub mod show_teams;
