@@ -15,9 +15,9 @@ pub struct ShowTeamsArgs {
     #[arg(long, short)]
     /// Target organisation name
     pub organisation: Option<String>,
-    #[arg(long, short = 'H')]
-    /// Display teams as a hierarchy tree
-    pub hierarchical: bool,
+    #[arg(long, short)]
+    /// Display teams as a tree
+    pub tree: bool,
 }
 
 impl ShowTeamsArgs {
@@ -29,7 +29,7 @@ impl ShowTeamsArgs {
 
         match result {
             Ok(teams) => {
-                if self.hierarchical {
+                if self.tree {
                     print_tree(&organisation, &teams);
                 } else {
                     print_results(&organisation, &teams);
