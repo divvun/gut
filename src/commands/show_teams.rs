@@ -106,7 +106,7 @@ fn print_tree(organisation: &str, teams: &[github::Team]) {
     for (i, team) in roots.iter().enumerate() {
         let is_last = i == total - 1;
         let connector = if is_last { "└── " } else { "├── " };
-        println!("{}{} — {}", connector, team.slug, team.name);
+        println!("{}{} ({})", connector, team.name, team.slug);
         let prefix = if is_last { "    " } else { "│   " };
         print_children(team, prefix, &children_map);
     }
@@ -125,7 +125,7 @@ fn print_children(
         for (i, child) in children.iter().enumerate() {
             let is_last = i == total - 1;
             let connector = if is_last { "└── " } else { "├── " };
-            println!("{}{}{} — {}", prefix, connector, child.slug, child.name);
+            println!("{}{}{} ({})", prefix, connector, child.name, child.slug);
             let next_prefix = if is_last {
                 format!("{}    ", prefix)
             } else {
