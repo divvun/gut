@@ -117,7 +117,11 @@ fn print_collaborators(
     }
 
     let mut sorted: Vec<_> = collaborators.iter().collect();
-    sorted.sort_by_key(|c| permission_rank(c.permissions.to_permission_string()));
+    sorted.sort_by(|a, b| {
+        permission_rank(a.permissions.to_permission_string())
+            .cmp(&permission_rank(b.permissions.to_permission_string()))
+            .then_with(|| a.login.to_lowercase().cmp(&b.login.to_lowercase()))
+    });
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
