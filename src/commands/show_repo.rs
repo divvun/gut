@@ -154,8 +154,12 @@ fn print_collaborators(
     println!();
     println!("Affiliation key:");
     println!("  org     - org member, access granted through organisation or team membership");
-    println!("  direct  - org member, explicitly added to this repository (e.g. for elevated permissions)");
-    println!("  outside - not an org member, explicitly added to this repository as an outside collaborator");
+    println!(
+        "  direct  - org member, explicitly added to this repository (e.g. for elevated permissions)"
+    );
+    println!(
+        "  outside - not an org member, explicitly added to this repository as an outside collaborator"
+    );
 }
 
 fn permission_rank(permission: &str) -> u8 {
