@@ -1007,11 +1007,18 @@ pub fn get_repo_collaborators(
     owner: &str,
     repo: &str,
     token: &str,
+    affiliation: Option<&str>,
 ) -> Result<Vec<RepoCollaborator>> {
-    let url = format!(
-        "https://api.github.com/repos/{}/{}/collaborators",
-        owner, repo
-    );
+    let url = match affiliation {
+        Some(aff) => format!(
+            "https://api.github.com/repos/{}/{}/collaborators?affiliation={}",
+            owner, repo, aff
+        ),
+        None => format!(
+            "https://api.github.com/repos/{}/{}/collaborators",
+            owner, repo
+        ),
+    };
 
     let response = get(&url, token, None)?;
     process_response(&response)?;

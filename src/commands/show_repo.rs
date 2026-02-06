@@ -5,6 +5,7 @@ use anyhow::Result;
 use clap::Parser;
 use prettytable::{Cell, Row, Table, format, row};
 use reqwest::StatusCode;
+use std::collections::HashSet;
 
 #[derive(Debug, Parser)]
 /// Show access details for a specific repository
@@ -52,9 +53,27 @@ impl ShowRepoArgs {
 
         println!();
 
-        match github::get_repo_collaborators(&organisation, repo_name, &user_token) {
+        match github::get_repo_collaborators(&organisation, repo_name, &user_token, None) {
             Ok(collaborators) => {
-                print_collaborators(&collaborators);
+                let direct_users: HashSet<String> = match github::get_repo_collaborators(
+                    &organisation,
+                    repo_name,
+                    &user_token,
+                    Some("direct"),
+                ) {
+                    Ok(direct) => direct.into_iter().map(|c| c.login).collect(),
+                    Err(_) => HashSet::new(),
+                };
+                let outside_users: HashSet<String> = match github::get_repo_collaborators(
+                    &organisation,
+                    repo_name,
+                    &user_token,
+                    Some("outside"),
+                ) {
+                    Ok(outside) => outside.into_iter().map(|c| c.login).collect(),
+                    Err(_) => HashSet::new(),
+                };
+                print_collaborators(&collaborators, &direct_users, &outside_users);
             }
             Err(e) => println!("Could not fetch collaborators: {:?}", e),
         }
@@ -87,7 +106,11 @@ fn print_teams(teams: &[github::RepoTeam]) {
     println!("{} teams", teams.len());
 }
 
-fn print_collaborators(collaborators: &[github::RepoCollaborator]) {
+fn print_collaborators(
+    collaborators: &[github::RepoCollaborator],
+    direct_logins: &HashSet<String>,
+    outside_logins: &HashSet<String>,
+) {
     if collaborators.is_empty() {
         println!("No collaborators have access to this repository");
         return;
@@ -95,14 +118,30 @@ fn print_collaborators(collaborators: &[github::RepoCollaborator]) {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Username", "Permission"]);
+    table.set_titles(row!["Username", "Permission", "Affiliation"]);
 
     for collaborator in collaborators {
         let permission = collaborator.permissions.to_permission_string();
         let permission_cell = permission_cell(permission);
+
+        let affiliation = if outside_logins.contains(&collaborator.login) {
+            "outside"
+        } else if direct_logins.contains(&collaborator.login) {
+            "direct"
+        } else {
+            "org"
+        };
+
+        let affiliation_cell = match affiliation {
+            "outside" => Cell::new(affiliation).style_spec("Fr"),
+            "direct" => Cell::new(affiliation).style_spec("Fc"),
+            _ => Cell::new(affiliation),
+        };
+
         table.add_row(Row::new(vec![
             Cell::new(&collaborator.login),
             permission_cell,
+            affiliation_cell,
         ]));
     }
 
