@@ -325,6 +325,14 @@ pub fn add_user_to_team(org: &str, team: &str, role: &str, user: &str, token: &s
     process_response(&response).map(|_| ())
 }
 
+pub fn rename_team(org: &str, team_slug: &str, new_name: &str, token: &str) -> Result<Team> {
+    let url = format!("https://api.github.com/orgs/{}/teams/{}", org, team_slug);
+    let body = serde_json::json!({ "name": new_name });
+    let response = patch(&url, &body, token)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
 pub fn get_teams(org: &str, token: &str) -> Result<Vec<Team>> {
     let url = format!("https://api.github.com/orgs/{}/teams", org);
 
