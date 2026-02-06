@@ -52,7 +52,7 @@ impl ShowTeamArgs {
 
         match team {
             Some(team) => {
-                print_team_header(team);
+                print_team_header(team, &teams);
             }
             None => {
                 println!(
@@ -95,7 +95,7 @@ impl ShowTeamArgs {
     }
 }
 
-fn print_team_header(team: &github::Team) {
+fn print_team_header(team: &github::Team, all_teams: &[github::Team]) {
     println!("Team: {} ({})", team.slug.bold().cyan(), team.name.bold());
     let description = team
         .description
@@ -104,6 +104,21 @@ fn print_team_header(team: &github::Team) {
         .map(|d| d.as_str())
         .unwrap_or("");
     println!("Description: {}", description);
+    if let Some(parent) = &team.parent {
+        println!(
+            "Parent: {} ({})",
+            parent.slug.bold().cyan(),
+            parent.name.bold()
+        );
+    }
+    let children: Vec<&github::Team> = all_teams
+        .iter()
+        .filter(|t| t.parent.as_ref().is_some_and(|p| p.slug == team.slug))
+        .collect();
+    if !children.is_empty() {
+        let child_list: Vec<String> = children.iter().map(|t| t.slug.clone()).collect();
+        println!("Child teams: {}", child_list.join(", "));
+    }
     println!();
 }
 

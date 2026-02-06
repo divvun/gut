@@ -342,6 +342,7 @@ pub struct Team {
     pub slug: String,
     pub name: String,
     pub description: Option<String>,
+    pub parent: Option<Box<Team>>,
 }
 
 #[derive(Deserialize, Debug)]
