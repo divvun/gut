@@ -116,11 +116,14 @@ fn print_collaborators(
         return;
     }
 
+    let mut sorted: Vec<_> = collaborators.iter().collect();
+    sorted.sort_by_key(|c| permission_rank(c.permissions.to_permission_string()));
+
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Username", "Permission", "Affiliation"]);
 
-    for collaborator in collaborators {
+    for collaborator in &sorted {
         let permission = collaborator.permissions.to_permission_string();
         let permission_cell = permission_cell(permission);
 
@@ -153,6 +156,17 @@ fn print_collaborators(
     println!("  org     - org member, access granted through organisation or team membership");
     println!("  direct  - org member, explicitly added to this repository (e.g. for elevated permissions)");
     println!("  outside - not an org member, explicitly added to this repository as an outside collaborator");
+}
+
+fn permission_rank(permission: &str) -> u8 {
+    match permission {
+        "admin" => 0,
+        "maintain" => 1,
+        "write" => 2,
+        "triage" => 3,
+        "read" => 4,
+        _ => 5,
+    }
 }
 
 fn permission_cell(permission: &str) -> Cell {
