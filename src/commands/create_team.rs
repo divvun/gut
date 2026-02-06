@@ -13,7 +13,7 @@ use clap::Parser;
 pub struct CreateTeamArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Team name
     pub team_name: String,
@@ -31,8 +31,9 @@ pub struct CreateTeamArgs {
 impl CreateTeamArgs {
     pub fn create_team(&self) -> Result<()> {
         let user_token = common::user_token()?;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
-        match create_team(self, &user_token) {
+        match create_team(self, &organisation, &user_token) {
             Ok(r) => println!(
                 "You created a team named: {} successfully with id: {} and link : {}",
                 self.team_name, r.id, r.html_url
@@ -48,12 +49,16 @@ impl CreateTeamArgs {
     }
 }
 
-fn create_team(args: &CreateTeamArgs, token: &str) -> Result<CreateTeamResponse> {
+fn create_team(
+    args: &CreateTeamArgs,
+    organisation: &str,
+    token: &str,
+) -> Result<CreateTeamResponse> {
     let des = args.description.as_deref().unwrap_or("");
     let members: Vec<String> = args.members.iter().map(|s| s.to_string()).collect();
 
     match github::create_team(
-        &args.organisation,
+        organisation,
         &args.team_name,
         des,
         members,

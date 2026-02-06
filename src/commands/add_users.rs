@@ -14,7 +14,7 @@ use clap::Parser;
 pub struct AddUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short, default_value = "member")]
     /// Role (member | admin) for org, or (member | maintainer) for team
     pub role: String,
@@ -28,35 +28,21 @@ pub struct AddUsersArgs {
 
 impl AddUsersArgs {
     pub fn run(&self) -> Result<()> {
+        let user_token = common::user_token()?;
+        let organisation = common::owner(self.organisation.as_deref())?;
+        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
+
         match &self.team_slug {
-            Some(name) => self.add_users_to_team(name),
-            None => self.add_users_to_org(),
+            Some(team_name) => {
+                let results =
+                    add_list_user_to_team(&organisation, team_name, &self.role, users, &user_token);
+                print_results_team(&results, team_name, &self.role);
+            }
+            None => {
+                let results = add_list_user_to_org(&organisation, &self.role, users, &user_token);
+                print_results_org(&results, &organisation, &self.role);
+            }
         }
-    }
-
-    fn add_users_to_org(&self) -> Result<()> {
-        let user_token = common::user_token()?;
-        let organisation = &self.organisation;
-
-        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
-
-        let results = add_list_user_to_org(organisation, &self.role, users, &user_token);
-
-        print_results_org(&results, organisation, &self.role);
-
-        Ok(())
-    }
-
-    fn add_users_to_team(&self, team_name: &str) -> Result<()> {
-        let user_token = common::user_token()?;
-        let organisation = &self.organisation;
-
-        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
-
-        let results =
-            add_list_user_to_team(organisation, team_name, &self.role, users, &user_token);
-
-        print_results_team(&results, team_name, &self.role);
 
         Ok(())
     }

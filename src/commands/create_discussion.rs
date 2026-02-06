@@ -13,7 +13,7 @@ use clap::Parser;
 pub struct CreateDiscussionArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Team slug
     pub team_slug: String,
@@ -31,10 +31,10 @@ pub struct CreateDiscussionArgs {
 impl CreateDiscussionArgs {
     pub fn create_discussion(&self) -> Result<()> {
         let token = common::user_token()?;
-        let organisation = &self.organisation;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         match github::create_discussion(
-            organisation,
+            &organisation,
             &self.team_slug,
             &self.subject,
             &self.body,
@@ -46,7 +46,17 @@ impl CreateDiscussionArgs {
                 self.team_slug, r.html_url
             ),
             Err(e) => {
-                if e.downcast_ref::<Unauthorized>().is_some() {
+                if common::handle_org_not_found(
+                    &e,
+                    &format!(
+                        "Could not create discussion for team '{}' in '{}'.",
+                        self.team_slug, organisation
+                    ),
+                    "gut create discussion -o <organisation>",
+                    self.organisation.is_some(),
+                ) {
+                    return Ok(());
+                } else if e.downcast_ref::<Unauthorized>().is_some() {
                     anyhow::bail!("User token invalid. Run `gut init` with a valid token");
                 } else {
                     println!(
