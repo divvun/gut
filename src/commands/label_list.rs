@@ -82,9 +82,10 @@ impl LabelListArgs {
         let mut label_count = 0;
         for result in &results {
             if let Ok(repo_labels) = result {
-                for label in &repo_labels.labels {
+                for (i, label) in repo_labels.labels.iter().enumerate() {
+                    let repo_col = if i == 0 { &repo_labels.repo_name } else { "" };
                     let desc = label.description.as_deref().unwrap_or("");
-                    table.add_row(row![repo_labels.repo_name, label.name, label.color, desc]);
+                    table.add_row(row![repo_col, label.name, label.color, desc]);
                     label_count += 1;
                 }
             }
