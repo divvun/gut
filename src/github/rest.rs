@@ -675,6 +675,101 @@ pub struct TopicsResponse {
     names: Vec<String>,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Label {
+    pub name: String,
+    pub color: String,
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+struct CreateLabelBody {
+    name: String,
+    color: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+struct UpdateLabelBody {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    new_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    color: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+}
+
+pub fn get_labels(repo: &RemoteRepo, token: &str) -> Result<Vec<Label>> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/labels",
+        repo.owner, repo.name
+    );
+
+    let response = get(&url, token, None)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
+pub fn create_label(
+    repo: &RemoteRepo,
+    name: &str,
+    color: &str,
+    description: Option<&str>,
+    token: &str,
+) -> Result<Label> {
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/labels",
+        repo.owner, repo.name
+    );
+
+    let body = CreateLabelBody {
+        name: name.to_string(),
+        color: color.to_string(),
+        description: description.map(|s| s.to_string()),
+    };
+
+    let response = post(&url, &body, token)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
+pub fn delete_label(repo: &RemoteRepo, name: &str, token: &str) -> Result<()> {
+    let encoded_name = urlencoding::encode(name);
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/labels/{}",
+        repo.owner, repo.name, encoded_name
+    );
+
+    let response = delete(&url, token)?;
+    process_response(&response).map(|_| ())
+}
+
+pub fn update_label(
+    repo: &RemoteRepo,
+    current_name: &str,
+    new_name: Option<&str>,
+    color: Option<&str>,
+    description: Option<&str>,
+    token: &str,
+) -> Result<Label> {
+    let encoded_name = urlencoding::encode(current_name);
+    let url = format!(
+        "https://api.github.com/repos/{}/{}/labels/{}",
+        repo.owner, repo.name, encoded_name
+    );
+
+    let body = UpdateLabelBody {
+        new_name: new_name.map(|s| s.to_string()),
+        color: color.map(|s| s.to_string()),
+        description: description.map(|s| s.to_string()),
+    };
+
+    let response = patch(&url, &body, token)?;
+    process_response(&response)?;
+    response.json().map_err(Into::into)
+}
+
 pub fn transfer_repo(repo: &RemoteRepo, new_owner: &str, token: &str) -> Result<()> {
     let url = format!(
         "https://api.github.com/repos/{}/{}/transfer",

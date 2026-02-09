@@ -1,8 +1,8 @@
 use crate::commands::{
     AddArgs, ApplyArgs, BranchArgs, CheckoutArgs, CiArgs, CleanArgs, CloneArgs, CommitArgs,
-    CreateArgs, FetchArgs, HookArgs, InitArgs, InviteArgs, MakeArgs, MergeArgs, PullArgs, PushArgs,
-    RemoveArgs, RenameArgs, RepoHealthArgs, SetArgs, ShowArgs, StatusArgs, TemplateArgs, TopicArgs,
-    TransferArgs, WorkflowArgs,
+    CreateArgs, FetchArgs, HookArgs, InitArgs, InviteArgs, LabelArgs, MakeArgs, MergeArgs,
+    PullArgs, PushArgs, RemoveArgs, RenameArgs, RepoHealthArgs, SetArgs, ShowArgs, StatusArgs,
+    TemplateArgs, TopicArgs, TransferArgs, WorkflowArgs,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 
@@ -57,6 +57,8 @@ pub enum Commands {
     Init(InitArgs),
     #[command(name = "invite")]
     Invite(InviteArgs),
+    #[command(name = "label")]
+    Label(LabelArgs),
     #[command(name = "make")]
     Make(MakeArgs),
     #[command(name = "merge")]
