@@ -95,15 +95,13 @@ impl LabelListArgs {
         table.set_titles(row!["Repository", "Label", "Color", "Description"]);
 
         let mut label_count = 0;
-        for result in &results {
-            if let Ok(repo_labels) = result {
-                for (i, label) in repo_labels.labels.iter().enumerate() {
-                    let repo_col = if i == 0 { &repo_labels.repo_name } else { "" };
-                    let desc = label.description.as_deref().unwrap_or("");
-                    let color = color_swatch(&label.color);
-                    table.add_row(row![repo_col, label.name, color, desc]);
-                    label_count += 1;
-                }
+        for repo_labels in results.iter().flatten() {
+            for (i, label) in repo_labels.labels.iter().enumerate() {
+                let repo_col = if i == 0 { &repo_labels.repo_name } else { "" };
+                let desc = label.description.as_deref().unwrap_or("");
+                let color = color_swatch(&label.color);
+                table.add_row(row![repo_col, label.name, color, desc]);
+                label_count += 1;
             }
         }
 
