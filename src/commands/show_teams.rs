@@ -1,10 +1,8 @@
 use super::common;
 use crate::github;
-use crate::github::models::Unsuccessful;
 use anyhow::Result;
 use clap::Parser;
 use prettytable::{Cell, Row, Table, format, row};
-use reqwest::StatusCode;
 use std::collections::HashMap;
 
 #[derive(Debug, Parser)]
@@ -36,16 +34,12 @@ impl ShowTeamsArgs {
                 }
             }
             Err(e) => {
-                if let Some(unsuccessful) = e.downcast_ref::<Unsuccessful>()
-                    && unsuccessful.0 == StatusCode::NOT_FOUND
-                {
-                    println!("Could not find teams for '{}'.", organisation);
-                    println!("Note: Teams only exist in organisations, not personal accounts.");
-                    if self.organisation.is_none() {
-                        println!(
-                            "If you meant a different organisation, use: gut show teams -o <organisation>"
-                        );
-                    }
+                if common::handle_org_not_found(
+                    &e,
+                    &format!("Could not find teams for '{}'.", organisation),
+                    "gut show teams -o <organisation>",
+                    self.organisation.is_some(),
+                ) {
                     return Ok(());
                 }
                 println!("Show teams failed: {:?}", e);

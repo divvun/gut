@@ -15,7 +15,7 @@ use clap::Parser;
 pub struct InviteUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short, default_value_t = Role::default())]
     /// Role (member | admin | billing_manager) for the invited users
     pub role: Role,
@@ -80,20 +80,29 @@ impl fmt::Display for Role {
 impl InviteUsersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = &self.organisation;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let emails: Vec<String> = self.emails.iter().map(|s| s.to_string()).collect();
-        let teams = team_slug_to_ids(organisation, &user_token, &self.teams)?;
+        let teams = team_slug_to_ids(&organisation, &user_token, &self.teams)?;
 
         let results = add_list_user_to_org(
-            organisation,
+            &organisation,
             self.role.to_value(),
             emails,
             &user_token,
             teams,
         );
 
-        print_results_org(&results, organisation, self.role.to_value());
+        print_results_org(&results, &organisation, self.role.to_value());
+
+        if let Some((_, Err(e))) = results.iter().find(|(_, r)| r.is_err()) {
+            common::handle_org_not_found(
+                e,
+                &format!("Could not invite users to '{}'.", organisation),
+                "gut invite users -o <organisation>",
+                self.organisation.is_some(),
+            );
+        }
 
         Ok(())
     }
@@ -133,6 +142,9 @@ fn print_results_org(results: &[(String, Result<()>)], org: &str, role: &str) {
 }
 
 fn team_slug_to_ids(org: &str, token: &str, teams: &[String]) -> Result<Vec<i32>> {
+    if teams.is_empty() {
+        return Ok(Vec::new());
+    }
     let all_teams = github::get_teams(org, token)?;
     let map: HashMap<_, _> = all_teams
         .into_iter()

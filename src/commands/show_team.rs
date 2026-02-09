@@ -1,11 +1,9 @@
 use super::common;
 use crate::github;
-use crate::github::models::Unsuccessful;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, format, row};
-use reqwest::StatusCode;
 
 #[derive(Debug, Parser)]
 /// Show details of a specific team
@@ -31,17 +29,12 @@ impl ShowTeamArgs {
         let teams = match github::get_teams(&organisation, &user_token) {
             Ok(teams) => teams,
             Err(e) => {
-                if let Some(unsuccessful) = e.downcast_ref::<Unsuccessful>()
-                    && unsuccessful.0 == StatusCode::NOT_FOUND
-                {
-                    println!("Could not find teams for '{}'.", organisation);
-                    println!("Note: Teams only exist in organisations, not personal accounts.");
-                    if self.organisation.is_none() {
-                        println!(
-                            "If you meant a different organisation, use: gut show team {} -o <organisation>",
-                            team_slug
-                        );
-                    }
+                if common::handle_org_not_found(
+                    &e,
+                    &format!("Could not find teams for '{}'.", organisation),
+                    &format!("gut show team {} -o <organisation>", team_slug),
+                    self.organisation.is_some(),
+                ) {
                     return Ok(());
                 }
                 return Err(e);

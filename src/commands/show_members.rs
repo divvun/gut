@@ -11,7 +11,7 @@ use prettytable::{Cell, Row, Table, format, row};
 pub struct ShowMembersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     //#[arg(long, short, default_value = "all", parse(try_from_str = parse_role))]
     // Filter members returned by their role.
     //
@@ -25,13 +25,22 @@ pub struct ShowMembersArgs {
 impl ShowMembersArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = &self.organisation;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
-        let result = github::get_org_members(organisation, &user_token);
+        let result = github::get_org_members(&organisation, &user_token);
 
         match result {
-            Ok(users) => print_results(organisation, &users),
-            Err(e) => println!("Show members failed because {:?}", e),
+            Ok(users) => print_results(&organisation, &users),
+            Err(e) => {
+                if !common::handle_org_not_found(
+                    &e,
+                    &format!("Could not find members for '{}'.", organisation),
+                    "gut show members -o <organisation>",
+                    self.organisation.is_some(),
+                ) {
+                    println!("Show members failed: {:?}", e);
+                }
+            }
         }
 
         Ok(())

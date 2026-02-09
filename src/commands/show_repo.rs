@@ -19,17 +19,17 @@ pub struct ShowRepoArgs {
     /// The repository name
     pub repo_name: String,
     #[arg(long, short)]
-    /// Target organisation name
-    pub organisation: Option<String>,
+    /// Target owner (organisation or user)
+    pub owner: Option<String>,
 }
 
 impl ShowRepoArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = common::owner(self.organisation.as_deref())?;
+        let owner = common::owner(self.owner.as_deref())?;
         let repo_name = &self.repo_name;
 
-        match github::get_repo_teams(&organisation, repo_name, &user_token) {
+        match github::get_repo_teams(&owner, repo_name, &user_token) {
             Ok(teams) => {
                 print_teams(&teams);
             }
@@ -38,12 +38,12 @@ impl ShowRepoArgs {
                     && unsuccessful.0 == StatusCode::NOT_FOUND
                 {
                     println!(
-                        "Could not find repository '{}/{}'. Check the name and organisation.",
-                        organisation, repo_name
+                        "Could not find repository '{}/{}'. Check the name and owner.",
+                        owner, repo_name
                     );
-                    if self.organisation.is_none() {
+                    if self.owner.is_none() {
                         println!(
-                            "If this repository belongs to a different organisation, use: gut show repository {} -o <organisation>",
+                            "If this repository belongs to a different owner, use: gut show repository {} -o <owner>",
                             repo_name
                         );
                     }
@@ -65,11 +65,11 @@ impl ShowRepoArgs {
         spinner.enable_steady_tick(Duration::from_millis(100));
 
         let collaborators_result =
-            github::get_repo_collaborators(&organisation, repo_name, &user_token, None);
+            github::get_repo_collaborators(&owner, repo_name, &user_token, None);
         let direct_result =
-            github::get_repo_collaborators(&organisation, repo_name, &user_token, Some("direct"));
+            github::get_repo_collaborators(&owner, repo_name, &user_token, Some("direct"));
         let outside_result =
-            github::get_repo_collaborators(&organisation, repo_name, &user_token, Some("outside"));
+            github::get_repo_collaborators(&owner, repo_name, &user_token, Some("outside"));
 
         spinner.finish_and_clear();
 

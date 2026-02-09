@@ -15,7 +15,7 @@ use rayon::prelude::*;
 pub struct AddRepoArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -31,10 +31,10 @@ pub struct AddRepoArgs {
 impl AddRepoArgs {
     pub fn run(&self) -> Result<()> {
         let user = common::user()?;
-        let organisation = &self.organisation;
+        let organisation = common::owner(self.organisation.as_deref())?;
 
         let filtered_repos =
-            common::query_and_filter_repositories(organisation, self.regex.as_ref(), &user.token)?;
+            common::query_and_filter_repositories(&organisation, self.regex.as_ref(), &user.token)?;
 
         if filtered_repos.is_empty() {
             println!(

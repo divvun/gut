@@ -9,17 +9,18 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 #[derive(Debug, Parser)]
-/// Show repositories accessible by specified user(s) in an organisation
+/// Show repositories accessible by specified user(s) for an owner
 ///
 /// Lists all repositories that the specified user(s) have access to,
 /// along with their permission level (admin, write, read).
+/// Works with both organisations and personal accounts.
 pub struct ShowAccessArgs {
     #[arg(value_name = "USERNAME", required = true)]
     /// One or more GitHub usernames to check
     pub users: Vec<String>,
     #[arg(long, short)]
-    /// Target organisation name
-    pub organisation: String,
+    /// Target owner (organisation or user)
+    pub owner: Option<String>,
     #[arg(long, short)]
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
@@ -38,19 +39,16 @@ struct RepoPermission {
 impl ShowAccessArgs {
     pub fn run(&self) -> Result<()> {
         let user_token = common::user_token()?;
-        let organisation = &self.organisation;
+        let owner = common::owner(self.owner.as_deref())?;
 
-        let repos = match common::query_and_filter_repositories(
-            organisation,
-            self.regex.as_ref(),
-            &user_token,
-        ) {
-            Ok(repos) => repos,
-            Err(e) => {
-                println!("Could not fetch repositories for {}: {:?}", organisation, e);
-                return Ok(());
-            }
-        };
+        let repos =
+            match common::query_and_filter_repositories(&owner, self.regex.as_ref(), &user_token) {
+                Ok(repos) => repos,
+                Err(e) => {
+                    println!("Could not fetch repositories for {}: {:?}", owner, e);
+                    return Ok(());
+                }
+            };
 
         if repos.is_empty() {
             println!("No repositories match the pattern");
@@ -62,15 +60,14 @@ impl ShowAccessArgs {
         // Collect permissions for all users
         let mut all_permissions: Vec<RepoPermission> = Vec::new();
         for username in &self.users {
-            let permissions =
-                self.get_user_permissions(username, organisation, &repo_names, &user_token);
+            let permissions = self.get_user_permissions(username, &owner, &repo_names, &user_token);
             all_permissions.extend(permissions);
         }
 
         if self.long {
-            self.print_long_table(organisation, &all_permissions);
+            self.print_long_table(&owner, &all_permissions);
         } else {
-            self.print_compact_table(organisation, &repo_names, &all_permissions);
+            self.print_compact_table(&owner, &repo_names, &all_permissions);
         }
 
         Ok(())
@@ -79,7 +76,7 @@ impl ShowAccessArgs {
     fn get_user_permissions(
         &self,
         username: &str,
-        organisation: &str,
+        owner: &str,
         repo_names: &[String],
         token: &str,
     ) -> Vec<RepoPermission> {
@@ -97,7 +94,7 @@ impl ShowAccessArgs {
             .par_iter()
             .map(|repo_name| {
                 let permission =
-                    github::get_user_repo_permission(organisation, repo_name, username, token)
+                    github::get_user_repo_permission(owner, repo_name, username, token)
                         .unwrap_or_else(|_| "error".to_string());
 
                 pb.set_message(repo_name.clone());
@@ -115,7 +112,7 @@ impl ShowAccessArgs {
         results
     }
 
-    fn print_long_table(&self, organisation: &str, permissions: &[RepoPermission]) {
+    fn print_long_table(&self, owner: &str, permissions: &[RepoPermission]) {
         // Sort by username, then by repo_name
         let mut sorted = permissions.to_vec();
         sorted.sort_by(|a, b| {
@@ -141,13 +138,13 @@ impl ShowAccessArgs {
         // Count unique repos
         let unique_repos: std::collections::HashSet<&str> =
             sorted.iter().map(|p| p.repo_name.as_str()).collect();
-        self.print_footer(organisation, unique_repos.len());
+        self.print_footer(owner, unique_repos.len());
         println!();
     }
 
     fn print_compact_table(
         &self,
-        organisation: &str,
+        owner: &str,
         repo_names: &[String],
         permissions: &[RepoPermission],
     ) {
@@ -188,7 +185,7 @@ impl ShowAccessArgs {
         }
 
         table.printstd();
-        self.print_footer(organisation, sorted_repos.len());
+        self.print_footer(owner, sorted_repos.len());
         println!();
     }
 
@@ -202,18 +199,18 @@ impl ShowAccessArgs {
         }
     }
 
-    fn print_footer(&self, organisation: &str, count: usize) {
+    fn print_footer(&self, owner: &str, count: usize) {
         let footer = match &self.regex {
             Some(filter) => format!(
                 "{} repos in {} matching {}",
                 count.to_string().bold(),
-                organisation.bold().cyan(),
+                owner.bold().cyan(),
                 filter.to_string().bold().cyan()
             ),
             None => format!(
                 "{} repos in {}",
                 count.to_string().bold(),
-                organisation.bold().cyan()
+                owner.bold().cyan()
             ),
         };
         println!("{}", footer);

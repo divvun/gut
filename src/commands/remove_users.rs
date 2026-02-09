@@ -14,7 +14,7 @@ use clap::Parser;
 pub struct RemoveUsersArgs {
     #[arg(long, short)]
     /// Target organisation name
-    pub organisation: String,
+    pub organisation: Option<String>,
     #[arg(long, short)]
     /// Usernames to remove (eg: -u user1 -u user2)
     pub users: Vec<String>,
@@ -25,34 +25,21 @@ pub struct RemoveUsersArgs {
 
 impl RemoveUsersArgs {
     pub fn run(&self) -> Result<()> {
+        let user_token = common::user_token()?;
+        let organisation = common::owner(self.organisation.as_deref())?;
+        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
+
         match &self.team_slug {
-            Some(name) => self.remove_users_from_team(name),
-            None => self.remove_users_from_org(),
+            Some(team_name) => {
+                let results =
+                    remove_list_user_from_team(&organisation, team_name, users, &user_token);
+                print_results_team(&results, team_name);
+            }
+            None => {
+                let results = remove_list_user_from_org(&organisation, users, &user_token);
+                print_results_org(&results, &organisation);
+            }
         }
-    }
-
-    fn remove_users_from_org(&self) -> Result<()> {
-        let user_token = common::user_token()?;
-        let organisation = &self.organisation;
-
-        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
-
-        let results = remove_list_user_from_org(organisation, users, &user_token);
-
-        print_results_org(&results, organisation);
-
-        Ok(())
-    }
-
-    fn remove_users_from_team(&self, team_name: &str) -> Result<()> {
-        let user_token = common::user_token()?;
-        let organisation = &self.organisation;
-
-        let users: Vec<String> = self.users.iter().map(|s| s.to_string()).collect();
-
-        let results = remove_list_user_from_team(organisation, team_name, users, &user_token);
-
-        print_results_team(&results, team_name);
 
         Ok(())
     }

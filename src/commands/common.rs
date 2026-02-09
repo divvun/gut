@@ -1,11 +1,13 @@
 use crate::commands::topic_helper;
 use crate::config::Config;
+use crate::github::models::Unsuccessful;
 use crate::path;
 use anyhow::{Context, Result, anyhow};
 use dialoguer::Input;
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Table, format, row};
 use rayon::prelude::*;
+use reqwest::StatusCode;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -259,6 +261,30 @@ pub fn owner(opt: Option<&str>) -> Result<String> {
             }
         }
     }
+}
+
+/// Check if an error is a 404 from the GitHub API and print org-specific guidance.
+/// Returns true if the error was handled (caller should return Ok(())).
+pub fn handle_org_not_found(
+    e: &anyhow::Error,
+    context: &str,
+    command_hint: &str,
+    org_was_explicit: bool,
+) -> bool {
+    if let Some(unsuccessful) = e.downcast_ref::<Unsuccessful>()
+        && unsuccessful.0 == StatusCode::NOT_FOUND
+    {
+        println!("{}", context);
+        println!("Note: This command only works with organisations, not personal accounts.");
+        if !org_was_explicit {
+            println!(
+                "If you meant a different organisation, use: {}",
+                command_hint
+            );
+        }
+        return true;
+    }
+    false
 }
 
 pub fn use_https() -> Result<bool> {
