@@ -28,6 +28,21 @@ struct RepoLabels {
     labels: Vec<Label>,
 }
 
+fn color_swatch(hex: &str) -> String {
+    let hex = hex.trim_start_matches('#');
+    if hex.len() >= 6 {
+        let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
+        let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
+        let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
+        format!(
+            "\x1b[38;2;{};{};{}m\u{2588}\u{2588}\x1b[0m #{}",
+            r, g, b, hex
+        )
+    } else {
+        hex.to_string()
+    }
+}
+
 impl LabelListArgs {
     pub fn run(&self) -> Result<()> {
         common::run_for_owners(
@@ -85,7 +100,8 @@ impl LabelListArgs {
                 for (i, label) in repo_labels.labels.iter().enumerate() {
                     let repo_col = if i == 0 { &repo_labels.repo_name } else { "" };
                     let desc = label.description.as_deref().unwrap_or("");
-                    table.add_row(row![repo_col, label.name, label.color, desc]);
+                    let color = color_swatch(&label.color);
+                    table.add_row(row![repo_col, label.name, color, desc]);
                     label_count += 1;
                 }
             }
