@@ -1,0 +1,84 @@
+use super::common;
+
+use crate::filter::Filter;
+use crate::github;
+use anyhow::Result;
+use clap::Parser;
+
+#[derive(Debug, Parser)]
+/// Rename repositories that match a pattern with another pattern.
+///
+/// This will show all repositories that will affected by this command
+/// If you want to public repositories, it'll show a confirmation prompt
+/// and You have to enter 'YES' to confirm your action
+pub struct RenameReposArgs {
+    #[arg(long, short, alias = "organisation")]
+    /// Target owner (organisation or user) name
+    ///
+    /// You can set a default owner in the init or set owner command.
+    pub owner: Option<String>,
+    #[arg(long, short)]
+    /// Regex to filter repositories
+    pub regex: Filter,
+    #[arg(long, short)]
+    /// Regex to replace with
+    pub new_pattern: String,
+}
+
+impl RenameReposArgs {
+    pub fn run(&self) -> Result<()> {
+        let user_token = common::user_token()?;
+        let owner = common::owner(self.owner.as_deref())?;
+
+        let filtered_repos =
+            common::query_and_filter_repositories(&owner, Some(&self.regex), &user_token)?;
+
+        if filtered_repos.is_empty() {
+            println!(
+                "There are no repositories in {} that match pattern {:?}",
+                owner, self.regex
+            );
+            return Ok(());
+        }
+
+        println!("The following repos will be renamed");
+
+        for repo in &filtered_repos {
+            println!(
+                "{} -> {}",
+                repo.full_name(),
+                self.regex.replace(&repo.name, &self.new_pattern)
+            );
+        }
+
+        if !confirm(filtered_repos.len())? {
+            println!("Command is aborted. Nothing change!");
+            return Ok(());
+        }
+
+        for repo in filtered_repos {
+            let new_name = self.regex.replace(&repo.name, &self.new_pattern);
+            let result = github::set_repo_name(&repo, &new_name, &user_token);
+            match result {
+                Ok(_) => println!("Renamed repo {} to {} successfully", repo.name, new_name),
+                Err(e) => println!(
+                    "Failed to rename repo {} to {} because {:?}",
+                    repo.name, new_name, e
+                ),
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn confirm(count: usize) -> Result<bool> {
+    let key = "YES";
+    common::confirm(
+        &format!(
+            "Are you sure you want to rename {} repo(s)?\nEnter {} to continue",
+            count, key
+        ),
+        key,
+    )
+}

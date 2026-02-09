@@ -34,6 +34,8 @@ pub mod remove;
 pub mod remove_repos;
 pub mod remove_users;
 pub mod rename;
+pub mod rename_repos;
+pub mod rename_team;
 pub mod repo_health;
 pub mod set;
 pub mod set_default_owner;
