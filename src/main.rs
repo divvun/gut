@@ -40,6 +40,7 @@ fn main() -> Result<()> {
         Commands::Hook(cmd) => cmd.run(),
         Commands::Init(cmd) => cmd.save_config(),
         Commands::Invite(cmd) => cmd.run(),
+        Commands::Label(cmd) => cmd.run(),
         Commands::Merge(cmd) => cmd.run(),
         Commands::Make(cmd) => cmd.run(),
         Commands::Pull(cmd) => cmd.run(args.format),
