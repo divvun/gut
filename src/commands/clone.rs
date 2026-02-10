@@ -143,7 +143,7 @@ fn summarize(statuses: &[Status]) {
     }
 
     if errors.is_empty() {
-        println!("\nThere is no error!");
+        println!("\nThere were no errors!");
     } else {
         let msg = format!("There were {} errors when cloning:", errors.len());
         println!("\n{}\n", msg.red());

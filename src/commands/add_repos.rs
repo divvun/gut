@@ -141,7 +141,7 @@ fn summarize(statuses: &[Status], team_slug: &str) {
     }
 
     if errors.is_empty() {
-        println!("\nThere is no error!");
+        println!("\nThere were no errors!");
     } else {
         let msg = format!(
             "There were {} errors when executing the command:",

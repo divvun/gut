@@ -137,7 +137,7 @@ fn summarize(statuses: &[Status]) {
     }
 
     if errors.is_empty() {
-        println!("There is no error!\n");
+        println!("There were no errors!\n");
     } else {
         let msg = format!("There were {} errors when process command:", errors.len());
         println!("{}\n", msg.red());
