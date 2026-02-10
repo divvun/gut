@@ -134,12 +134,13 @@ Commands:
   hook      Create or delete hooks for all repositories that match a pattern
   init      Init configuration data
   invite    Invite users to an organisation by email
+  label     List, create, delete or rename labels
   make      Make repositories that match a regex become public/private
   merge     Merge a branch into the current branch for all repositories that match a pattern
   pull      Pull the current branch of all local repositories that match a regex
   push      Push the provided branch to remote server for all repositories that match a pattern or a topic
   remove    Remove users (from an organisation or team) or delete repositories
-  rename    Rename repositories that match a pattern with another pattern
+  rename    Rename repositories or teams
   set       Set information, secret for repositories or permission for a team
   show      Show config, repositories, members, or user access
   status    Show git status of all repositories that match a pattern
@@ -185,6 +186,12 @@ hook
 
 invite
     users         Invite users to an organisation by emails
+
+label
+    list          List labels for all repositories that match a regex
+    create        Create a label for all repositories that match a regex
+    delete        Delete a label from all repositories that match a regex
+    rename        Rename a label for all repositories that match a regex
 
 remove
     repositories  Delete repositories matching a pattern
