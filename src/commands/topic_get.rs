@@ -3,6 +3,7 @@ use crate::filter::Filter;
 use crate::github;
 use anyhow::Result;
 use clap::Parser;
+use prettytable::{Table, format, row};
 use rayon::prelude::*;
 
 #[derive(Debug, Parser)]
@@ -19,6 +20,11 @@ pub struct TopicGetArgs {
     #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
+}
+
+struct RepoTopics {
+    repo_name: String,
+    topics: Vec<String>,
 }
 
 impl TopicGetArgs {
@@ -50,23 +56,46 @@ impl TopicGetArgs {
             .map(|repo| {
                 let result = github::get_topics(repo, &user_token);
                 match result {
-                    Ok(topics) => {
-                        println!("List of topics for {} is: {:?}", repo.name, topics);
-                        true
-                    }
+                    Ok(topics) => Ok(RepoTopics {
+                        repo_name: repo.name.clone(),
+                        topics,
+                    }),
                     Err(e) => {
                         println!(
                             "Failed to get topics for repo {} because {:?}",
                             repo.name, e
                         );
-                        false
+                        Err(())
                     }
                 }
             })
             .collect();
 
-        let successful = results.iter().filter(|&&success| success).count();
+        let successful = results.iter().filter(|r| r.is_ok()).count();
         let failed = results.len() - successful;
+
+        let mut table = Table::new();
+        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        table.set_titles(row!["Repository", "Topic"]);
+
+        let mut topic_count = 0;
+        for repo_topics in results.iter().flatten() {
+            for (i, topic) in repo_topics.topics.iter().enumerate() {
+                let repo_col = if i == 0 { &repo_topics.repo_name } else { "" };
+                table.add_row(row![repo_col, topic]);
+                topic_count += 1;
+            }
+        }
+
+        if topic_count > 0 {
+            table.printstd();
+            println!(
+                "{} topics across {} repos in {}",
+                topic_count, successful, owner
+            );
+        } else {
+            println!("No topics found for repos in {}", owner);
+        }
 
         Ok(OrgResult {
             org_name: owner.to_string(),
