@@ -5,6 +5,7 @@ use anyhow::Result;
 use clap::Parser;
 use prettytable::{Table, format, row};
 use rayon::prelude::*;
+use serde_json::json;
 
 #[derive(Debug, Parser)]
 /// Get topics for all repositories that match a regex
@@ -20,6 +21,9 @@ pub struct TopicGetArgs {
     #[arg(long, short)]
     /// Run command against all owners, not just the default one
     pub all_owners: bool,
+    #[arg(long, short)]
+    /// Output as JSON
+    pub json: bool,
 }
 
 struct RepoTopics {
@@ -74,27 +78,36 @@ impl TopicGetArgs {
         let successful = results.iter().filter(|r| r.is_ok()).count();
         let failed = results.len() - successful;
 
-        let mut table = Table::new();
-        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-        table.set_titles(row!["Repository", "Topic"]);
-
-        let mut topic_count = 0;
-        for repo_topics in results.iter().flatten() {
-            for (i, topic) in repo_topics.topics.iter().enumerate() {
-                let repo_col = if i == 0 { &repo_topics.repo_name } else { "" };
-                table.add_row(row![repo_col, topic]);
-                topic_count += 1;
-            }
-        }
-
-        if topic_count > 0 {
-            table.printstd();
-            println!(
-                "{} topics across {} repos in {}",
-                topic_count, successful, owner
-            );
+        if self.json {
+            let json_output: Vec<_> = results
+                .iter()
+                .flatten()
+                .map(|rt| json!({"repository": rt.repo_name, "topics": rt.topics}))
+                .collect();
+            println!("{}", serde_json::to_string_pretty(&json_output)?);
         } else {
-            println!("No topics found for repos in {}", owner);
+            let mut table = Table::new();
+            table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+            table.set_titles(row!["Repository", "Topic"]);
+
+            let mut topic_count = 0;
+            for repo_topics in results.iter().flatten() {
+                for (i, topic) in repo_topics.topics.iter().enumerate() {
+                    let repo_col = if i == 0 { &repo_topics.repo_name } else { "" };
+                    table.add_row(row![repo_col, topic]);
+                    topic_count += 1;
+                }
+            }
+
+            if topic_count > 0 {
+                table.printstd();
+                println!(
+                    "{} topics across {} repos in {}",
+                    topic_count, successful, owner
+                );
+            } else {
+                println!("No topics found for repos in {}", owner);
+            }
         }
 
         Ok(OrgResult {
