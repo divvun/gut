@@ -231,11 +231,11 @@ gut set permission -o <org> -t team-slug \
 
 Topics are GitHub repository tags that help organize and discover repositories.
 
-### topic get
-Get topics for all repositories that match a pattern.
+### topic list
+List topics for all repositories that match a pattern.
 
 ```bash
-gut topic get -o <org> -r "<regex>"
+gut topic list -o <org> -r "<regex>"
 ```
 
 ### topic set

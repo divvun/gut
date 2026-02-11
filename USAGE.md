@@ -269,11 +269,11 @@ SUBCOMMANDS:
 ### Topic Get
 
 ```
-gut-topic-get 0.1.0
-Get topics for all repositories that match a regex
+gut-topic-list 0.1.0
+List topics for all repositories that match a regex
 
 USAGE:
-    gut topic get [OPTIONS]
+    gut topic list [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information

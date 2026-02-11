@@ -1,12 +1,12 @@
 use super::topic_add::*;
 use super::topic_apply::*;
-use super::topic_get::*;
+use super::topic_list::*;
 use super::topic_set::*;
 use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-/// Add, get, set or apply a script by topic
+/// Add, list, set or apply a script by topic
 pub struct TopicArgs {
     #[command(subcommand)]
     command: TopicCommand,
@@ -24,8 +24,8 @@ pub enum TopicCommand {
     Add(TopicAddArgs),
     #[command(name = "apply")]
     Apply(TopicApplyArgs),
-    #[command(name = "get")]
-    Get(TopicGetArgs),
+    #[command(name = "list", alias = "get")]
+    List(TopicListArgs),
     #[command(name = "set")]
     Set(TopicSetArgs),
 }
@@ -33,7 +33,7 @@ pub enum TopicCommand {
 impl TopicCommand {
     pub fn run(&self) -> Result<()> {
         match self {
-            Self::Get(args) => args.run(),
+            Self::List(args) => args.run(),
             Self::Set(args) => args.run(),
             Self::Add(args) => args.run(),
             Self::Apply(args) => args.run(),

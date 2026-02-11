@@ -8,8 +8,8 @@ use rayon::prelude::*;
 use serde_json::json;
 
 #[derive(Debug, Parser)]
-/// Get topics for all repositories that match a regex
-pub struct TopicGetArgs {
+/// List topics for all repositories that match a regex
+pub struct TopicListArgs {
     #[arg(long, short, alias = "organisation", conflicts_with = "all_owners")]
     /// Target owner (organisation or user) name
     ///
@@ -31,7 +31,7 @@ struct RepoTopics {
     topics: Vec<String>,
 }
 
-impl TopicGetArgs {
+impl TopicListArgs {
     pub fn run(&self) -> Result<()> {
         common::run_for_owners(
             self.all_owners,

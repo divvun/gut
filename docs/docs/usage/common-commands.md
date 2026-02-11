@@ -154,8 +154,8 @@ gut topic add -o myorg -r ".*-service$" -t microservice backend
 # Set topics (replaces existing)
 gut topic set -o myorg -r "^lang-sme" -t language sami production
 
-# Get current topics
-gut topic get -o myorg -r ".*"
+# List current topics
+gut topic list -o myorg -r ".*"
 
 # Apply script to repos with specific topic
 gut topic apply -o myorg -t backend -s deploy.sh
