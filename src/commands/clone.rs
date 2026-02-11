@@ -6,6 +6,7 @@ use anyhow::{Error, Result, anyhow};
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::Clonable;
+use crate::git::lfs::{self, LfsPullStatus};
 use crate::git::models::GitRepo;
 use crate::system_health;
 use crate::user::User;
@@ -79,26 +80,45 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
         Ok(result)
     };
     let result = cl();
+    let lfs_status = match &result {
+        Ok(git_repo) => lfs::lfs_pull(&git_repo.local_path),
+        Err(_) => LfsPullStatus::NotNeeded,
+    };
     Status {
         repo: repo.clone(),
         result,
+        lfs_status,
     }
 }
 
 struct Status {
     repo: RemoteRepo,
     result: Result<GitRepo, Error>,
+    lfs_status: LfsPullStatus,
 }
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(b -> &self.repo.name), self.status()])
+        Row::new(vec![
+            cell!(b -> &self.repo.name),
+            self.status(),
+            self.lfs_cell(),
+        ])
     }
 
     fn status(&self) -> Cell {
         match &self.result {
             Ok(_) => cell!(Fgr -> "Success"),
             Err(_) => cell!(Frr -> "Failed"),
+        }
+    }
+
+    fn lfs_cell(&self) -> Cell {
+        match &self.lfs_status {
+            LfsPullStatus::Success => cell!(Fgr -> "Pulled"),
+            LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
+            LfsPullStatus::NotNeeded => cell!(r -> "-"),
+            LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
         }
     }
 
@@ -123,7 +143,7 @@ impl Status {
 fn to_table(statuses: &[Status]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repo", "Status"]);
+    table.set_titles(row!["Repo", "Status", "LFS"]);
     for status in statuses {
         table.add_row(status.to_row());
     }

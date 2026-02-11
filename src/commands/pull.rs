@@ -4,6 +4,7 @@ use crate::filter::Filter;
 use crate::git;
 use crate::git::GitCredential;
 use crate::git::PullStatus;
+use crate::git::lfs::{self, LfsPullStatus};
 use crate::path;
 use crate::system_health;
 use crate::user::User;
@@ -156,7 +157,13 @@ fn to_table(statuses: &[Status]) -> Table {
     let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repo", "Pull Status", "Repo Status", "Stash Status"]);
+    table.set_titles(row![
+        "Repo",
+        "Pull Status",
+        "Repo Status",
+        "Stash Status",
+        "LFS"
+    ]);
     table
 }
 
@@ -206,11 +213,18 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
 
     let status = pull().map_err(Arc::new);
 
+    let lfs_status = if status.is_ok() {
+        lfs::lfs_pull(dir)
+    } else {
+        LfsPullStatus::NotNeeded
+    };
+
     Status {
         repo: dir_name,
         status,
         repo_status,
         stash_status,
+        lfs_status,
     }
 }
 
@@ -234,6 +248,7 @@ struct Status {
     status: Result<PullStatus, Arc<anyhow::Error>>,
     repo_status: RepoStatus,
     stash_status: StashStatus,
+    lfs_status: LfsPullStatus,
 }
 
 impl Status {
@@ -243,7 +258,17 @@ impl Status {
             self.status_to_cell(),
             self.repo_status.to_cell(),
             self.stash_status.to_cell(),
+            self.lfs_cell(),
         ])
+    }
+
+    fn lfs_cell(&self) -> Cell {
+        match &self.lfs_status {
+            LfsPullStatus::Success => cell!(Fgr -> "Pulled"),
+            LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
+            LfsPullStatus::NotNeeded => cell!(r -> "-"),
+            LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
+        }
     }
 
     fn status_to_cell(&self) -> Cell {

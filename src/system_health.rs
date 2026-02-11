@@ -85,7 +85,7 @@ fn get_git_config(key: &str) -> Option<String> {
 }
 
 /// Check if Git LFS is installed
-fn is_git_lfs_installed() -> bool {
+pub fn is_git_lfs_installed() -> bool {
     Command::new("git")
         .args(["lfs", "version"])
         .output()

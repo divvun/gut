@@ -4,6 +4,7 @@ pub mod commit;
 pub mod common;
 pub mod diff;
 pub mod fetch;
+pub mod lfs;
 pub mod merge;
 pub mod models;
 pub mod open;
