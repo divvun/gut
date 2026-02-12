@@ -1,5 +1,6 @@
 use colored::*;
 use std::process::Command;
+use std::sync::LazyLock;
 
 /// Types of health warnings for type-safe matching
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,13 +85,17 @@ fn get_git_config(key: &str) -> Option<String> {
     if value.is_empty() { None } else { Some(value) }
 }
 
-/// Check if Git LFS is installed
-pub fn is_git_lfs_installed() -> bool {
+static GIT_LFS_INSTALLED: LazyLock<bool> = LazyLock::new(|| {
     Command::new("git")
         .args(["lfs", "version"])
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
+});
+
+/// Check if Git LFS is installed (cached after first call).
+pub fn is_git_lfs_installed() -> bool {
+    *GIT_LFS_INSTALLED
 }
 
 /// Parse a Git version string into (major, minor, patch) tuple.
