@@ -6,13 +6,14 @@ use anyhow::{Error, Result, anyhow};
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::Clonable;
-use crate::git::lfs::{self, LfsPullStatus};
+use crate::git::lfs;
 use crate::git::models::GitRepo;
 use crate::system_health;
 use crate::user::User;
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Parser)]
 /// Clone all repositories that matches a pattern
@@ -52,12 +53,54 @@ impl CloneArgs {
             return Ok(());
         }
 
-        let statuses = common::process_with_progress(
+        // Phase 1: Clone all repos with libgit2 (parallel, with progress bar).
+        // For LFS repos this only fetches git objects (pointer files are tiny).
+        let mut statuses = common::process_with_progress(
             "Cloning",
             &filtered_repos,
             |r| clone(r, &user, use_https),
             |status| status.repo.name.clone(),
         );
+
+        // Phase 2: Re-clone LFS repos with git CLI (sequential) so that
+        // LFS objects are fetched automatically and progress is visible.
+        for status in &mut statuses {
+            if !status.lfs || status.has_error() {
+                continue;
+            }
+
+            if let Ok(git_repo) = &status.result {
+                let remote_url = git_repo.remote_url.clone();
+                let local_path = git_repo.local_path.clone();
+
+                println!("\nCloning {} with LFS...", status.repo.name);
+
+                if let Err(e) = std::fs::remove_dir_all(&local_path) {
+                    status.result = Err(anyhow!("Failed to remove directory for re-clone: {}", e));
+                    continue;
+                }
+
+                match Command::new("git")
+                    .args([
+                        "clone",
+                        "--progress",
+                        &remote_url,
+                        &local_path.to_string_lossy(),
+                    ])
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .status()
+                {
+                    Ok(s) if s.success() => {}
+                    Ok(_) => {
+                        status.result = Err(anyhow!("git clone failed for {}", status.repo.name));
+                    }
+                    Err(e) => {
+                        status.result = Err(anyhow!("Failed to run git clone: {}", e));
+                    }
+                }
+            }
+        }
 
         summarize(&statuses);
 
@@ -67,7 +110,7 @@ impl CloneArgs {
 }
 
 fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
-    let cl = || -> Result<GitRepo> {
+    let cl = || -> Result<(GitRepo, bool)> {
         let git_repo = try_from_one(repo.clone(), user, use_https)?;
         if git_repo.local_path.exists() {
             return Err(anyhow!(
@@ -76,25 +119,27 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
                 git_repo.local_path
             ));
         }
+
         let result = git_repo.gclone()?;
-        Ok(result)
+        let uses_lfs = lfs::repo_uses_lfs(&result.local_path);
+
+        Ok((result, uses_lfs))
     };
-    let result = cl();
-    let lfs_status = match &result {
-        Ok(git_repo) => lfs::lfs_pull(&git_repo.local_path),
-        Err(_) => LfsPullStatus::NotNeeded,
+    let (result, lfs) = match cl() {
+        Ok((git_repo, lfs)) => (Ok(git_repo), lfs),
+        Err(e) => (Err(e), false),
     };
     Status {
         repo: repo.clone(),
         result,
-        lfs_status,
+        lfs,
     }
 }
 
 struct Status {
     repo: RemoteRepo,
     result: Result<GitRepo, Error>,
-    lfs_status: LfsPullStatus,
+    lfs: bool,
 }
 
 impl Status {
@@ -114,11 +159,10 @@ impl Status {
     }
 
     fn lfs_cell(&self) -> Cell {
-        match &self.lfs_status {
-            LfsPullStatus::Success => cell!(Fgr -> "Pulled"),
-            LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
-            LfsPullStatus::NotNeeded => cell!(r -> "-"),
-            LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
+        if self.lfs {
+            cell!(Fgr -> "Yes")
+        } else {
+            cell!(r -> "-")
         }
     }
 
