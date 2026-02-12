@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.8.0] - 2026-02-12
+
+### Added
+
+- **`gut label` commands** for managing GitHub labels in bulk across repositories (#218):
+  - `gut label list` -- lists all labels in a table with color swatches
+  - `gut label create` -- creates a label across matching repos
+  - `gut label delete` -- deletes a label across matching repos
+  - `gut label rename` -- renames a label (and optionally updates color/description) across matching repos
+- **`gut rename team <SLUG> <NEW_NAME>` command**: Renames a GitHub organisation team with a confirmation prompt (#215)
+- **`gut show repository <REPO_NAME>` command**: Displays all teams and collaborators for a repository with permission levels and affiliation (org/direct/outside) (#216)
+- **`gut show teams --tree` flag**: Renders teams as a hierarchical tree showing parent/child relationships (#214)
+- **`gut show team` parent/child info**: Now displays parent team and child teams in the header (#214)
+- **Git LFS support** in `gut clone` and `gut pull`: Automatically detects LFS usage via `.gitattributes` and pulls LFS objects, with status shown in the summary table (#221)
+- **`--json` flag for `gut topic list`**: Output topic results as JSON (#220)
+
+### Changed
+
+- **`gut topic get` renamed to `gut topic list`**: Results now displayed in a formatted table instead of plain text (#220)
+- **`--organisation` now optional** in `add repos`, `add users`, `create discussion`, `create team`, `invite users`, `remove users`, `set team permission`, `show access`, and `show members` -- falls back to the default owner from configuration (#217)
+- **`show access` and `show repo`**: `--organisation` flag renamed to `--owner` to reflect support for both organisations and personal accounts (#217)
+- **Unified 404 error handling** with helpful guidance across team/org commands (#217)
+- **Dependency updates**
+
+### Fixed
+
+- Corrected success message grammar from "There is no error!" to "There were no errors!" across multiple commands
+
 ## [0.7.0] - 2026-02-05
 
 ### Added
