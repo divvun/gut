@@ -65,42 +65,40 @@ impl CloneArgs {
         // Phase 2: Re-clone LFS repos with git CLI (sequential) so that
         // LFS objects are fetched automatically and progress is visible.
         for status in &mut statuses {
-            if status.has_error() {
+            let Ok(git_repo) = &status.result else {
+                continue;
+            };
+            if !lfs::repo_uses_lfs(&git_repo.local_path) {
                 continue;
             }
 
-            if let Ok(git_repo) = &status.result {
-                if !lfs::repo_uses_lfs(&git_repo.local_path) {
-                    continue;
+            let remote_url = git_repo.remote_url.clone();
+            let local_path = git_repo.local_path.clone();
+
+            println!("\nCloning {} with LFS...", status.repo.name);
+
+            if let Err(e) = std::fs::remove_dir_all(&local_path) {
+                status.result = Err(anyhow!("Failed to remove directory for re-clone: {}", e));
+                continue;
+            }
+
+            match Command::new("git")
+                .args([
+                    "clone",
+                    "--progress",
+                    &remote_url,
+                    &local_path.to_string_lossy(),
+                ])
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()
+            {
+                Ok(s) if s.success() => {}
+                Ok(_) => {
+                    status.result = Err(anyhow!("git clone failed for {}", status.repo.name));
                 }
-                let remote_url = git_repo.remote_url.clone();
-                let local_path = git_repo.local_path.clone();
-
-                println!("\nCloning {} with LFS...", status.repo.name);
-
-                if let Err(e) = std::fs::remove_dir_all(&local_path) {
-                    status.result = Err(anyhow!("Failed to remove directory for re-clone: {}", e));
-                    continue;
-                }
-
-                match Command::new("git")
-                    .args([
-                        "clone",
-                        "--progress",
-                        &remote_url,
-                        &local_path.to_string_lossy(),
-                    ])
-                    .stdout(Stdio::inherit())
-                    .stderr(Stdio::inherit())
-                    .status()
-                {
-                    Ok(s) if s.success() => {}
-                    Ok(_) => {
-                        status.result = Err(anyhow!("git clone failed for {}", status.repo.name));
-                    }
-                    Err(e) => {
-                        status.result = Err(anyhow!("Failed to run git clone: {}", e));
-                    }
+                Err(e) => {
+                    status.result = Err(anyhow!("Failed to run git clone: {}", e));
                 }
             }
         }
