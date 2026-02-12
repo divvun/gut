@@ -6,6 +6,7 @@ use anyhow::{Error, Result, anyhow};
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::Clonable;
+use crate::git::lfs::{self, LfsPullStatus};
 use crate::git::models::GitRepo;
 use crate::system_health;
 use crate::user::User;
@@ -51,12 +52,22 @@ impl CloneArgs {
             return Ok(());
         }
 
-        let statuses = common::process_with_progress(
+        let mut statuses = common::process_with_progress(
             "Cloning",
             &filtered_repos,
             |r| clone(r, &user, use_https),
             |status| status.repo.name.clone(),
         );
+
+        // Pull LFS objects sequentially with visible output.
+        for status in statuses.iter_mut() {
+            if let Ok(git_repo) = &status.result {
+                if lfs::repo_uses_lfs(&git_repo.local_path) {
+                    println!("\nPulling LFS objects for {}...", status.repo.name);
+                }
+                status.lfs_status = lfs::lfs_pull_verbose(&git_repo.local_path);
+            }
+        }
 
         summarize(&statuses);
 
@@ -78,21 +89,26 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
         let result = git_repo.gclone()?;
         Ok(result)
     };
-    let result = cl();
     Status {
         repo: repo.clone(),
-        result,
+        result: cl(),
+        lfs_status: LfsPullStatus::NotNeeded,
     }
 }
 
 struct Status {
     repo: RemoteRepo,
     result: Result<GitRepo, Error>,
+    lfs_status: LfsPullStatus,
 }
 
 impl Status {
     fn to_row(&self) -> Row {
-        Row::new(vec![cell!(b -> &self.repo.name), self.status()])
+        Row::new(vec![
+            cell!(b -> &self.repo.name),
+            self.status(),
+            self.lfs_cell(),
+        ])
     }
 
     fn status(&self) -> Cell {
@@ -102,18 +118,28 @@ impl Status {
         }
     }
 
+    fn lfs_cell(&self) -> Cell {
+        match &self.lfs_status {
+            LfsPullStatus::Success => cell!(Fgr -> "Yes"),
+            LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
+            LfsPullStatus::NotNeeded => cell!(r -> "-"),
+            LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
+        }
+    }
+
     fn has_error(&self) -> bool {
-        self.result.is_err()
+        self.result.is_err() || matches!(self.lfs_status, LfsPullStatus::Failed(_))
     }
 
     fn to_error_row(&self) -> Row {
-        let e = if let Err(e) = &self.result {
-            e
+        let msg = if let Err(e) = &self.result {
+            format!("{:?}", e)
+        } else if let LfsPullStatus::Failed(e) = &self.lfs_status {
+            format!("LFS pull failed: {}", e)
         } else {
             panic!("This should have an error here");
         };
 
-        let msg = format!("{:?}", e);
         let lines = common::sub_strings(msg.as_str(), 80);
         let lines = lines.join("\n");
         row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
@@ -123,7 +149,7 @@ impl Status {
 fn to_table(statuses: &[Status]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    table.set_titles(row!["Repo", "Status"]);
+    table.set_titles(row!["Repo", "Status", "LFS"]);
     for status in statuses {
         table.add_row(status.to_row());
     }
@@ -134,24 +160,34 @@ fn summarize(statuses: &[Status]) {
     let table = to_table(statuses);
     table.printstd();
 
-    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
-    let successes: Vec<_> = statuses.iter().filter(|s| !s.has_error()).collect();
+    let clone_errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
+    let lfs_errors: Vec<_> = statuses
+        .iter()
+        .filter(|s| matches!(s.lfs_status, LfsPullStatus::Failed(_)))
+        .collect();
+    let cloned = statuses.len() - clone_errors.len();
 
-    if !successes.is_empty() {
-        let msg = format!("\nCloned {} repos successfully!", successes.len());
+    if cloned > 0 {
+        let msg = format!("\nCloned {} repos successfully!", cloned);
         println!("{}", msg.green());
     }
 
-    if errors.is_empty() {
+    if !lfs_errors.is_empty() {
+        let msg = format!("LFS pull failed for {} repos.", lfs_errors.len());
+        println!("{}", msg.yellow());
+    }
+
+    let all_errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+    if all_errors.is_empty() {
         println!("\nThere were no errors!");
     } else {
-        let msg = format!("There were {} errors when cloning:", errors.len());
+        let msg = format!("There were {} errors:", all_errors.len());
         println!("\n{}\n", msg.red());
 
         let mut error_table = Table::new();
         error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
         error_table.set_titles(row!["Repo", "Error"]);
-        for error in errors {
+        for error in &all_errors {
             error_table.add_row(error.to_error_row());
         }
         error_table.printstd();
