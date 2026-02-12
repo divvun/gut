@@ -296,19 +296,22 @@ impl Status {
     }
 
     fn has_error(&self) -> bool {
-        self.status.is_err() || matches!(self.stash_status, StashStatus::Failed(_))
+        self.status.is_err()
+            || matches!(self.stash_status, StashStatus::Failed(_))
+            || matches!(self.lfs_status, LfsPullStatus::Failed(_))
     }
 
     fn to_error_row(&self) -> Row {
-        let e = if let StashStatus::Failed(e1) = &self.stash_status {
-            e1
-        } else if let Err(e2) = &self.status {
-            e2
+        let msg = if let StashStatus::Failed(e) = &self.stash_status {
+            format!("{:?}", e)
+        } else if let Err(e) = &self.status {
+            format!("{:?}", e)
+        } else if let LfsPullStatus::Failed(e) = &self.lfs_status {
+            format!("LFS pull failed: {}", e)
         } else {
             panic!("This should have an error here");
         };
 
-        let msg = format!("{:?}", e);
         let lines = common::sub_strings(msg.as_str(), 80);
         let lines = lines.join("\n");
         row!(cell!(b -> &self.repo), cell!(Fr -> lines.as_str()))

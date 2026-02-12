@@ -128,17 +128,18 @@ impl Status {
     }
 
     fn has_error(&self) -> bool {
-        self.result.is_err()
+        self.result.is_err() || matches!(self.lfs_status, LfsPullStatus::Failed(_))
     }
 
     fn to_error_row(&self) -> Row {
-        let e = if let Err(e) = &self.result {
-            e
+        let msg = if let Err(e) = &self.result {
+            format!("{:?}", e)
+        } else if let LfsPullStatus::Failed(e) = &self.lfs_status {
+            format!("LFS pull failed: {}", e)
         } else {
             panic!("This should have an error here");
         };
 
-        let msg = format!("{:?}", e);
         let lines = common::sub_strings(msg.as_str(), 80);
         let lines = lines.join("\n");
         row!(cell!(b -> &self.repo.name), cell!(Fr -> lines.as_str()))
