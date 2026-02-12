@@ -6,14 +6,13 @@ use anyhow::{Error, Result, anyhow};
 use crate::convert::try_from_one;
 use crate::filter::Filter;
 use crate::git::Clonable;
-use crate::git::lfs;
+use crate::git::lfs::{self, LfsPullStatus};
 use crate::git::models::GitRepo;
 use crate::system_health;
 use crate::user::User;
 use clap::Parser;
 use colored::*;
 use prettytable::{Cell, Row, Table, cell, format, row};
-use std::process::{Command, Stdio};
 
 #[derive(Debug, Parser)]
 /// Clone all repositories that matches a pattern
@@ -53,8 +52,6 @@ impl CloneArgs {
             return Ok(());
         }
 
-        // Phase 1: Clone all repos with libgit2 (parallel, with progress bar).
-        // For LFS repos this only fetches git objects (pointer files are tiny).
         let mut statuses = common::process_with_progress(
             "Cloning",
             &filtered_repos,
@@ -62,50 +59,17 @@ impl CloneArgs {
             |status| status.repo.name.clone(),
         );
 
-        // Phase 2: Re-clone LFS repos with git CLI (sequential) so that
-        // LFS objects are fetched automatically and progress is visible.
-        // Skipped entirely if git-lfs is not installed (the health warning covers that).
-        let lfs_installed = system_health::is_git_lfs_installed();
-        for status in statuses.iter_mut().filter(|_| lfs_installed) {
-            let Ok(git_repo) = &status.result else {
-                continue;
-            };
-            if !lfs::repo_uses_lfs(&git_repo.local_path) {
-                continue;
-            }
-
-            let remote_url = git_repo.remote_url.clone();
-            let local_path = git_repo.local_path.clone();
-
-            println!("\nCloning {} with LFS...", status.repo.name);
-
-            if let Err(e) = std::fs::remove_dir_all(&local_path) {
-                status.result = Err(anyhow!("Failed to remove directory for re-clone: {}", e));
-                continue;
-            }
-
-            match Command::new("git")
-                .args([
-                    "clone",
-                    "--progress",
-                    &remote_url,
-                    &local_path.to_string_lossy(),
-                ])
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .status()
-            {
-                Ok(s) if s.success() => {}
-                Ok(_) => {
-                    status.result = Err(anyhow!("git clone failed for {}", status.repo.name));
+        // Pull LFS objects sequentially with visible output.
+        for status in statuses.iter_mut() {
+            if let Ok(git_repo) = &status.result {
+                if lfs::repo_uses_lfs(&git_repo.local_path) {
+                    println!("\nPulling LFS objects for {}...", status.repo.name);
                 }
-                Err(e) => {
-                    status.result = Err(anyhow!("Failed to run git clone: {}", e));
-                }
+                status.lfs_status = lfs::lfs_pull_verbose(&git_repo.local_path);
             }
         }
 
-        summarize(&statuses, lfs_installed);
+        summarize(&statuses);
 
         system_health::print_warnings(&warnings);
         Ok(())
@@ -128,20 +92,22 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
     Status {
         repo: repo.clone(),
         result: cl(),
+        lfs_status: LfsPullStatus::NotNeeded,
     }
 }
 
 struct Status {
     repo: RemoteRepo,
     result: Result<GitRepo, Error>,
+    lfs_status: LfsPullStatus,
 }
 
 impl Status {
-    fn to_row(&self, lfs_installed: bool) -> Row {
+    fn to_row(&self) -> Row {
         Row::new(vec![
             cell!(b -> &self.repo.name),
             self.status(),
-            self.lfs_cell(lfs_installed),
+            self.lfs_cell(),
         ])
     }
 
@@ -152,16 +118,12 @@ impl Status {
         }
     }
 
-    fn lfs_cell(&self, lfs_installed: bool) -> Cell {
-        match &self.result {
-            Ok(git_repo) if lfs::repo_uses_lfs(&git_repo.local_path) => {
-                if lfs_installed {
-                    cell!(Fgr -> "Yes")
-                } else {
-                    cell!(Fyr -> "No LFS installed")
-                }
-            }
-            _ => cell!(r -> "-"),
+    fn lfs_cell(&self) -> Cell {
+        match &self.lfs_status {
+            LfsPullStatus::Success => cell!(Fgr -> "Yes"),
+            LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
+            LfsPullStatus::NotNeeded => cell!(r -> "-"),
+            LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
         }
     }
 
@@ -183,18 +145,18 @@ impl Status {
     }
 }
 
-fn to_table(statuses: &[Status], lfs_installed: bool) -> Table {
+fn to_table(statuses: &[Status]) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repo", "Status", "LFS"]);
     for status in statuses {
-        table.add_row(status.to_row(lfs_installed));
+        table.add_row(status.to_row());
     }
     table
 }
 
-fn summarize(statuses: &[Status], lfs_installed: bool) {
-    let table = to_table(statuses, lfs_installed);
+fn summarize(statuses: &[Status]) {
+    let table = to_table(statuses);
     table.printstd();
 
     let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();

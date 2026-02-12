@@ -1,7 +1,7 @@
 use crate::system_health;
 use serde::Serialize;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum LfsPullStatus {
@@ -42,6 +42,30 @@ pub fn lfs_pull(repo_path: &Path) -> LfsPullStatus {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
             LfsPullStatus::Failed(stderr)
         }
+        Err(e) => LfsPullStatus::Failed(e.to_string()),
+    }
+}
+
+/// Run `git lfs pull` with output visible to the user.
+/// Use this when LFS downloads are expected to be large/slow.
+pub fn lfs_pull_verbose(repo_path: &Path) -> LfsPullStatus {
+    if !repo_uses_lfs(repo_path) {
+        return LfsPullStatus::NotNeeded;
+    }
+
+    if !system_health::is_git_lfs_installed() {
+        return LfsPullStatus::LfsNotInstalled;
+    }
+
+    match Command::new("git")
+        .args(["lfs", "pull"])
+        .current_dir(repo_path)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+    {
+        Ok(s) if s.success() => LfsPullStatus::Success,
+        Ok(_) => LfsPullStatus::Failed("git lfs pull failed".to_string()),
         Err(e) => LfsPullStatus::Failed(e.to_string()),
     }
 }
