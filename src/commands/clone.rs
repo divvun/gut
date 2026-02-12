@@ -65,11 +65,14 @@ impl CloneArgs {
         // Phase 2: Re-clone LFS repos with git CLI (sequential) so that
         // LFS objects are fetched automatically and progress is visible.
         for status in &mut statuses {
-            if !status.lfs || status.has_error() {
+            if status.has_error() {
                 continue;
             }
 
             if let Ok(git_repo) = &status.result {
+                if !lfs::repo_uses_lfs(&git_repo.local_path) {
+                    continue;
+                }
                 let remote_url = git_repo.remote_url.clone();
                 let local_path = git_repo.local_path.clone();
 
@@ -110,7 +113,7 @@ impl CloneArgs {
 }
 
 fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
-    let cl = || -> Result<(GitRepo, bool)> {
+    let cl = || -> Result<GitRepo> {
         let git_repo = try_from_one(repo.clone(), user, use_https)?;
         if git_repo.local_path.exists() {
             return Err(anyhow!(
@@ -119,27 +122,18 @@ fn clone(repo: &RemoteRepo, user: &User, use_https: bool) -> Status {
                 git_repo.local_path
             ));
         }
-
         let result = git_repo.gclone()?;
-        let uses_lfs = lfs::repo_uses_lfs(&result.local_path);
-
-        Ok((result, uses_lfs))
-    };
-    let (result, lfs) = match cl() {
-        Ok((git_repo, lfs)) => (Ok(git_repo), lfs),
-        Err(e) => (Err(e), false),
+        Ok(result)
     };
     Status {
         repo: repo.clone(),
-        result,
-        lfs,
+        result: cl(),
     }
 }
 
 struct Status {
     repo: RemoteRepo,
     result: Result<GitRepo, Error>,
-    lfs: bool,
 }
 
 impl Status {
@@ -159,10 +153,9 @@ impl Status {
     }
 
     fn lfs_cell(&self) -> Cell {
-        if self.lfs {
-            cell!(Fgr -> "Yes")
-        } else {
-            cell!(r -> "-")
+        match &self.result {
+            Ok(git_repo) if lfs::repo_uses_lfs(&git_repo.local_path) => cell!(Fgr -> "Yes"),
+            _ => cell!(r -> "-"),
         }
     }
 
