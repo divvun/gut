@@ -160,24 +160,34 @@ fn summarize(statuses: &[Status]) {
     let table = to_table(statuses);
     table.printstd();
 
-    let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
-    let successes: Vec<_> = statuses.iter().filter(|s| !s.has_error()).collect();
+    let clone_errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
+    let lfs_errors: Vec<_> = statuses
+        .iter()
+        .filter(|s| matches!(s.lfs_status, LfsPullStatus::Failed(_)))
+        .collect();
+    let cloned = statuses.len() - clone_errors.len();
 
-    if !successes.is_empty() {
-        let msg = format!("\nCloned {} repos successfully!", successes.len());
+    if cloned > 0 {
+        let msg = format!("\nCloned {} repos successfully!", cloned);
         println!("{}", msg.green());
     }
 
-    if errors.is_empty() {
+    if !lfs_errors.is_empty() {
+        let msg = format!("LFS pull failed for {} repos.", lfs_errors.len());
+        println!("{}", msg.yellow());
+    }
+
+    let all_errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
+    if all_errors.is_empty() {
         println!("\nThere were no errors!");
     } else {
-        let msg = format!("There were {} errors when cloning:", errors.len());
+        let msg = format!("There were {} errors:", all_errors.len());
         println!("\n{}\n", msg.red());
 
         let mut error_table = Table::new();
         error_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
         error_table.set_titles(row!["Repo", "Error"]);
-        for error in errors {
+        for error in &all_errors {
             error_table.add_row(error.to_error_row());
         }
         error_table.printstd();
