@@ -260,13 +260,13 @@ FLAGS:
 
 SUBCOMMANDS:
     add
-    get
+    list
     help    Prints this message or the help of the given subcommand(s)
     set     Set topics for all repositories that match a regex
 
 ```
 
-### Topic Get
+### Topic List
 
 ```
 gut-topic-list 0.1.0

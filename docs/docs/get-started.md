@@ -75,18 +75,18 @@ gut init -r ~/gut-repos -t ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 This creates a configuration file in your system's config directory (e.g., `~/.config/gut/` on Linux/macOS).
 
-### 3. Set a Default Organization (Optional)
+### 3. Set a Default Owner (Optional)
 
-To avoid specifying `-o <organization>` with every command, set a default:
+To avoid specifying `-o <owner>` with every command, set a default:
 
 ```bash
-gut set organisation -o <org-name>
+gut set owner <owner-name>
 ```
 
 For example:
 
 ```bash
-gut set organisation -o divvun
+gut set owner divvun
 ```
 
 ## SSH Access (Optional)

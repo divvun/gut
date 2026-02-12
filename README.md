@@ -97,7 +97,7 @@ Then there are some use cases with example commands
 gut clone -o myorg -r "^api-.*"
 
 # Pull all repos across all organizations
-gut pull --all-orgs
+gut pull --all-owners
 
 # Fetch and check status of all repos matching regex
 gut status -r ".*" --fetch
@@ -141,6 +141,9 @@ Commands:
   push      Push the provided branch to remote server for all repositories that match a pattern or a topic
   remove    Remove users (from an organisation or team) or delete repositories
   rename    Rename repositories or teams
+  rename
+    repo          Rename a repository
+    team          Rename a team in an organisation
   set       Set information, secret for repositories or permission for a team
   show      Show config, repositories, members, or user access
   status    Show git status of all repositories that match a pattern
@@ -206,6 +209,7 @@ set
 show
     config        Show current configuration
     repositories  Show all repositories that match a pattern [aliases: repos]
+    repository    Show details for a specific repository (teams, collaborators)
     access        Show repositories accessible by specified user(s) in an organisation
     members       Show all members in an organisation [aliases: users]
     teams         Show all teams in an organisation
@@ -219,7 +223,7 @@ template
 topic
     add           Add topics for all repositories that match a regex
     apply         Apply a script to all repositories that have topics matching a pattern
-    get           Get topics for all repositories that match a regex
+    list          List topics for all repositories that match a regex
     set           Set topics for all repositories that match a regex
 
 workflow

@@ -305,7 +305,7 @@ gut push -o myorg -r ".*"
 Avoid typing `-o <org>` every time:
 
 ```bash
-gut set organisation myorg
+gut set owner myorg
 
 # Now you can omit -o:
 gut status -r ".*"
