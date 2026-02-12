@@ -64,7 +64,9 @@ impl CloneArgs {
 
         // Phase 2: Re-clone LFS repos with git CLI (sequential) so that
         // LFS objects are fetched automatically and progress is visible.
-        for status in &mut statuses {
+        // Skipped entirely if git-lfs is not installed (the health warning covers that).
+        let lfs_installed = system_health::is_git_lfs_installed();
+        for status in statuses.iter_mut().filter(|_| lfs_installed) {
             let Ok(git_repo) = &status.result else {
                 continue;
             };
@@ -103,7 +105,7 @@ impl CloneArgs {
             }
         }
 
-        summarize(&statuses);
+        summarize(&statuses, lfs_installed);
 
         system_health::print_warnings(&warnings);
         Ok(())
@@ -135,11 +137,11 @@ struct Status {
 }
 
 impl Status {
-    fn to_row(&self) -> Row {
+    fn to_row(&self, lfs_installed: bool) -> Row {
         Row::new(vec![
             cell!(b -> &self.repo.name),
             self.status(),
-            self.lfs_cell(),
+            self.lfs_cell(lfs_installed),
         ])
     }
 
@@ -150,9 +152,15 @@ impl Status {
         }
     }
 
-    fn lfs_cell(&self) -> Cell {
+    fn lfs_cell(&self, lfs_installed: bool) -> Cell {
         match &self.result {
-            Ok(git_repo) if lfs::repo_uses_lfs(&git_repo.local_path) => cell!(Fgr -> "Yes"),
+            Ok(git_repo) if lfs::repo_uses_lfs(&git_repo.local_path) => {
+                if lfs_installed {
+                    cell!(Fgr -> "Yes")
+                } else {
+                    cell!(Fyr -> "No LFS installed")
+                }
+            }
             _ => cell!(r -> "-"),
         }
     }
@@ -175,18 +183,18 @@ impl Status {
     }
 }
 
-fn to_table(statuses: &[Status]) -> Table {
+fn to_table(statuses: &[Status], lfs_installed: bool) -> Table {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     table.set_titles(row!["Repo", "Status", "LFS"]);
     for status in statuses {
-        table.add_row(status.to_row());
+        table.add_row(status.to_row(lfs_installed));
     }
     table
 }
 
-fn summarize(statuses: &[Status]) {
-    let table = to_table(statuses);
+fn summarize(statuses: &[Status], lfs_installed: bool) {
+    let table = to_table(statuses, lfs_installed);
     table.printstd();
 
     let errors: Vec<_> = statuses.iter().filter(|s| s.has_error()).collect();
