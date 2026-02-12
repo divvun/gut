@@ -15,7 +15,10 @@ pub enum LfsPullStatus {
 pub fn repo_uses_lfs(repo_path: &Path) -> bool {
     let gitattributes = repo_path.join(".gitattributes");
     if let Ok(contents) = std::fs::read_to_string(gitattributes) {
-        contents.contains("filter=lfs")
+        contents.lines().any(|line| {
+            let line = line.trim();
+            !line.starts_with('#') && line.contains("filter=lfs")
+        })
     } else {
         false
     }
