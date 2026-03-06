@@ -188,8 +188,6 @@ fn print_status_table(statuses: &[StatusResult], verbose: bool) {
         .collect();
     let errors: Vec<_> = statuses.iter().filter(|s| s.result.is_err()).collect();
 
-    let any_lfs = success_statuses.iter().any(|s| s.uses_lfs);
-
     let rows = to_rows_with_errors_sorted(
         &success_statuses
             .iter()
@@ -198,7 +196,7 @@ fn print_status_table(statuses: &[StatusResult], verbose: bool) {
         &errors,
         verbose,
     );
-    let table = to_table(&rows, any_lfs);
+    let table = to_table(&rows);
     table.printstd();
 
     if !errors.is_empty() {
@@ -225,19 +223,13 @@ fn print_status_table(statuses: &[StatusResult], verbose: bool) {
     }
 }
 
-fn to_table(statuses: &[StatusRow], any_lfs: bool) -> Table {
-    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row(any_lfs)).collect();
+fn to_table(statuses: &[StatusRow]) -> Table {
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    if any_lfs {
-        table.set_titles(
-            row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
-        );
-    } else {
-        table.set_titles(
-            row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
-        );
-    }
+    table.set_titles(
+        row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
+    );
     table
 }
 
@@ -291,11 +283,7 @@ fn to_rows_with_errors_sorted(
 }
 
 fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
-    let any_lfs = statuses.iter().any(|s| s.uses_lfs);
-    let mut rows = vec![
-        StatusRow::TitleSeperation,
-        StatusRow::SummarizeTitle { any_lfs },
-    ];
+    let mut rows = vec![StatusRow::TitleSeperation, StatusRow::SummarizeTitle];
     let total = statuses.len().to_string();
     let mut unpushed_repo_count: usize = 0;
     let mut uncommitted_repo_count: usize = 0;
@@ -470,9 +458,7 @@ enum StatusRow {
     },
     RepoSeperation,
     TitleSeperation,
-    SummarizeTitle {
-        any_lfs: bool,
-    },
+    SummarizeTitle,
     Empty,
     ErrorRow {
         name: String,
@@ -480,17 +466,13 @@ enum StatusRow {
 }
 
 impl StatusRow {
-    fn to_row(&self, any_lfs: bool) -> Row {
+    fn to_row(&self) -> Row {
         match self {
             StatusRow::RepoSeperation => row!["--------------"],
             StatusRow::TitleSeperation => row!["================"],
             StatusRow::Empty => row![""],
             StatusRow::ErrorRow { name } => {
-                if any_lfs {
-                    row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
-                } else {
-                    row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
-                }
+                row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
             }
             StatusRow::FileDetail { status, path } => row![r => status, path],
             StatusRow::SummarizeAll {
@@ -504,11 +486,7 @@ impl StatusRow {
                 total_added,
                 total_lfs_repos,
             } => {
-                if any_lfs {
-                    row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
-                } else {
-                    row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
-                }
+                row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
             }
             StatusRow::RepoSummarize {
                 name,
@@ -521,18 +499,10 @@ impl StatusRow {
                 added,
                 lfs,
             } => {
-                if any_lfs {
-                    row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added, r -> lfs]
-                } else {
-                    row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added]
-                }
+                row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added, r -> lfs]
             }
-            StatusRow::SummarizeTitle { any_lfs: has_lfs } => {
-                if *has_lfs {
-                    row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"]
-                } else {
-                    row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
-                }
+            StatusRow::SummarizeTitle => {
+                row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"]
             }
             StatusRow::OrgSummarize {
                 org_name,
@@ -546,11 +516,7 @@ impl StatusRow {
                 total_added,
                 total_lfs_repos,
             } => {
-                if any_lfs {
-                    row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
-                } else {
-                    row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
-                }
+                row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
             }
         }
     }
@@ -595,8 +561,6 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
         total_lfs_repos += summary.total_lfs_repos;
     }
 
-    let any_lfs = summaries.iter().any(|s| s.total_lfs_repos > 0);
-
     // Add separator row
     rows.push(StatusRow::Empty);
 
@@ -615,23 +579,17 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
     };
     rows.push(total_row);
 
-    let table = to_org_summary_table(&rows, any_lfs);
+    let table = to_org_summary_table(&rows);
     println!("\n=== All org summary ===");
     table.printstd();
 }
 
-fn to_org_summary_table(statuses: &[StatusRow], any_lfs: bool) -> Table {
-    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row(any_lfs)).collect();
+fn to_org_summary_table(statuses: &[StatusRow]) -> Table {
+    let rows: Vec<_> = statuses.par_iter().map(|s| s.to_row()).collect();
     let mut table = Table::init(rows);
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-    if any_lfs {
-        table.set_titles(
-            row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
-        );
-    } else {
-        table.set_titles(
-            row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"],
-        );
-    }
+    table.set_titles(
+        row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
+    );
     table
 }
