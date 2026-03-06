@@ -4,7 +4,7 @@ use crate::cli::OutputFormat;
 use crate::filter::Filter;
 use crate::git;
 use crate::git::GitStatus;
-use crate::git::lfs::{self, LfsFileStatus, LfsPushStatus};
+use crate::git::lfs::{self, LfsFileStatus};
 use crate::path::dir_name;
 use crate::system_health;
 use anyhow::{Context, Result};
@@ -107,7 +107,6 @@ impl StatusArgs {
         let mut total_conflicted = 0;
         let mut total_added = 0;
         let mut total_lfs_repos = 0;
-        let mut total_lfs_unpushed = 0;
 
         for status_result in &filtered_statuses {
             if let Ok(status) = &status_result.result {
@@ -125,9 +124,6 @@ impl StatusArgs {
                 if status.uses_lfs {
                     total_lfs_repos += 1;
                 }
-                if let Some(ref lfs_push) = status.lfs_push {
-                    total_lfs_unpushed += lfs_push.unpushed;
-                }
             }
         }
 
@@ -142,7 +138,6 @@ impl StatusArgs {
             total_conflicted,
             total_added,
             total_lfs_repos,
-            total_lfs_unpushed,
         })
     }
 }
@@ -158,13 +153,10 @@ fn status(dir: &PathBuf) -> StatusResult {
         let branch = git::head_shorthand(&git_repo)?;
 
         let uses_lfs = lfs::repo_uses_lfs(dir);
-        let (lfs_files, lfs_push) = if uses_lfs && system_health::is_git_lfs_installed() {
-            (
-                lfs::lfs_file_status(dir),
-                lfs::lfs_push_status(dir, &branch),
-            )
+        let lfs_files = if uses_lfs && system_health::is_git_lfs_installed() {
+            lfs::lfs_file_status(dir)
         } else {
-            (None, None)
+            None
         };
 
         let repo_status = RepoStatus {
@@ -173,7 +165,6 @@ fn status(dir: &PathBuf) -> StatusResult {
             status,
             uses_lfs,
             lfs_files,
-            lfs_push,
         };
         Ok(repo_status)
     })();
@@ -240,7 +231,7 @@ fn to_table(statuses: &[StatusRow], any_lfs: bool) -> Table {
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     if any_lfs {
         table.set_titles(
-            row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS", r -> "LFS↑"],
+            row!["Repo", "branch", r -> "±origin", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
         );
     } else {
         table.set_titles(
@@ -314,7 +305,6 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
     let mut total_conflicted: usize = 0;
     let mut total_added: usize = 0;
     let mut total_lfs_repos: usize = 0;
-    let mut total_lfs_unpushed: usize = 0;
 
     for status in statuses {
         if !status.status.is_empty() {
@@ -331,9 +321,6 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
         if status.uses_lfs {
             total_lfs_repos += 1;
         }
-        if let Some(ref lfs_push) = status.lfs_push {
-            total_lfs_unpushed += lfs_push.unpushed;
-        }
     }
 
     let summarize_row = StatusRow::SummarizeAll {
@@ -346,7 +333,6 @@ fn to_total_summarize(statuses: &[RepoStatus]) -> Vec<StatusRow> {
         total_conflicted: total_conflicted.to_string(),
         total_added: total_added.to_string(),
         total_lfs_repos: total_lfs_repos.to_string(),
-        total_lfs_unpushed: total_lfs_unpushed.to_string(),
     };
     rows.push(summarize_row);
     rows
@@ -359,7 +345,6 @@ struct RepoStatus {
     status: GitStatus,
     uses_lfs: bool,
     lfs_files: Option<LfsFileStatus>,
-    lfs_push: Option<LfsPushStatus>,
 }
 
 impl RepoStatus {
@@ -388,14 +373,6 @@ impl RepoStatus {
                 });
             }
         }
-        if let Some(ref lfs_push) = self.lfs_push {
-            for file in &lfs_push.files {
-                rows.push(StatusRow::FileDetail {
-                    status: "LFS↑".to_string(),
-                    path: file.clone(),
-                });
-            }
-        }
 
         rows.push(StatusRow::RepoSeperation);
         rows
@@ -415,18 +392,10 @@ impl RepoStatus {
                 .count();
             let adjusted_downloaded = lfs_files.downloaded + modified_not_downloaded;
             if adjusted_downloaded >= lfs_files.total {
-                lfs_files.total.to_string()
+                "YES".to_string()
             } else {
                 format!("{}/{}", adjusted_downloaded, lfs_files.total)
             }
-        } else {
-            "-".to_string()
-        };
-
-        let lfs_unpushed = if !self.uses_lfs {
-            "-".to_string()
-        } else if let Some(ref lfs_push) = self.lfs_push {
-            lfs_push.unpushed.to_string()
         } else {
             "-".to_string()
         };
@@ -441,7 +410,6 @@ impl RepoStatus {
             conflicted: self.status.conflicted.len().to_string(),
             added: self.status.added.len().to_string(),
             lfs,
-            lfs_unpushed,
         }
     }
 }
@@ -472,7 +440,6 @@ enum StatusRow {
         conflicted: String,
         added: String,
         lfs: String,
-        lfs_unpushed: String,
     },
     FileDetail {
         status: String,
@@ -488,7 +455,6 @@ enum StatusRow {
         total_conflicted: String,
         total_added: String,
         total_lfs_repos: String,
-        total_lfs_unpushed: String,
     },
     OrgSummarize {
         org_name: String,
@@ -501,7 +467,6 @@ enum StatusRow {
         total_conflicted: String,
         total_added: String,
         total_lfs_repos: String,
-        total_lfs_unpushed: String,
     },
     RepoSeperation,
     TitleSeperation,
@@ -522,7 +487,7 @@ impl StatusRow {
             StatusRow::Empty => row![""],
             StatusRow::ErrorRow { name } => {
                 if any_lfs {
-                    row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
+                    row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
                 } else {
                     row![name, "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-", r -> "-"]
                 }
@@ -538,10 +503,9 @@ impl StatusRow {
                 total_conflicted,
                 total_added,
                 total_lfs_repos,
-                total_lfs_unpushed,
             } => {
                 if any_lfs {
-                    row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos, r -> total_lfs_unpushed]
+                    row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
                 } else {
                     row![total, uncommitted_repo_count, r -> unpushed_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
                 }
@@ -556,17 +520,16 @@ impl StatusRow {
                 conflicted,
                 added,
                 lfs,
-                lfs_unpushed,
             } => {
                 if any_lfs {
-                    row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added, r -> lfs, r -> lfs_unpushed]
+                    row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added, r -> lfs]
                 } else {
                     row![name, branch, r -> ahead_behind, r -> unadded, r -> deleted, r -> modified, r -> conflicted, r -> added]
                 }
             }
             StatusRow::SummarizeTitle { any_lfs: has_lfs } => {
                 if *has_lfs {
-                    row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS", r -> "LFS↑"]
+                    row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"]
                 } else {
                     row!["Repo Count", "Dirty", "fetch/push", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A"]
                 }
@@ -582,10 +545,9 @@ impl StatusRow {
                 total_conflicted,
                 total_added,
                 total_lfs_repos,
-                total_lfs_unpushed,
             } => {
                 if any_lfs {
-                    row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos, r -> total_lfs_unpushed]
+                    row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added, r -> total_lfs_repos]
                 } else {
                     row![org_name, total_repos, r -> unpushed_repo_count, r -> uncommitted_repo_count, r -> total_unadded, r -> total_deleted, r -> total_modified, r -> total_conflicted, r -> total_added]
                 }
@@ -606,7 +568,6 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
     let mut total_conflicted = 0;
     let mut total_added = 0;
     let mut total_lfs_repos = 0;
-    let mut total_lfs_unpushed = 0;
 
     for summary in summaries {
         let org_row = StatusRow::OrgSummarize {
@@ -620,7 +581,6 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
             total_conflicted: summary.total_conflicted.to_string(),
             total_added: summary.total_added.to_string(),
             total_lfs_repos: summary.total_lfs_repos.to_string(),
-            total_lfs_unpushed: summary.total_lfs_unpushed.to_string(),
         };
         rows.push(org_row);
 
@@ -633,7 +593,6 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
         total_conflicted += summary.total_conflicted;
         total_added += summary.total_added;
         total_lfs_repos += summary.total_lfs_repos;
-        total_lfs_unpushed += summary.total_lfs_unpushed;
     }
 
     let any_lfs = summaries.iter().any(|s| s.total_lfs_repos > 0);
@@ -653,7 +612,6 @@ pub fn print_org_summary(summaries: &[OrgSummary]) {
         total_conflicted: total_conflicted.to_string(),
         total_added: total_added.to_string(),
         total_lfs_repos: total_lfs_repos.to_string(),
-        total_lfs_unpushed: total_lfs_unpushed.to_string(),
     };
     rows.push(total_row);
 
@@ -668,7 +626,7 @@ fn to_org_summary_table(statuses: &[StatusRow], any_lfs: bool) -> Table {
     table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
     if any_lfs {
         table.set_titles(
-            row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS", r -> "LFS↑"],
+            row!["Owner", "#repos", r -> "±origin", r -> "Dirty", r -> "U", r -> "D", r -> "M", r -> "C", r -> "A", r -> "LFS"],
         );
     } else {
         table.set_titles(

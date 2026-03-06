@@ -45,7 +45,6 @@ pub struct OrgSummary {
     pub total_conflicted: usize,
     pub total_added: usize,
     pub total_lfs_repos: usize,
-    pub total_lfs_unpushed: usize,
 }
 
 impl ErrorPlaceholder for OrgSummary {
@@ -61,7 +60,6 @@ impl ErrorPlaceholder for OrgSummary {
             total_conflicted: 0,
             total_added: 0,
             total_lfs_repos: 0,
-            total_lfs_unpushed: 0,
         }
     }
 }

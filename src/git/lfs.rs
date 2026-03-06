@@ -25,12 +25,6 @@ pub struct LfsFile {
     pub downloaded: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
-pub struct LfsPushStatus {
-    pub unpushed: usize,
-    pub files: Vec<String>,
-}
-
 /// Check if a repository uses Git LFS by looking for `filter=lfs` in `.gitattributes`.
 pub fn repo_uses_lfs(repo_path: &Path) -> bool {
     let gitattributes = repo_path.join(".gitattributes");
@@ -136,40 +130,5 @@ pub fn lfs_file_status(repo_path: &Path) -> Option<LfsFileStatus> {
         total,
         downloaded,
         files,
-    })
-}
-
-/// Query LFS push status using `git lfs push --dry-run`.
-///
-/// Returns info about LFS objects that haven't been pushed to the remote.
-/// Each output line has the format: `push <oid> => <filename>`
-pub fn lfs_push_status(repo_path: &Path, branch: &str) -> Option<LfsPushStatus> {
-    let output = Command::new("git")
-        .args(["lfs", "push", "--dry-run", "origin", branch])
-        .current_dir(repo_path)
-        .output()
-        .ok()?;
-
-    if !output.status.success() {
-        return None;
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut unpushed_files = Vec::new();
-
-    for line in stdout.lines() {
-        let line = line.trim();
-        // Format: "push <oid> => <filename>"
-        if let Some(rest) = line.strip_prefix("push ") {
-            if let Some((_oid, name)) = rest.split_once(" => ") {
-                unpushed_files.push(name.to_string());
-            }
-        }
-    }
-
-    let unpushed = unpushed_files.len();
-    Some(LfsPushStatus {
-        unpushed,
-        files: unpushed_files,
     })
 }
