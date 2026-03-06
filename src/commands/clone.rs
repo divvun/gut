@@ -26,7 +26,7 @@ pub struct CloneArgs {
     /// Optional regex to filter repositories
     pub regex: Option<Filter>,
     #[arg(long, short)]
-    /// Option to use https instead of ssh when clone repositories
+    /// Option to use https instead of ssh when cloning repositories
     pub use_https: bool,
 }
 
