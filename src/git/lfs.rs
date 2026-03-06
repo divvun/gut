@@ -111,7 +111,7 @@ pub fn lfs_file_status(repo_path: &Path) -> Option<LfsFileStatus> {
             continue;
         }
         // Format: "<oid> * <name>" or "<oid> - <name>"
-        if let Some((oid_and_marker, name)) = line.split_once(|c| c == '*' || c == '-') {
+        if let Some((oid_and_marker, name)) = line.split_once(['*', '-']) {
             let oid = oid_and_marker.trim().to_string();
             let name = name.trim().to_string();
             let downloaded = line.contains(" * ");
