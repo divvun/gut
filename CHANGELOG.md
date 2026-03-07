@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0] - 2026-03-07
+
+### Added
+
+- **Git LFS info in `gut status`**: The status table now always shows an LFS column indicating the LFS state of each repository (#224)
+
+### Fixed
+
+- **LFS files falsely appearing as changed**: Updated the git index for LFS files so that unmodified LFS-tracked files no longer show up as dirty in `gut status`
+
 ## [0.8.0] - 2026-02-12
 
 ### Added
