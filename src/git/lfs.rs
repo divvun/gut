@@ -54,7 +54,10 @@ pub fn lfs_pull(repo_path: &Path) -> LfsPullStatus {
         .current_dir(repo_path)
         .output()
     {
-        Ok(output) if output.status.success() => LfsPullStatus::Success,
+        Ok(output) if output.status.success() => {
+            refresh_lfs_index(repo_path);
+            LfsPullStatus::Success
+        }
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
             LfsPullStatus::Failed(stderr)
@@ -81,10 +84,61 @@ pub fn lfs_pull_verbose(repo_path: &Path) -> LfsPullStatus {
         .stderr(Stdio::inherit())
         .status()
     {
-        Ok(s) if s.success() => LfsPullStatus::Success,
+        Ok(s) if s.success() => {
+            refresh_lfs_index(repo_path);
+            LfsPullStatus::Success
+        }
         Ok(_) => LfsPullStatus::Failed("git lfs pull failed".to_string()),
         Err(e) => LfsPullStatus::Failed(e.to_string()),
     }
+}
+
+/// Refresh git's index stat cache for all LFS-tracked files.
+///
+/// After `git lfs checkout` writes actual file content to disk, it does not update
+/// git's index stat cache. This leaves the cache with stale data (e.g. the size of
+/// the old LFS pointer file), causing `git status` to report those files as modified
+/// even though their content matches the index. Running `git update-index` for each
+/// LFS file re-reads the file, applies the clean filter, and writes the correct stat
+/// into the cache so subsequent `git status` calls report a clean working tree.
+fn refresh_lfs_index(repo_path: &Path) {
+    let ls = match Command::new("git")
+        .args(["lfs", "ls-files", "-n"])
+        .current_dir(repo_path)
+        .output()
+    {
+        Ok(o) if o.status.success() => o,
+        _ => return,
+    };
+
+    let stdout = String::from_utf8_lossy(&ls.stdout);
+    let files: Vec<&str> = stdout.lines().filter(|l| !l.is_empty()).collect();
+    if files.is_empty() {
+        return;
+    }
+
+    // Pipe filenames to `git update-index --stdin` to avoid ARG_MAX limits
+    // on repos with many LFS files.
+    let mut child = match Command::new("git")
+        .args(["update-index", "--stdin"])
+        .current_dir(repo_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    if let Some(mut stdin) = child.stdin.take() {
+        use std::io::Write;
+        for file in files {
+            let _ = writeln!(stdin, "{file}");
+        }
+    }
+
+    let _ = child.wait();
 }
 
 /// Query LFS file download status by parsing `git lfs ls-files` output.
