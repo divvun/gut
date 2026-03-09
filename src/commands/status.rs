@@ -68,7 +68,9 @@ impl StatusArgs {
 
         let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
-        let statuses: Vec<_> = sub_dirs.iter().map(status).collect();
+        let statuses = common::process_with_progress("Status", &sub_dirs, status, |result| {
+            result.name.clone()
+        });
 
         let filtered_statuses: Vec<_> = statuses
             .iter()
