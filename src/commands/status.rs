@@ -39,6 +39,9 @@ pub struct StatusArgs {
     #[arg(long, short)]
     /// Fetch from remotes before showing status
     pub fetch: bool,
+    #[arg(long, short)]
+    /// Show detailed LFS file download status
+    pub lfs: bool,
 }
 
 impl StatusArgs {
@@ -68,7 +71,13 @@ impl StatusArgs {
 
         let sub_dirs = common::read_dirs_for_owner(owner, &root, self.regex.as_ref())?;
 
-        let statuses: Vec<_> = sub_dirs.iter().map(status).collect();
+        let detailed_lfs = self.lfs;
+        let statuses = common::process_with_progress(
+            "Status",
+            &sub_dirs,
+            |dir| status(dir, detailed_lfs),
+            |result| result.name.clone(),
+        );
 
         let filtered_statuses: Vec<_> = statuses
             .iter()
@@ -142,7 +151,7 @@ impl StatusArgs {
     }
 }
 
-fn status(dir: &PathBuf) -> StatusResult {
+fn status(dir: &PathBuf, detailed_lfs: bool) -> StatusResult {
     let name = dir_name(dir).unwrap_or_else(|_| "Unknown".to_string());
 
     let result = (|| -> Result<RepoStatus> {
@@ -153,7 +162,7 @@ fn status(dir: &PathBuf) -> StatusResult {
         let branch = git::head_shorthand(&git_repo)?;
 
         let uses_lfs = lfs::repo_uses_lfs(dir);
-        let lfs_files = if uses_lfs && system_health::is_git_lfs_installed() {
+        let lfs_files = if detailed_lfs && uses_lfs && system_health::is_git_lfs_installed() {
             lfs::lfs_file_status(dir)
         } else {
             None
@@ -385,7 +394,7 @@ impl RepoStatus {
                 format!("{}/{}", adjusted_downloaded, lfs_files.total)
             }
         } else {
-            "-".to_string()
+            "YES".to_string()
         };
 
         StatusRow::RepoSummarize {

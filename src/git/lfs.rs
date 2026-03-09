@@ -9,6 +9,7 @@ pub enum LfsPullStatus {
     Failed(String),
     NotNeeded,
     LfsNotInstalled,
+    IndexRefreshed,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -101,7 +102,7 @@ pub fn lfs_pull_verbose(repo_path: &Path) -> LfsPullStatus {
 /// even though their content matches the index. Running `git update-index` for each
 /// LFS file re-reads the file, applies the clean filter, and writes the correct stat
 /// into the cache so subsequent `git status` calls report a clean working tree.
-fn refresh_lfs_index(repo_path: &Path) {
+pub fn refresh_lfs_index(repo_path: &Path) {
     let ls = match Command::new("git")
         .args(["lfs", "ls-files", "-n"])
         .current_dir(repo_path)
