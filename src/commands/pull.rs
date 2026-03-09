@@ -226,16 +226,17 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
             // Re-check status — the refresh may have fixed false modifications
             if let Ok(git_repo) = git::open(dir)
                 && let Ok(new_status) = git::status(&git_repo, false)
-                    && !new_status.is_dirty() {
-                        repo_status = RepoStatus::Clean;
-                        return Status {
-                            repo: dir_name,
-                            status,
-                            repo_status,
-                            stash_status,
-                            lfs_status: LfsPullStatus::IndexRefreshed,
-                        };
-                    }
+                && !new_status.is_dirty()
+            {
+                repo_status = RepoStatus::Clean;
+                return Status {
+                    repo: dir_name,
+                    status,
+                    repo_status,
+                    stash_status,
+                    lfs_status: LfsPullStatus::IndexRefreshed,
+                };
+            }
         }
         LfsPullStatus::NotNeeded
     };
