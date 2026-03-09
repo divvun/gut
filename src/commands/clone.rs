@@ -124,6 +124,7 @@ impl Status {
             LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
             LfsPullStatus::NotNeeded => cell!(r -> "-"),
             LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
+            LfsPullStatus::IndexRefreshed => cell!(Fgr -> "Index Fixed"),
         }
     }
 

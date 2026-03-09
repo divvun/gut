@@ -219,6 +219,26 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
     ) {
         lfs::lfs_pull(dir)
     } else {
+        // Even when we didn't pull, refresh the LFS index for dirty LFS repos
+        // to fix stale stat cache entries that cause false "modified" reports.
+        if matches!(repo_status, RepoStatus::Dirty) && lfs::repo_uses_lfs(dir) {
+            lfs::refresh_lfs_index(dir);
+            // Re-check status — the refresh may have fixed false modifications
+            if let Ok(git_repo) = git::open(dir) {
+                if let Ok(new_status) = git::status(&git_repo, false) {
+                    if !new_status.is_dirty() {
+                        repo_status = RepoStatus::Clean;
+                        return Status {
+                            repo: dir_name,
+                            status,
+                            repo_status,
+                            stash_status,
+                            lfs_status: LfsPullStatus::IndexRefreshed,
+                        };
+                    }
+                }
+            }
+        }
         LfsPullStatus::NotNeeded
     };
 
@@ -271,6 +291,7 @@ impl Status {
             LfsPullStatus::Failed(_) => cell!(Frr -> "Failed"),
             LfsPullStatus::NotNeeded => cell!(r -> "-"),
             LfsPullStatus::LfsNotInstalled => cell!(Fyr -> "No LFS installed"),
+            LfsPullStatus::IndexRefreshed => cell!(Fgr -> "Index Fixed"),
         }
     }
 
