@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0] - 2026-03-09
+
+### Added
+
+- **Parallelized `gut status`**: Status checks now run in parallel across repositories for significantly faster results
+- **`--lfs` flag for `gut status`**: Shows detailed LFS file download counts (e.g. `3/5`) per repository; without the flag, the LFS column still appears but only shows whether LFS is in use, skipping the slower per-file query
+
+### Fixed
+
+- **`gut pull` LFS performance**: Git LFS pull now only runs when there are actual changes detected during normal pull, avoiding unnecessary LFS operations
+- **`gut pull` dirty repo LFS fix**: When a repo is dirty, `pull` now attempts to fix the LFS index and reports whether it was fixed
+
 ## [0.9.0] - 2026-03-07
 
 ### Added
