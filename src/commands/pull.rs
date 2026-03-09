@@ -213,7 +213,10 @@ fn pull(dir: &PathBuf, user: &User, stash: bool, merge: bool) -> Status {
 
     let status = pull().map_err(Arc::new);
 
-    let lfs_status = if status.is_ok() {
+    let lfs_status = if matches!(
+        &status,
+        Ok(PullStatus::FastForward) | Ok(PullStatus::Normal)
+    ) {
         lfs::lfs_pull(dir)
     } else {
         LfsPullStatus::NotNeeded
