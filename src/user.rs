@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 const KEYRING_SERVICE: &str = "gut";
 
 fn keyring_entry(username: &str) -> Result<keyring::Entry> {
-    keyring::Entry::new(KEYRING_SERVICE, username)
-        .context("Failed to create keyring entry")
+    keyring::Entry::new(KEYRING_SERVICE, username).context("Failed to create keyring entry")
 }
 
 /// Serialised form of the user file. The `token` field exists only for
