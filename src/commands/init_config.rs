@@ -3,6 +3,7 @@ use crate::github;
 use crate::system_health;
 use crate::user::User;
 use clap::Parser;
+use dialoguer::Password;
 use std::path::PathBuf;
 
 fn validate_root(root: &str) -> Result<PathBuf, String> {
@@ -40,9 +41,6 @@ pub struct InitArgs {
     ///
     /// All repositories will be cloned under this directory
     pub root: PathBuf,
-    #[arg(short, long)]
-    /// Github token. Gut needs github token to access your github data
-    pub token: String,
     /// Default owner (can be a GitHub organisation or user account)
     #[arg(short, long, alias = "organisation")]
     pub owner: Option<String>,
@@ -51,11 +49,20 @@ pub struct InitArgs {
     pub use_https: bool,
 }
 
+fn prompt_token() -> anyhow::Result<String> {
+    Password::new()
+        .with_prompt("GitHub token")
+        .allow_empty_password(false)
+        .interact()
+        .map_err(|e| anyhow::anyhow!("Failed to read GitHub token: {e}"))
+}
+
 impl InitArgs {
     pub fn save_config(&self) -> anyhow::Result<()> {
         let warnings = system_health::check_git_config();
 
-        let user = match User::new(self.token.clone()) {
+        let token = prompt_token()?;
+        let user = match User::new(token) {
             Ok(user) => user,
             Err(e) => match e.downcast_ref::<github::Unauthorized>() {
                 Some(_) => anyhow::bail!(
