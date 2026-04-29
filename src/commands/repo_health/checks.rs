@@ -255,7 +255,7 @@ fn check_repo_for_large_files_and_long_paths(
     })?;
 
     // Sort by size (largest first) and convert to Issues
-    large_files.sort_by(|a, b| b.1.cmp(&a.1));
+    large_files.sort_by_key(|b| std::cmp::Reverse(b.1));
     for (file_path, size_bytes) in large_files {
         issues.push(Issue {
             repo: repo_name.to_owned(),
@@ -266,7 +266,7 @@ fn check_repo_for_large_files_and_long_paths(
         });
     }
 
-    large_ignored_files.sort_by(|a, b| b.1.cmp(&a.1));
+    large_ignored_files.sort_by_key(|b| std::cmp::Reverse(b.1));
     for (file_path, size_bytes) in large_ignored_files {
         issues.push(Issue {
             repo: repo_name.to_owned(),
@@ -278,7 +278,7 @@ fn check_repo_for_large_files_and_long_paths(
     }
 
     // Sort long paths by path length (longest first)
-    long_paths.sort_by(|a, b| b.1.cmp(&a.1));
+    long_paths.sort_by_key(|b| std::cmp::Reverse(b.1));
     for (file_path, path_bytes, filename_bytes) in long_paths {
         issues.push(Issue {
             repo: repo_name.to_owned(),
