@@ -62,7 +62,7 @@ If you get compilation errors related to SSL (esp. on the mac), try this variant
 
 1. make a [personal access token](https://github.com/settings/tokens) in GitHub - allow everything. Make sure to store it in a safe place - the token replaces your username and password when accessing GitHub via `gut`.
 1. run `gut init -r <root-dir> -t <token>`
-
+ 
 `<token>` is the token created in step 1. above.
 The `<root-dir>` is the directory where you want to store all repos processed by `gut`.
 Below the `<root-dir>` dir, there will be one directory for every organisation you interact with, and within the organisation directory all repos are stored.
