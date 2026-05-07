@@ -1,7 +1,7 @@
 use super::github;
 use super::path::user_path;
 use super::toml::{read_file, write_to_file};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 const KEYRING_SERVICE: &str = "gut";
@@ -72,17 +72,15 @@ impl User {
         }
 
         let username = file.username.clone();
-        let token = std::thread::spawn(move || {
-            keyring_entry(&username).ok()?.get_password().ok()
-        })
-        .join()
-        .ok()
-        .flatten()
-        .or_else(|| std::env::var("GITHUB_TOKEN").ok())
-        .context(
-            "No GitHub token found. Run `gut init --token <PAT>` or set the GITHUB_TOKEN \
+        let token = std::thread::spawn(move || keyring_entry(&username).ok()?.get_password().ok())
+            .join()
+            .ok()
+            .flatten()
+            .or_else(|| std::env::var("GITHUB_TOKEN").ok())
+            .context(
+                "No GitHub token found. Run `gut init --token <PAT>` or set the GITHUB_TOKEN \
              environment variable.",
-        )?;
+            )?;
 
         Ok(User {
             token,
