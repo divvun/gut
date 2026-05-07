@@ -1,7 +1,7 @@
 use super::github;
 use super::path::user_path;
 use super::toml::{read_file, write_to_file};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 
 const KEYRING_SERVICE: &str = "gut";
@@ -34,9 +34,15 @@ impl User {
     }
 
     pub fn save_user(&self) -> Result<()> {
-        keyring_entry(&self.username)?
-            .set_password(&self.token)
-            .context("Failed to save token to keyring")?;
+        let username = self.username.clone();
+        let token = self.token.clone();
+        std::thread::spawn(move || -> Result<()> {
+            keyring_entry(&username)?
+                .set_password(&token)
+                .context("Failed to save token to keyring")
+        })
+        .join()
+        .map_err(|_| anyhow!("keyring thread panicked"))??;
         let file = UserFile {
             username: self.username.clone(),
             token: None,
@@ -49,9 +55,15 @@ impl User {
 
         // Migrate legacy files that still contain a plaintext token.
         if let Some(ref legacy_token) = file.token {
-            keyring_entry(&file.username)?
-                .set_password(legacy_token)
-                .context("Failed to migrate token to keyring")?;
+            let username = file.username.clone();
+            let token = legacy_token.clone();
+            std::thread::spawn(move || -> Result<()> {
+                keyring_entry(&username)?
+                    .set_password(&token)
+                    .context("Failed to migrate token to keyring")
+            })
+            .join()
+            .map_err(|_| anyhow!("keyring thread panicked"))??;
             let clean = UserFile {
                 username: file.username.clone(),
                 token: None,
@@ -59,14 +71,18 @@ impl User {
             write_to_file(user_path()?, &clean)?;
         }
 
-        let token = keyring_entry(&file.username)?
-            .get_password()
-            .ok()
-            .or_else(|| std::env::var("GITHUB_TOKEN").ok())
-            .context(
-                "No GitHub token found. Run `gut init --token <PAT>` or set the GITHUB_TOKEN \
-                 environment variable.",
-            )?;
+        let username = file.username.clone();
+        let token = std::thread::spawn(move || {
+            keyring_entry(&username).ok()?.get_password().ok()
+        })
+        .join()
+        .ok()
+        .flatten()
+        .or_else(|| std::env::var("GITHUB_TOKEN").ok())
+        .context(
+            "No GitHub token found. Run `gut init --token <PAT>` or set the GITHUB_TOKEN \
+             environment variable.",
+        )?;
 
         Ok(User {
             token,
