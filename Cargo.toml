@@ -19,6 +19,11 @@ colored = "3.1.1"
 reqwest = { version = "0.13.2", features = ["blocking", "json", "gzip", "native-tls-vendored", "http2"], default-features = false }
 graphql_client = "0.16.0"
 dirs = "6.0.0"
+# linux-native-async-persistent uses zbus (pure Rust D-Bus, no libdbus) backed by the
+# secret service for reboot-persistent storage, with keyutils as an in-memory cache.
+# async-io is the executor; tokio is deliberately avoided to prevent conflicts with
+# reqwest's background tokio runtime. keyring calls must be made from a spawned thread —
+# the blocking shim deadlocks if called from a tokio context or the main thread.
 keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native-async-persistent", "async-io", "crypto-rust"] }
 walkdir = "2"
 regex = "1.12.3"
